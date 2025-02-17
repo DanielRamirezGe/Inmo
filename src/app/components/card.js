@@ -6,20 +6,17 @@ import CardHeader from "@mui/material/CardHeader";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
+import CardActionArea from "@mui/material/CardActionArea";
 import Collapse from "@mui/material/Collapse";
-import Avatar from "@mui/material/Avatar";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import { red } from "@mui/material/colors";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import ShareIcon from "@mui/icons-material/Share";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import HouseIcon from "@mui/icons-material/House";
 import BedIcon from "@mui/icons-material/Bed";
 import ShowerIcon from "@mui/icons-material/Shower";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import Box from "@mui/material/Box";
+import DialogImage from "./dialogImage";
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -53,47 +50,69 @@ export default function CardHouse(props) {
     setExpanded(!expanded);
   };
 
+  const [open, setOpen] = React.useState(false);
+  const [selectedValue, setSelectedValue] = React.useState();
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = (value) => {
+    setOpen(false);
+    setSelectedValue(value);
+  };
+
   return (
-    <Card sx={{ maxWidth: 345 }}>
-      <CardHeader
-        title={houseDetails.title}
-        subheader={houseDetails.subheader}
+    <>
+      <DialogImage
+        selectedValue={selectedValue}
+        open={open}
+        onClose={handleClose}
+        houseDetails={houseDetails}
       />
-      <CardMedia
-        component="img"
-        height="194"
-        image={houseDetails.image}
-        alt="Paella dish"
-      />
-      <CardContent>
-        <Typography variant="body2" color="text.secondary">
-          $ 1,012,700
-        </Typography>
-        <Typography variant="body3" color="text.secondary">
-          <Box display="flex" alignItems="center">
-            <HouseIcon /> {houseDetails.size} m2 | <BedIcon />{" "}
-            {houseDetails.bed} | <ShowerIcon /> {houseDetails.shower} |{" "}
-            <DirectionsCarIcon /> {houseDetails.car}
-          </Box>
-        </Typography>
-      </CardContent>
-      <CardActions disableSpacing>
-        <ExpandMore
-          expand={expanded}
-          onClick={handleExpandClick}
-          aria-expanded={expanded}
-          aria-label="show more"
-        >
-          <ExpandMoreIcon />
-        </ExpandMore>
-      </CardActions>
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
+      <Card sx={{ maxWidth: 345 }}>
+        <CardHeader
+          title={houseDetails.title}
+          subheader={houseDetails.subheader}
+        />
+        <CardActionArea onClick={handleClickOpen}>
+          <CardMedia
+            component="img"
+            height="194"
+            image={houseDetails.image}
+            alt="Paella dish"
+          />
+        </CardActionArea>
         <CardContent>
-          <Typography sx={{ marginBottom: 2 }}>
-            {houseDetails.description}
+          <Typography variant="body2" color="text.secondary">
+            $ 1,012,700
           </Typography>
+          <CardActions disableSpacing onClick={handleExpandClick}>
+            <Typography variant="body3" color="text.secondary">
+              <Box display="flex" alignItems="center">
+                <HouseIcon /> {houseDetails.size} m2 | <BedIcon />{" "}
+                {houseDetails.bed} | <ShowerIcon /> {houseDetails.shower} |{" "}
+                <DirectionsCarIcon /> {houseDetails.car}
+                <ExpandMore
+                  expand={expanded}
+                  onClick={handleExpandClick}
+                  aria-expanded={expanded}
+                  aria-label="show more"
+                >
+                  <ExpandMoreIcon />
+                </ExpandMore>
+              </Box>
+            </Typography>
+          </CardActions>
         </CardContent>
-      </Collapse>
-    </Card>
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <CardContent>
+            <Typography sx={{ marginBottom: 2 }}>
+              {houseDetails.description}
+            </Typography>
+          </CardContent>
+        </Collapse>
+      </Card>
+    </>
   );
 }
