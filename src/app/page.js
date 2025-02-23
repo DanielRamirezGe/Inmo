@@ -5,6 +5,7 @@ import MainHeader from "./components/mainHeader";
 import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import DrawerAppBar from "./components/navBar";
 
 export default function Home() {
   const houseDetails = [
@@ -132,6 +133,7 @@ export default function Home() {
   ];
   return (
     <>
+      <DrawerAppBar />
       <MainHeader />
 
       <div className={styles.page}>

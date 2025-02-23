@@ -17,6 +17,10 @@ import ShowerIcon from "@mui/icons-material/Shower";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
 import Box from "@mui/material/Box";
 import DialogImage from "./dialogImage";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import Button from "@mui/material/Button";
+import { useRouter } from "next/navigation"; // Asegúrate de importar desde 'next/router'
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -45,6 +49,9 @@ const ExpandMore = styled((props) => {
 export default function CardHouse(props) {
   const { houseDetails } = props;
   const [expanded, setExpanded] = React.useState(false);
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down(330));
+  const router = useRouter();
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -60,6 +67,10 @@ export default function CardHouse(props) {
   const handleClose = (value) => {
     setOpen(false);
     setSelectedValue(value);
+  };
+
+  const handleViewDetails = () => {
+    router.push("/singleHouse");
   };
 
   return (
@@ -89,10 +100,19 @@ export default function CardHouse(props) {
           </Typography>
           <CardActions disableSpacing onClick={handleExpandClick}>
             <Typography variant="body3" color="text.secondary">
-              <Box display="flex" alignItems="center">
-                <HouseIcon /> {houseDetails.size} m2 | <BedIcon />{" "}
-                {houseDetails.bed} | <ShowerIcon /> {houseDetails.shower} |{" "}
-                <DirectionsCarIcon /> {houseDetails.car}
+              <Box
+                display="flex"
+                alignItems="center"
+                sx={{ fontSize: "0.7rem" }}
+              >
+                <HouseIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
+                {houseDetails.size} m2 |{" "}
+                <BedIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
+                {houseDetails.bed} |{" "}
+                <ShowerIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
+                {houseDetails.shower} |{" "}
+                <DirectionsCarIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
+                {houseDetails.car}
                 <ExpandMore
                   expand={expanded}
                   onClick={handleExpandClick}
@@ -111,6 +131,15 @@ export default function CardHouse(props) {
               {houseDetails.description}
             </Typography>
           </CardContent>
+          <CardActions>
+            <Box
+              sx={{ display: "flex", justifyContent: "center", width: "100%" }}
+            >
+              <Button size="small" onClick={handleViewDetails}>
+                Ver la propiedad
+              </Button>
+            </Box>
+          </CardActions>
         </Collapse>
       </Card>
     </>
