@@ -15,29 +15,49 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import { useRouter } from "next/navigation"; // Importa useRouter
+import styles from "./../page.module.css";
 
 const drawerWidth = 240;
-const navItems = ["Home", "About", "Contact"];
-const nameImno = "CALLI Bienes Raíces";
-const slogan = "Donde los siueños se encuentran hogar";
+const navItems = ["Home", "Nosotros", "Contacto"];
+const nameImno = "CALLI";
+
 function DrawerAppBar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const router = useRouter(); // Usa useRouter
 
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
   };
 
+  const handleNavigation = (item) => {
+    if (item === "Nosotros") {
+      router.push("/about");
+    } else if (item === "Home") {
+      router.push("/");
+    } else if (item === "Contacto") {
+      router.push("/contact");
+    }
+  };
+
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
+    <Box
+      onClick={handleDrawerToggle}
+      sx={{ textAlign: "center" }}
+      className={styles.color_header_main}
+    >
       <Typography variant="h6" sx={{ my: 2 }}>
         {nameImno}
       </Typography>
       <Divider />
-      <List>
+      <List className={styles.color_header_main_menu}>
         {navItems.map((item) => (
           <ListItem key={item} disablePadding>
-            <ListItemButton sx={{ textAlign: "center" }}>
+            <ListItemButton
+              sx={{ textAlign: "center" }}
+              onClick={() => handleNavigation(item)}
+            >
               <ListItemText primary={item} />
             </ListItemButton>
           </ListItem>
@@ -57,11 +77,11 @@ function DrawerAppBar(props) {
         sx={{
           backgroundColor: {
             xs: "white",
-            sm: "primary.main",
+            sm: "white",
           },
         }}
       >
-        <Toolbar>
+        <Toolbar className={styles.color_header_main}>
           <IconButton
             // color="inherit"
             aria-label="open drawer"
@@ -70,25 +90,33 @@ function DrawerAppBar(props) {
             sx={{ mr: 2, display: { sm: "none" } }}
           >
             <MenuIcon />
-            <Typography
+            {/* <Typography
               variant="h6"
               component="div"
               color="rgba(0, 0, 0, 0.54)"
             >
               {nameImno}
-            </Typography>
+            </Typography> */}
           </IconButton>
           <Typography
-            variant="h6"
+            // variant="h6"
             component="div"
-            sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+            sx={{
+              flexGrow: 1,
+              display: {
+                xs: "none",
+                sm: "block",
+              },
+            }}
           >
             {nameImno}
           </Typography>
-          <Box sx={{ display: { xs: "none", sm: "block" } }}>
+          <Box sx={{ display: { xs: "none", sm: "block", color: "black" } }}>
             {navItems.map((item) => (
-              <Button key={item} sx={{ color: "#fff" }}>
-                {item}
+              <Button key={item} onClick={() => handleNavigation(item)}>
+                <Typography className={styles.color_header_main}>
+                  {item}
+                </Typography>
               </Button>
             ))}
           </Box>

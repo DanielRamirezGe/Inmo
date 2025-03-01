@@ -36,15 +36,6 @@ export default function MainHeader() {
       }}
     >
       <Box sx={{ width: { xs: "100%", sm: "80%" }, margin: "auto" }}>
-        <Box padding={2}>
-          {/* <Typography
-            variant="h5"
-            color="black"
-            sx={{ fontWeight: "bold", marginTop: { xs: "30px" } }}
-          >
-            {slogan}
-          </Typography> */}
-        </Box>
         <Paper
           component="form"
           sx={{
@@ -52,7 +43,7 @@ export default function MainHeader() {
             display: "flex",
             alignItems: "center",
             width: "auto",
-            marginTop: { xs: "130px", sm: "30px" },
+            marginTop: { xs: "150px", sm: "10px" },
           }}
           elevation={3}
         >

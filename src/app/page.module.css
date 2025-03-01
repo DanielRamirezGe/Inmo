@@ -1,3 +1,17 @@
+
+.color_header_main {
+  color: #000;
+
+}
+.color_header_main_menu {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --font-geist-sans: Arial, Helvetica, sans-serif;
+  --font-geist-mono: Arial, Helvetica, sans-serif;
+  color: white;
+  --color-header-menu: rgb(94, 94, 94);
+  color: rgb(94, 94, 94);
+}
 .page {
   --gray-rgb: 0, 0, 0;
   --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
