@@ -18,7 +18,8 @@ import Button from "@mui/material/Button";
 
 const drawerWidth = 240;
 const navItems = ["Home", "About", "Contact"];
-const nameImno = "MUI";
+const nameImno = "CALLI Bienes Raíces";
+const slogan = "Donde los siueños se encuentran hogar";
 function DrawerAppBar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -55,21 +56,25 @@ function DrawerAppBar(props) {
         component="nav"
         sx={{
           backgroundColor: {
-            xs: "transparent",
+            xs: "white",
             sm: "primary.main",
           },
         }}
       >
         <Toolbar>
           <IconButton
-            color="inherit"
+            // color="inherit"
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: "none" } }}
           >
             <MenuIcon />
-            <Typography variant="h6" component="div">
+            <Typography
+              variant="h6"
+              component="div"
+              color="rgba(0, 0, 0, 0.54)"
+            >
               {nameImno}
             </Typography>
           </IconButton>

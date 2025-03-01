@@ -2,26 +2,24 @@
 import * as React from "react";
 import Paper from "@mui/material/Paper";
 import InputBase from "@mui/material/InputBase";
-import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
-import DirectionsIcon from "@mui/icons-material/Directions";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Image from "next/image";
 
 export default function MainHeader() {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("xs"));
 
+  const slogan = "Donde los sueños se encuentran hogar";
+
   return (
     <Paper
       elevation={8}
       sx={{
-        backgroundImage: "url(/house_test/headerImg3.png)",
+        backgroundImage: "url(/house_test/CalliLogo.jpeg)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: "white",
@@ -31,7 +29,7 @@ export default function MainHeader() {
         },
         padding: "20px",
         height: {
-          xs: "350px",
+          xs: "250px",
           sm: "350px",
           md: "400px",
         },
@@ -39,13 +37,13 @@ export default function MainHeader() {
     >
       <Box sx={{ width: { xs: "100%", sm: "80%" }, margin: "auto" }}>
         <Box padding={2}>
-          <Typography
-            variant="h4"
-            color="white"
+          {/* <Typography
+            variant="h5"
+            color="black"
             sx={{ fontWeight: "bold", marginTop: { xs: "30px" } }}
           >
-            No solo un lugar para vivir
-          </Typography>
+            {slogan}
+          </Typography> */}
         </Box>
         <Paper
           component="form"
@@ -54,6 +52,7 @@ export default function MainHeader() {
             display: "flex",
             alignItems: "center",
             width: "auto",
+            marginTop: { xs: "130px", sm: "30px" },
           }}
           elevation={3}
         >
