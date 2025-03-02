@@ -18,6 +18,7 @@ import Button from "@mui/material/Button";
 import { styled, alpha } from "@mui/material/styles";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
+import { useRouter } from "next/navigation"; // Importa useRouter
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -59,11 +60,22 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 const drawerWidth = 240;
-const navItems = ["Home", "About", "Contact"];
-const nameImno = "MUI";
+const navItems = ["Home", "Nosotros", "Contacto"];
+const nameImno = "CALLI";
 function DrawerAppBar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const router = useRouter(); // Usa useRouter
+
+  const handleNavigation = (item) => {
+    if (item === "Nosotros") {
+      router.push("/about");
+    } else if (item === "Home") {
+      router.push("/");
+    } else if (item === "Contacto") {
+      router.push("/contact");
+    }
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen((prevState) => !prevState);
@@ -78,7 +90,10 @@ function DrawerAppBar(props) {
       <List>
         {navItems.map((item) => (
           <ListItem key={item} disablePadding>
-            <ListItemButton sx={{ textAlign: "center" }}>
+            <ListItemButton
+              sx={{ textAlign: "center" }}
+              onClick={() => handleNavigation(item)}
+            >
               <ListItemText primary={item} />
             </ListItemButton>
           </ListItem>

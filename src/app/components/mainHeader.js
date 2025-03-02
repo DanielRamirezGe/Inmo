@@ -19,7 +19,7 @@ export default function MainHeader() {
     <Paper
       elevation={8}
       sx={{
-        backgroundImage: "url(/house_test/CalliLogo.jpeg)",
+        backgroundImage: "url(/house_test/c.png)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         color: "white",
