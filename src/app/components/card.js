@@ -47,7 +47,7 @@ const ExpandMore = styled((props) => {
 }));
 
 export default function CardHouse(props) {
-  const { houseDetails } = props;
+  const { prototype, developmentName } = props;
   const [expanded, setExpanded] = React.useState(false);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down(330));
@@ -60,7 +60,8 @@ export default function CardHouse(props) {
   const [open, setOpen] = React.useState(false);
   const [selectedValue, setSelectedValue] = React.useState();
 
-  const handleClickOpen = () => {
+  const handleClickOpen = (imageList) => {
+    setSelectedValue(imageList);
     setOpen(true);
   };
 
@@ -69,34 +70,36 @@ export default function CardHouse(props) {
     setSelectedValue(value);
   };
 
-  const handleViewDetails = () => {
-    router.push("/singleHouse");
+  const handleViewDetails = (idHouse) => {
+    router.push(`/singleHouse/${idHouse}`);
   };
 
   return (
     <>
       <DialogImage
-        selectedValue={selectedValue}
+        imageArray={selectedValue}
         open={open}
         onClose={handleClose}
-        houseDetails={houseDetails}
+        prototype={prototype}
       />
       <Card sx={{ maxWidth: 345 }}>
         <CardHeader
-          title={houseDetails.title}
-          subheader={houseDetails.subheader}
+          title={prototype.nombrePrototipo}
+          subheader={developmentName}
         />
-        <CardActionArea onClick={handleClickOpen}>
+        <CardActionArea
+          onClick={() => handleClickOpen(prototype.imagenSecundaria)}
+        >
           <CardMedia
             component="img"
             height="194"
-            image={houseDetails.image}
-            alt="Paella dish"
+            image={prototype.imagenPrincipal}
+            alt={prototype.nombrePrototipo}
           />
         </CardActionArea>
         <CardContent>
           <Typography variant="body2" color="text.secondary">
-            $ 1,012,700
+            {prototype.precio}
           </Typography>
           <CardActions disableSpacing onClick={handleExpandClick}>
             <Typography variant="body3" color="text.secondary">
@@ -106,13 +109,13 @@ export default function CardHouse(props) {
                 sx={{ fontSize: "0.7rem" }}
               >
                 <HouseIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
-                {houseDetails.size} m2 |{" "}
+                {prototype.size} m2 |{" "}
                 <BedIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
-                {houseDetails.bed} |{" "}
+                {prototype.bed} |{" "}
                 <ShowerIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
-                {houseDetails.shower} |{" "}
+                {prototype.shower} |{" "}
                 <DirectionsCarIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
-                {houseDetails.car}
+                {prototype.car}
                 <ExpandMore
                   expand={expanded}
                   onClick={handleExpandClick}
@@ -128,14 +131,21 @@ export default function CardHouse(props) {
         <Collapse in={expanded} timeout="auto" unmountOnExit>
           <CardContent>
             <Typography sx={{ marginBottom: 2 }}>
-              {houseDetails.description}
+              {prototype.shortDescription}
             </Typography>
           </CardContent>
           <CardActions>
             <Box
-              sx={{ display: "flex", justifyContent: "center", width: "100%" }}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                width: "100%",
+              }}
             >
-              <Button size="small" onClick={handleViewDetails}>
+              <Button
+                size="small"
+                onClick={() => handleViewDetails(prototype.id)}
+              >
                 Ver la propiedad
               </Button>
             </Box>

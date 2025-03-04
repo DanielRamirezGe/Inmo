@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import Image from "next/image";
 
 export default function DialogImage(props) {
-  const { onClose, selectedValue, open, houseDetails } = props;
+  const { onClose, selectedValue, open, imageArray, imageAlone } = props;
 
   const handleClose = () => {
     onClose(selectedValue);
@@ -16,20 +16,21 @@ export default function DialogImage(props) {
   return (
     <Dialog onClose={handleClose} open={open} fullWidth={true}>
       <ImageList sx={{}} cols={1}>
-        {houseDetails.imageList ? (
-          houseDetails.imageList.map((item) => (
+        {imageArray ? (
+          imageArray.map((item) => (
             <ImageListItem key={item}>
               <img srcSet={`${item}`} src={`${item}`} loading="lazy" />
             </ImageListItem>
           ))
         ) : (
-          <Box position="relative" width="100%" height={{ xs: 300, sm: 600 }}>
-            <Image
-              src={`/${houseDetails.image}`}
-              alt={houseDetails.title}
-              layout="fill"
-              objectFit="cover"
-              quality={100}
+          <Box
+            sx={{ display: "flex", justifyContent: "center", maxWidth: "100%" }}
+          >
+            <img
+              srcSet={`${imageAlone}`}
+              src={`${imageAlone}`}
+              loading="lazy"
+              style={{ maxWidth: "100%", height: "auto" }}
             />
           </Box>
         )}
