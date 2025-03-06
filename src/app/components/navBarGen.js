@@ -27,7 +27,7 @@ function DrawerAppBar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const router = useRouter();
-
+  const imageIcon = "/icon/icon.png";
   const handleNavigation = (item) => {
     if (item === "Nosotros") {
       router.push("/about");
@@ -94,7 +94,7 @@ function DrawerAppBar(props) {
                 {nameImno}
               </Typography>
             </Grid>
-            <Grid size={{ xs: 10, sm: 4 }}>
+            <Grid size={{ xs: 8, sm: 4 }}>
               <Box
                 sx={{ flexGrow: 1, display: "flex", justifyContent: "center" }}
               >
@@ -102,6 +102,18 @@ function DrawerAppBar(props) {
                   <SearchBar />
                 </Box>
               </Box>
+            </Grid>
+            <Grid
+              size={{ xs: 2, sm: 4 }}
+              sx={{
+                display: { xs: "flex", sm: "none" },
+                justifyContent: "flex-end",
+              }}
+            >
+              <img
+                src={imageIcon}
+                style={{ maxHeight: "40px", maxWidth: "50px" }}
+              />
             </Grid>
 
             <Grid size={{ xs: 10, sm: 4 }}>
