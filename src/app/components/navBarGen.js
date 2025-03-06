@@ -27,7 +27,7 @@ function DrawerAppBar(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const router = useRouter();
-  const imageIcon = "/icon/icon.png";
+  const imageIcon = "/logo/icon.png";
   const handleNavigation = (item) => {
     if (item === "Nosotros") {
       router.push("/about");
