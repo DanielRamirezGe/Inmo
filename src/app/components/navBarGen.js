@@ -115,6 +115,7 @@ function DrawerAppBar(props) {
                   <Button
                     key={item}
                     sx={{ color: "#000", fontSize: { sm: "12px", md: "16px" } }}
+                    onClick={() => handleNavigation(item)}
                   >
                     {item}
                   </Button>
