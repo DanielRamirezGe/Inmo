@@ -8,6 +8,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import SearchBar from "./SearchBar";
 
 export default function MainHeader() {
   const theme = useTheme();
@@ -47,19 +48,7 @@ export default function MainHeader() {
           }}
           elevation={3}
         >
-          <IconButton sx={{ p: "2px" }} aria-label="menu"></IconButton>
-          <InputBase
-            sx={{ ml: 1, flex: 1 }}
-            placeholder="Desarrollo, Municipio, Precios, etc."
-            inputProps={{
-              style: {
-                fontSize: isXs ? "12px" : "inherit", // Aplica el tamaño de fuente solo en pantallas xs
-              },
-            }}
-          />
-          <IconButton type="button" sx={{ p: "10px" }} aria-label="search">
-            <SearchIcon />
-          </IconButton>
+          <SearchBar />
         </Paper>
       </Box>
     </Paper>

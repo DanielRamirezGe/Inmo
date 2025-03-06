@@ -29,29 +29,37 @@ export default function ResultsPage() {
         </Typography>
         <div className={styles.page}>
           <main className={styles.main}>
-            {houseDetails.map((house, index) => (
-              <Box key={index} marginBottom={4}>
-                <Typography variant="h5" color="text.secondary">
-                  {house.municipio} - {house.estado}
-                </Typography>
-                <Grid
-                  container
-                  spacing={{ xs: 2, md: 3 }}
-                  columns={{ xs: 2, sm: 8, md: 12 }}
-                >
-                  {house.houseExpample.map((houseExpample) => (
+            {houseDetails.map((realState) => (
+              <div key={realState.id}>
+                {realState.development.map((development, index) => (
+                  <Box
+                    key={`${development.developmentName}-${index}`}
+                    marginBottom={4}
+                  >
+                    <Typography variant="h5" color="text.secondary">
+                      {development.municipio} - {development.estado}
+                    </Typography>
                     <Grid
-                      key={houseExpample.key}
-                      size={{ xs: 4, sm: 4, md: 4 }}
+                      container
+                      spacing={{ xs: 2, md: 3 }}
+                      columns={{ xs: 4, sm: 8, md: 12 }}
                     >
-                      <CardHouse
-                        houseDetails={houseExpample}
-                        key={houseExpample.key}
-                      />
+                      {development.prototype ? (
+                        development.prototype.map((prototypes, index) => (
+                          <Grid key={index} size={{ xs: 4, sm: 4, md: 4 }}>
+                            <CardHouse
+                              prototype={prototypes}
+                              developmentName={development.developmentName}
+                            />
+                          </Grid>
+                        ))
+                      ) : (
+                        <p>{`${development.calle}`}</p>
+                      )}
                     </Grid>
-                  ))}
-                </Grid>
-              </Box>
+                  </Box>
+                ))}
+              </div>
             ))}
           </main>
         </div>

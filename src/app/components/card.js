@@ -21,7 +21,7 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Button from "@mui/material/Button";
 import { useRouter } from "next/navigation"; // Asegúrate de importar desde 'next/router'
-
+import { formatCurrency } from "../../utils/formatters";
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
   return <IconButton {...other} />;
@@ -99,7 +99,7 @@ export default function CardHouse(props) {
         </CardActionArea>
         <CardContent>
           <Typography variant="body2" color="text.secondary">
-            {prototype.precio}
+            {formatCurrency(prototype.precio)}
           </Typography>
           <CardActions disableSpacing onClick={handleExpandClick}>
             <Typography variant="body3" color="text.secondary">

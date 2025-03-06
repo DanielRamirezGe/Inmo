@@ -13,6 +13,7 @@ import NavBarGen from "../../components/navBarGen";
 import DialogImage from "../../components/dialogImage";
 import styles from "./../singleHouse.module.css";
 import { useState, useEffect } from "react";
+import { formatCurrency } from "../../../utils/formatters";
 
 export default function Page({ params }) {
   const router = useRouter();
@@ -66,8 +67,10 @@ export default function Page({ params }) {
       <NavBarGen />
       <Box className={styles.container}>
         <Typography variant="h4" className={styles.title}>
-          {houseDetails.nombrePrototipo} - {houseDetails.municipio} -{" "}
-          {houseDetails.estado}
+          {houseDetails.nombrePrototipo}
+        </Typography>
+        <Typography variant="h5" className={styles.title}>
+          {houseDetails.municipio} - {houseDetails.estado}
         </Typography>
         <Box className={styles.carouselContainer}>
           <Carousel showThumbs={false} autoPlay infiniteLoop>
@@ -80,7 +83,7 @@ export default function Page({ params }) {
         </Box>
         <Box className={styles.detailsContainer}>
           <Typography variant="h5" className={styles.price}>
-            {houseDetails.precio}
+            {formatCurrency(houseDetails.precio)}
           </Typography>
           <Box className={styles.detail}>
             <HouseIcon sx={{ fontSize: 22 }} />
