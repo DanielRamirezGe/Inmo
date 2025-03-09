@@ -82,10 +82,17 @@ export default function CardHouse(props) {
         onClose={handleClose}
         prototype={prototype}
       />
-      <Card sx={{ maxWidth: 345 }}>
+      <Card sx={{ maxWidth: 345, boxShadow: 6 }}>
         <CardHeader
-          title={prototype.nombrePrototipo}
-          subheader={developmentName}
+          title={
+            <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+              {`${prototype.nombrePrototipo} - ${developmentName}`}
+            </Typography>
+          }
+          subheader={`${prototype.municipio} - ${prototype.estado}`}
+          sx={{
+            padding: "12px",
+          }}
         />
         <CardActionArea
           onClick={() => handleClickOpen(prototype.imagenSecundaria)}
@@ -97,16 +104,20 @@ export default function CardHouse(props) {
             alt={prototype.nombrePrototipo}
           />
         </CardActionArea>
-        <CardContent>
-          <Typography variant="body2" color="text.secondary">
-            {formatCurrency(prototype.precio)}
+        <CardContent sx={{ paddingBottom: "1px" }}>
+          <Typography
+            fontSize={{ xs: "16px" }}
+            color="text.secondary"
+            fontWeight="bold"
+          >
+            {formatCurrency(prototype.precio)} MXN
           </Typography>
           <CardActions disableSpacing onClick={handleExpandClick}>
             <Typography variant="body3" color="text.secondary">
               <Box
                 display="flex"
                 alignItems="center"
-                sx={{ fontSize: "0.7rem" }}
+                sx={{ fontSize: "15px", width: "100%" }}
               >
                 <HouseIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
                 {prototype.size} m2 |{" "}
@@ -116,16 +127,18 @@ export default function CardHouse(props) {
                 {prototype.shower} |{" "}
                 <DirectionsCarIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
                 {prototype.car}
-                <ExpandMore
-                  expand={expanded}
-                  onClick={handleExpandClick}
-                  aria-expanded={expanded}
-                  aria-label="show more"
-                >
-                  <ExpandMoreIcon />
-                </ExpandMore>
               </Box>
             </Typography>
+            <Box sx={{ marginLeft: "auto" }}>
+              <ExpandMore
+                expand={expanded}
+                onClick={handleExpandClick}
+                aria-expanded={expanded}
+                aria-label="show more"
+              >
+                <ExpandMoreIcon />
+              </ExpandMore>
+            </Box>
           </CardActions>
         </CardContent>
         <Collapse in={expanded} timeout="auto" unmountOnExit>

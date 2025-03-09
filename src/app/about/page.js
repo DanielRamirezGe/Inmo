@@ -20,14 +20,11 @@ export default function AboutPage() {
   return (
     <>
       <NavBar />
-      <Box
-        className={styles.container}
-        sx={{ width: "80%", marginTop: "80px" }}
-      >
+      <Box className={styles.container} sx={{ marginTop: "80px" }}>
         <Typography variant="h4" className={styles.title}>
           Sobre Nosotros
         </Typography>
-        <Grid container marginTop="40px">
+        <Grid container marginTop={{ xs: "0px", sm: "60px" }}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Box className={styles.imageContainer}>
               <img
@@ -39,15 +36,15 @@ export default function AboutPage() {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="body1" className={styles.text}>
-              Nuestro objetivo es ayudarte a encontrar más que una casa, su
-              verdadero hogar, combinando la esencia de la confianza con el
-              poder de la tecnología. Porque en Calli, cada puerta que se abre
-              es el inicio de una nueva historia.
+              Nuestro objetivo es ayudarte a encontrar más que una casa: tu
+              verdadero hogar. En Minkaasa, combinamos la confianza con el poder
+              de la tecnología, porque sabemos que cada puerta que se abre marca
+              el inicio de una nueva historia.
             </Typography>
           </Grid>
         </Grid>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={4} margin="">
           <Grid
             size={{ xs: 12, sm: 6 }}
             sx={{ mr: 2, display: { sm: "none" }, color: "#000" }}
@@ -78,15 +75,10 @@ export default function AboutPage() {
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <Typography variant="body1" className={styles.text}>
-              Con más de 10 años de experiencia en el sector inmobiliario,
-              contamos con un equipo altamente capacitado en perfilamiento,
-              asesoría crediticia y estrategias de ventas. Nuestro compromiso es
-              brindar a cada cliente un servicio personalizado, basado en una
-              sólida formación y certificaciones en esquemas de crédito,
-              oratoria, manejo de personalidad y técnicas de ventas. En Calli,
-              nos aseguramos de ofrecerte la mejor asesoría para que tomes
-              decisiones seguras y acertadas en la compra, venta o renta de tu
-              propiedad.
+              Nuestro objetivo es ayudarte a encontrar más que una casa: tu
+              verdadero hogar. En Minkaasa, combinamos la confianza con el poder
+              de la tecnología, porque sabemos que cada puerta que se abre marca
+              el inicio de una nueva historia.
             </Typography>
           </Grid>
           <Grid

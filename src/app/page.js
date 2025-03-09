@@ -9,7 +9,7 @@ import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import DrawerAppBar from "./components/navBarGen";
-import { Carousel } from "react-responsive-carousel";
+import SearchBar from "./components/SearchBar";
 
 export default function Home() {
   const [houseDetails, setHouseDetails] = useState([]);
@@ -39,7 +39,12 @@ export default function Home() {
                   key={`${development.developmentName}-${index}`}
                   marginBottom={4}
                 >
-                  <Typography variant="h5" color="text.secondary">
+                  <Typography
+                    variant="h5"
+                    color="text.secondary"
+                    marginBottom={{ xs: "20px" }}
+                    textAlign={{ xs: "center" }}
+                  >
                     {development.municipio} - {development.estado}
                   </Typography>
                   <Grid
