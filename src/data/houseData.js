@@ -358,7 +358,7 @@ const house = [
               "https://cdn.ara.com.mx/images/desarrollos/guerrero/puerta-al-sol/casas-modelo-cipres/gallery/5.webp",
               "https://cdn.ara.com.mx/images/desarrollos/guerrero/puerta-al-sol/casas-modelo-cipres/gallery/6.webp",
             ],
-            shortDescription: `ESi estás buscando casas en venta en Acapulco dentro de fraccionamientos que brindan un entorno seguro y familiar, Puerta al Sol de Casas Ara es la opción perfecta. Este desarrollo es ideal para quienes desean disfrutar de una vida tranquila cerca de las playas, ofreciendo viviendas diseñadas para adaptarse a tus necesidades en una de las zonas más atractivas de Acapulco, Guerrero.
+            shortDescription: `Si estás buscando casas en venta en Acapulco dentro de fraccionamientos que brindan un entorno seguro y familiar, Puerta al Sol de Casas Ara es la opción perfecta. Este desarrollo es ideal para quienes desean disfrutar de una vida tranquila cerca de las playas, ofreciendo viviendas diseñadas para adaptarse a tus necesidades en una de las zonas más atractivas de Acapulco, Guerrero.
                 Déjate cautivar por sus bellos acabados, con pasta texturizada en muros y plafones, pisos de loseta cerámica y elegantes detalles de zoclo.`,
             descripcionCompleta: `Si estás buscando casas en venta en Acapulco dentro de fraccionamientos que brindan un entorno seguro y familiar, Puerta al Sol de Casas Ara es la opción perfecta. Este desarrollo es ideal para quienes desean disfrutar de una vida tranquila cerca de las playas, ofreciendo viviendas diseñadas para adaptarse a tus necesidades en una de las zonas más atractivas de Acapulco, Guerrero.
                 Déjate cautivar por sus bellos acabados, con pasta texturizada en muros y plafones, pisos de loseta cerámica y elegantes detalles de zoclo.
@@ -456,7 +456,13 @@ const house = [
               "https://cdn.ara.com.mx/images/desarrollos/guerrero/dream-diamante/departamentos-modelo-opalo/gallery/4.webp",
               "https://cdn.ara.com.mx/images/desarrollos/guerrero/dream-diamante/departamentos-modelo-opalo/gallery/5.webp",
             ],
-            shortDescription: `Diseño funcional: Sala-comedor y cocina integradas para fomentar la convivencia. 4 recámaras: Espacios amplios con excelente iluminación natural. shower modernos: Dos shower con acabados contemporáneos y de calidad. Estacionamiento seguro: Espacio para 2 car.`,
+            shortDescription: `Diseño funcional: Sala, comedor y cocina integrados para fomentar la convivencia.
+
+4 recámaras: Espacios amplios con excelente iluminación natural.
+
+Baños modernos: Dos baños con acabados contemporáneos y de alta calidad.
+
+Estacionamiento seguro: Espacio para dos autos.`,
             descripcionCompleta: `
                 Diseño funcional: Sala-comedor y cocina integradas para fomentar la convivencia. 4 recámaras: Espacios amplios con excelente iluminación natural. shower modernos: Dos shower con acabados contemporáneos y de calidad. Estacionamiento seguro: Espacio para 2 car.
                 Amenidades Exclusivas
