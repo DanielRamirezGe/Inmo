@@ -76,7 +76,11 @@ export default function Page({ params }) {
           <Carousel showThumbs={false} autoPlay infiniteLoop>
             {houseDetails.imagenSecundaria?.map((item, index) => (
               <div key={index} onClick={() => handleClickOpen(item)}>
-                <img src={item} className={styles.image} />
+                <img
+                  src={item}
+                  className={styles.image}
+                  style={{ width: "100%", height: "300px", objectFit: "cover" }}
+                />
               </div>
             ))}
           </Carousel>
