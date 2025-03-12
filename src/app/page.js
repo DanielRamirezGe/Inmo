@@ -54,7 +54,7 @@ export default function Home() {
                   >
                     {development.prototype ? (
                       development.prototype.map((prototypes, index) => (
-                        <Grid key={index} size={{ xs: 4, sm: 4, md: 4 }}>
+                        <Grid key={index} size={{ xs: 4, sm: 4, md: 3 }}>
                           <CardHouse
                             prototype={prototypes}
                             developmentName={development.developmentName}

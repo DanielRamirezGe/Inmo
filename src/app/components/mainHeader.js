@@ -40,10 +40,7 @@ export default function MainHeader() {
           <Carousel showThumbs={false} autoPlay infiniteLoop>
             {imagen.map((item, index) => (
               <div key={index}>
-                <img
-                  src={item}
-                  style={{ maxHeight: "300px", maxWidth: "800px" }}
-                />
+                <img src={item} style={{ maxWidth: "800px" }} />
               </div>
             ))}
           </Carousel>
