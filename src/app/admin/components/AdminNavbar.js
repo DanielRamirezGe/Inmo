@@ -9,14 +9,14 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useRouter } from "next/navigation";
 
-const adminNavItems = ["Dashboard", "Users", "Settings"];
+const adminNavItems = ["Usuarios", "Users", "Settings"];
 
 export default function AdminNavBar() {
   const router = useRouter();
 
   const handleNavigation = (item) => {
-    if (item === "Dashboard") {
-      router.push("/admin/dashboard");
+    if (item === "Usuarios") {
+      router.push("/admin/users");
     } else if (item === "Users") {
       router.push("/admin/users");
     } else if (item === "Settings") {
