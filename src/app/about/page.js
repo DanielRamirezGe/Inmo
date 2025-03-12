@@ -11,7 +11,7 @@ import Grid from "@mui/material/Grid2";
 
 export default function AboutPage() {
   const imagen = [
-    "/clientes/uno.jpg",
+    "/clientes/cinco.jpeg",
     "/clientes/dos.jpg",
     "/clientes/tres.jpg",
     "/clientes/cuatro.jpg",
