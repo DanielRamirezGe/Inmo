@@ -36,6 +36,16 @@ export default function ClientCard({ client }) {
         <Typography variant="body2" color="text.secondary">
           Comentario: {client.comment}
         </Typography>
+        {client.status &&
+          client.status.map((status, index) => (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              key={`${client.mainEmail}-${client.mainPhone}`}
+            >
+              Status: {status.statusType}
+            </Typography>
+          ))}
         <Box sx={{ flexGrow: 1 }} />
       </CardContent>
     </Card>
