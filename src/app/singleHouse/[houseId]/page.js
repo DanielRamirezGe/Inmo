@@ -16,7 +16,7 @@ import { useState, useEffect } from "react";
 import { formatCurrency } from "../../../utils/formatters";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import Button from "@mui/material/Button";
-import Grid from "@mui/material/Grid";
+import Grid from "@mui/material/Grid2";
 
 export default function Page({ params }) {
   const router = useRouter();
@@ -93,22 +93,18 @@ export default function Page({ params }) {
           sx={{ width: "100%", padding: { xs: "10px", sm: "20px" } }}
         >
           <Grid container alignItems="center" justifyContent="space-between">
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography
                 className={styles.price}
                 fontWeight="bold"
-                sx={{ fontSize: { xs: "19px", sm: "30px" } }}
+                sx={{ fontSize: { xs: "17px", sm: "30px" } }}
                 marginTop="10px"
                 marginBottom="10px"
               >
                 {formatCurrency(houseDetails.precio)} MXN
               </Typography>
             </Grid>
-            <Grid
-              item
-              xs={6}
-              sx={{ display: "flex", justifyContent: "flex-end" }}
-            >
+            <Grid xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
                 color="success"
