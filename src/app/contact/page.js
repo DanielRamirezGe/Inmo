@@ -6,38 +6,27 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import NavBarGen from "../components/navBarGen";
 import styles from "./contact.module.css";
+import FacebookIcon from "@mui/icons-material/Facebook";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 
 export default function ContactPage() {
   const [nombre, setNombre] = React.useState("");
-  const [telefono, settelefono] = React.useState("");
   const [mensaje, setMensaje] = React.useState("");
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
-
-    const res = await fetch("/api/contact", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ nombre, telefono, mensaje }),
-    });
-    // print(res);
-    if (res.ok) {
-      alert("Mensaje enviado exitosamente");
-      setNombre("");
-      settelefono("");
-      setMensaje("");
-    } else {
-      alert("Error al enviar el mensaje");
-    }
+    const whatsappMessage = `Hola, soy ${nombre}. ${mensaje}`;
+    const whatsappUrl = `https://wa.me/525651562698?text=${encodeURIComponent(
+      whatsappMessage
+    )}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
     <>
       <NavBarGen />
       <Box className={styles.container} sx={{ marginTop: "80px" }}>
-        <Typography variant="h4" className={styles.title}>
+        <Typography variant="h4" className={styles.title} marginBottom="40px">
           Contáctanos
         </Typography>
         <Typography variant="body1" className={styles.text}>
@@ -46,25 +35,40 @@ export default function ContactPage() {
         </Typography>
         <Box className={styles.contactInfo}>
           <Typography variant="h6">Información de Contacto</Typography>
-          {/* <Typography variant="body1">
-            <strong>Dirección:</strong> Calle San Pablo, Tecámac, Estado de
-            México
-          </Typography> */}
           <Typography variant="body1">
-            <strong>Teléfono:</strong> 56 5872 4119
+            <strong>Teléfono:</strong> 5651562698
           </Typography>
           <Typography variant="body1">
-            <strong>telefono:</strong> especialista.inmobiliario.88@gmail.com
+            <strong>telefono:</strong> informacion@minkaasa.com
           </Typography>
           <Typography variant="body1">
-            <a
-              href="https://www.facebook.com/profile.php?id=100084180904633"
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: "#1877F2",
+                color: "white",
+                marginTop: "16px",
+              }}
+              startIcon={<FacebookIcon />}
+              href="https://www.facebook.com/profile.php?id=61573640081107"
               target="_blank"
               rel="noopener noreferrer"
-              className={styles.link}
             >
               Facebook
-            </a>
+            </Button>
+          </Typography>
+          <Typography variant="body1">
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<WhatsAppIcon />}
+              href="https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información."
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ marginTop: "16px" }}
+            >
+              WhatsApp
+            </Button>
           </Typography>
         </Box>
         <Box className={styles.formContainer}>
@@ -77,14 +81,6 @@ export default function ContactPage() {
               margin="normal"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-            />
-            <TextField
-              label="Teléfono"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={telefono}
-              onChange={(e) => settelefono(e.target.value)}
             />
             <TextField
               label="Mensaje"

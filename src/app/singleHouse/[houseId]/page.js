@@ -14,6 +14,8 @@ import DialogImage from "../../components/dialogImage";
 import styles from "./../singleHouse.module.css";
 import { useState, useEffect } from "react";
 import { formatCurrency } from "../../../utils/formatters";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import Button from "@mui/material/Button";
 
 export default function Page({ params }) {
   const router = useRouter();
@@ -86,8 +88,8 @@ export default function Page({ params }) {
           </Carousel>
         </Box>
         <Box className={styles.detailsContainer}>
-          <Typography variant="h5" className={styles.price}>
-            {formatCurrency(houseDetails.precio)}
+          <Typography variant="h5" className={styles.price} fontWeight="bold">
+            {formatCurrency(houseDetails.precio)} MXN
           </Typography>
           <Box className={styles.detail}>
             <HouseIcon sx={{ fontSize: 22 }} />
@@ -110,6 +112,21 @@ export default function Page({ params }) {
           <Typography variant="h6">Descripción</Typography>
           <Typography>{houseDetails.shortDescription}</Typography>
         </Box>
+        <Typography
+          variant="body1"
+          sx={{ display: "flex", justifyContent: "center", marginTop: "20px" }}
+        >
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<WhatsAppIcon />}
+            href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${houseDetails.nombrePrototipo}%20en%20${houseDetails.developmentName},%20ubicada%20en%20${houseDetails.municipio},%20${houseDetails.estado}.`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            WhatsApp
+          </Button>
+        </Typography>
       </Box>
       <DialogImage
         selectedValue={selectedValue}

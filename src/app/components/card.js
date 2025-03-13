@@ -20,8 +20,11 @@ import DialogImage from "./dialogImage";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Button from "@mui/material/Button";
-import { useRouter } from "next/navigation"; // Asegúrate de importar desde 'next/router'
+import { useRouter } from "next/navigation";
 import { formatCurrency } from "../../utils/formatters";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import Grid from "@mui/material/Grid2";
+
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
   return <IconButton {...other} />;
@@ -93,6 +96,7 @@ export default function CardHouse(props) {
           sx={{
             padding: "12px",
           }}
+          onClick={() => handleViewDetails(prototype.id)}
         />
         <CardActionArea
           onClick={() => handleClickOpen(prototype.imagenSecundaria)}
@@ -105,13 +109,35 @@ export default function CardHouse(props) {
           />
         </CardActionArea>
         <CardContent sx={{ paddingBottom: "1px" }}>
-          <Typography
-            fontSize={{ xs: "16px" }}
-            color="text.secondary"
-            fontWeight="bold"
-          >
-            {formatCurrency(prototype.precio)} MXN
-          </Typography>
+          <Grid container alignItems="center" justifyContent="space-between">
+            <Grid>
+              <Typography
+                fontSize={{ xs: "16px" }}
+                color="text.secondary"
+                fontWeight="bold"
+              >
+                {formatCurrency(prototype.precio)} MXN
+              </Typography>
+            </Grid>
+            <Grid>
+              <Typography
+                variant="body1"
+                sx={{ display: "flex", justifyContent: "flex-end" }}
+              >
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<WhatsAppIcon />}
+                  href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${prototype.nombrePrototipo}%20en%20${developmentName},%20ubicada%20en%20${prototype.municipio},%20${prototype.estado}.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp
+                </Button>
+              </Typography>
+            </Grid>
+          </Grid>
+
           <CardActions disableSpacing onClick={handleExpandClick}>
             <Typography variant="body3" color="text.secondary">
               <Box
@@ -129,6 +155,7 @@ export default function CardHouse(props) {
                 {prototype.car}
               </Box>
             </Typography>
+
             <Box sx={{ marginLeft: "auto" }}>
               <ExpandMore
                 expand={expanded}

@@ -366,11 +366,11 @@ const house = [
                 Área de construcción: 69.09m2
                 Distribución funcional: Sala-comedor y cocina integradas que maximizan la convivencia familiar.
                 Espacios acogedores: 3 recámaras con abundante luz natural.
-                shower modernos: 1 ½ shower con acabados contemporáneos.
+                Baños modernos: 1 ½ baños con acabados contemporáneos.
                 Estacionamiento seguro para 1 auto.
                 Patio de servicio práctico y funcional.
                 Amenidades Destacadas para tu Bienestar
-                Club de playa: 4 albercas, 2 chapoteaderos, 2 jacuzis, pergolados con camastros, restaurante, spa, regaderas, vestidores, lokers, shower y próximamente gimnasio y arakids para niños.
+                Club de playa: 4 albercas, 2 chapoteaderos, 2 jacuzis, pergolados con camastros, restaurante, spa, regaderas, vestidores, lokers, baños y próximamente gimnasio y arakids para niños.
                 Ubicación Estratégica en Acapulco
                 Puerta al Sol ofrece cercanía a las mejores playas y puntos de interés en Acapulco, posicionándose como una excelente opción en la venta de casas en Acapulco. Su ubicación permite una rápida conexión con vialidades principales, transporte público y servicios esenciales, convirtiéndolo en el lugar ideal para tu nuevo hogar en Acapulco, Guerrero.
                 Mantenimiento y Seguridad
@@ -409,11 +409,11 @@ const house = [
                 Características del Departamento Modelo Palma
                 Diseño funcional: Sala-comedor y cocina integradas, que promueven la convivencia familiar.
                 Espacios luminosos: Tres recámaras amplias y llenas de luz natural.
-                shower modernos: Dos shower con acabados contemporáneos y de alta calidad.
+                Baños modernos: Dos baños con acabados contemporáneos y de alta calidad.
                 Estacionamiento seguro: Espacio para un auto.
                 Patio de servicio: Área práctica y funcional para tus necesidades diarias.
                 Amenidades Destacadas
-                Club de playa: 4 albercas, 2 chapoteaderos, 2 jacuzis, pergolados con camastros, restaurante, spa, regaderas, vestidores, lokers, shower y próximamente gimnasio y arakids para niños.
+                Club de playa: 4 albercas, 2 chapoteaderos, 2 jacuzis, pergolados con camastros, restaurante, spa, regaderas, vestidores, lokers, baños y próximamente gimnasio y arakids para niños.
                 Ubicación Estratégica en Acapulco
                 Puerta al Sol está cerca de las mejores playas y puntos de interés, lo que lo convierte en una excelente opción dentro del mercado de deptos en venta en Acapulco. Su ubicación estratégica permite un fácil acceso a vialidades principales, transporte público y servicios esenciales, ideal para quienes buscan vivir en un entorno privilegiado de Acapulco, Guerrero.
                 Mantenimiento y Seguridad
@@ -464,7 +464,7 @@ Baños modernos: Dos baños con acabados contemporáneos y de alta calidad.
 
 Estacionamiento seguro: Espacio para dos autos.`,
             descripcionCompleta: `
-                Diseño funcional: Sala-comedor y cocina integradas para fomentar la convivencia. 4 recámaras: Espacios amplios con excelente iluminación natural. shower modernos: Dos shower con acabados contemporáneos y de calidad. Estacionamiento seguro: Espacio para 2 car.
+                Diseño funcional: Sala-comedor y cocina integradas para fomentar la convivencia. 4 recámaras: Espacios amplios con excelente iluminación natural. baños modernos: Dos baños con acabados contemporáneos y de calidad. Estacionamiento seguro: Espacio para 2 car.
                 Amenidades Exclusivas
                 Dream Diamante destaca como uno de los desarrollos más atractivos en bienes raíces en Acapulco, gracias a sus amenidades de primer nivel:
                 Alberca privada en cada área residencial.
@@ -520,7 +520,7 @@ Estacionamiento seguro: Espacio para dos autos.`,
             Características del Departamento Modelo Perla
             Diseño moderno y funcional: Sala-comedor y cocina integradas para una experiencia de convivencia ideal.
             Tres recámaras amplias: Espacios con excelente iluminación natural que garantizan confort en cada habitación.
-            shower contemporáneos: Dos shower con acabados de alta calidad y estilo actual.
+            Baños contemporáneos: Dos baños con acabados de alta calidad y estilo actual.
             Estacionamiento privado: Espacio para dos car, proporcionando tranquilidad y seguridad.
             Amenidades que Hacen la Diferencia
             Dream Diamante ofrece amenidades pensadas para maximizar tu calidad de vida:
