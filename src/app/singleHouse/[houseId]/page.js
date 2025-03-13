@@ -82,7 +82,7 @@ export default function Page({ params }) {
                 <img
                   src={item}
                   className={styles.image}
-                  style={{ width: "100%", objectFit: "cover" }}
+                  style={{ width: "100%", height: "300px", objectFit: "cover" }}
                 />
               </div>
             ))}
