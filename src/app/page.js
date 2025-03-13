@@ -49,12 +49,15 @@ export default function Home() {
                   </Typography>
                   <Grid
                     container
-                    spacing={{ xs: 2, md: 3 }}
-                    columns={{ xs: 4, sm: 8, md: 12 }}
+                    spacing={{ xs: 2 }}
+                    // columns={{ xs: 4, sm: 8, md: 12 }}
                   >
                     {development.prototype ? (
                       development.prototype.map((prototypes, index) => (
-                        <Grid key={index} size={{ xs: 4, sm: 4, md: 3 }}>
+                        <Grid
+                          key={index}
+                          size={{ xs: 12, sm: 6, md: 6, lg: 3 }}
+                        >
                           <CardHouse
                             prototype={prototypes}
                             developmentName={development.developmentName}

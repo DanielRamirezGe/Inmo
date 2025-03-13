@@ -85,16 +85,21 @@ export default function CardHouse(props) {
         onClose={handleClose}
         prototype={prototype}
       />
-      <Card sx={{ maxWidth: 345, boxShadow: 6 }}>
+      <Card
+        sx={{ width: "100%", boxShadow: 6, marginBottom: 2, height: "100%" }}
+      >
         <CardHeader
           title={
-            <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+            <Typography
+              variant="h6"
+              sx={{ fontSize: { xs: "0.9rem", sm: "1rem" } }}
+            >
               {`${prototype.nombrePrototipo} - ${developmentName}`}
             </Typography>
           }
           subheader={`${prototype.municipio} - ${prototype.estado}`}
           sx={{
-            padding: "12px",
+            padding: { xs: "8px", sm: "12px" },
           }}
           onClick={() => handleViewDetails(prototype.id)}
         />
@@ -106,35 +111,37 @@ export default function CardHouse(props) {
             height="194"
             image={prototype.imagenPrincipal}
             alt={prototype.nombrePrototipo}
+            sx={{ objectFit: "cover" }}
           />
         </CardActionArea>
         <CardContent sx={{ paddingBottom: "1px" }}>
-          <Grid container alignItems="center" justifyContent="space-between">
-            <Grid>
+          <Grid
+            container
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ width: "100%" }}
+          >
+            <Grid xs={6}>
               <Typography
-                fontSize={{ xs: "16px" }}
+                fontSize={{ xs: "14px", sm: "14px" }}
                 color="text.secondary"
                 fontWeight="bold"
               >
                 {formatCurrency(prototype.precio)} MXN
               </Typography>
             </Grid>
-            <Grid>
-              <Typography
-                variant="body1"
-                sx={{ display: "flex", justifyContent: "flex-end" }}
+            <Grid xs={6} sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<WhatsAppIcon />}
+                href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${prototype.nombrePrototipo}%20en%20${developmentName},%20ubicada%20en%20${prototype.municipio},%20${prototype.estado}.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: { xs: "0.7rem", sm: "0.8rem" } }}
               >
-                <Button
-                  variant="contained"
-                  color="success"
-                  startIcon={<WhatsAppIcon />}
-                  href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${prototype.nombrePrototipo}%20en%20${developmentName},%20ubicada%20en%20${prototype.municipio},%20${prototype.estado}.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  WhatsApp
-                </Button>
-              </Typography>
+                WhatsApp
+              </Button>
             </Grid>
           </Grid>
 
@@ -143,7 +150,10 @@ export default function CardHouse(props) {
               <Box
                 display="flex"
                 alignItems="center"
-                sx={{ fontSize: "15px", width: "100%" }}
+                sx={{
+                  fontSize: { xs: "12px", sm: "12px", md: "14px" },
+                  width: "100%",
+                }}
               >
                 <HouseIcon sx={{ fontSize: isSmallScreen ? 16 : 22 }} />{" "}
                 {prototype.size} m2 |{" "}
@@ -174,7 +184,7 @@ export default function CardHouse(props) {
               {prototype.shortDescription}
             </Typography>
           </CardContent>
-          <CardActions>
+          <CardActions sx={{ marginTop: "auto" }}>
             <Box
               sx={{
                 display: "flex",
@@ -185,6 +195,7 @@ export default function CardHouse(props) {
               <Button
                 size="small"
                 onClick={() => handleViewDetails(prototype.id)}
+                sx={{ fontSize: { xs: "0.7rem", sm: "0.8rem" } }}
               >
                 Ver la propiedad
               </Button>

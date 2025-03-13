@@ -16,6 +16,7 @@ import { useState, useEffect } from "react";
 import { formatCurrency } from "../../../utils/formatters";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 
 export default function Page({ params }) {
   const router = useRouter();
@@ -81,52 +82,75 @@ export default function Page({ params }) {
                 <img
                   src={item}
                   className={styles.image}
-                  style={{ width: "100%", height: "300px", objectFit: "cover" }}
+                  style={{ width: "100%", objectFit: "cover" }}
                 />
               </div>
             ))}
           </Carousel>
         </Box>
-        <Box className={styles.detailsContainer}>
-          <Typography variant="h5" className={styles.price} fontWeight="bold">
-            {formatCurrency(houseDetails.precio)} MXN
-          </Typography>
-          <Box className={styles.detail}>
+        <Box
+          className={styles.detailsContainer}
+          sx={{ width: "100%", padding: { xs: "10px", sm: "20px" } }}
+        >
+          <Grid container alignItems="center" justifyContent="space-between">
+            <Grid item xs={6}>
+              <Typography
+                className={styles.price}
+                fontWeight="bold"
+                sx={{ fontSize: { xs: "19px", sm: "30px" } }}
+                marginTop="10px"
+                marginBottom="10px"
+              >
+                {formatCurrency(houseDetails.precio)} MXN
+              </Typography>
+            </Grid>
+            <Grid
+              item
+              xs={6}
+              sx={{ display: "flex", justifyContent: "flex-end" }}
+            >
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<WhatsAppIcon />}
+                href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${houseDetails.nombrePrototipo}%20en%20${houseDetails.developmentName},%20ubicada%20en%20${houseDetails.municipio},%20${houseDetails.estado}.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ fontSize: { xs: "0.7rem", sm: "0.8rem" } }}
+              >
+                WhatsApp
+              </Button>
+            </Grid>
+          </Grid>
+          <Box className={styles.detail} sx={{ marginTop: "10px" }}>
             <HouseIcon sx={{ fontSize: 22 }} />
-            <Typography>Superficie: {houseDetails.size} m2</Typography>
+            <Typography sx={{ fontSize: { xs: "14px", sm: "16px" } }}>
+              Superficie: {houseDetails.size} m2
+            </Typography>
           </Box>
-          <Box className={styles.detail}>
+          <Box className={styles.detail} sx={{ marginTop: "10px" }}>
             <BedIcon sx={{ fontSize: 22 }} />
-            <Typography>Recámaras: {houseDetails.bed}</Typography>
+            <Typography sx={{ fontSize: { xs: "14px", sm: "16px" } }}>
+              Recámaras: {houseDetails.bed}
+            </Typography>
           </Box>
-          <Box className={styles.detail}>
+          <Box className={styles.detail} sx={{ marginTop: "10px" }}>
             <ShowerIcon sx={{ fontSize: 22 }} />
-            <Typography>Baños: {houseDetails.shower}</Typography>
+            <Typography sx={{ fontSize: { xs: "14px", sm: "16px" } }}>
+              Baños: {houseDetails.shower}
+            </Typography>
           </Box>
-          <Box className={styles.detail}>
+          <Box className={styles.detail} sx={{ marginTop: "10px" }}>
             <DirectionsCarIcon sx={{ fontSize: 22 }} />
-            <Typography>Estacionamiento: {houseDetails.car}</Typography>
+            <Typography sx={{ fontSize: { xs: "14px", sm: "16px" } }}>
+              Estacionamiento: {houseDetails.car}
+            </Typography>
           </Box>
         </Box>
         <Box className={styles.descriptionContainer}>
           <Typography variant="h6">Descripción</Typography>
           <Typography>{houseDetails.shortDescription}</Typography>
         </Box>
-        <Typography
-          variant="body1"
-          sx={{ display: "flex", justifyContent: "center", marginTop: "20px" }}
-        >
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<WhatsAppIcon />}
-            href={`https://wa.me/525651562698?text=Hola,%20me%20gustaría%20obtener%20más%20información%20sobre%20la%20propiedad%20${houseDetails.nombrePrototipo}%20en%20${houseDetails.developmentName},%20ubicada%20en%20${houseDetails.municipio},%20${houseDetails.estado}.`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            WhatsApp
-          </Button>
-        </Typography>
       </Box>
       <DialogImage
         selectedValue={selectedValue}
