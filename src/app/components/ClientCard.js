@@ -3,6 +3,7 @@ import * as React from "react";
 import { Card, CardContent, Typography, Avatar, Box } from "@mui/material";
 
 export default function ClientCard({ client }) {
+  console.log(client);
   return (
     <Card sx={{ maxWidth: 345, margin: 2, height: "100%" }}>
       <CardContent
@@ -36,17 +37,22 @@ export default function ClientCard({ client }) {
         <Typography variant="body2" color="text.secondary">
           Comentario: {client.comment}
         </Typography>
-        {client.status &&
-          client.status.map((status, index) => (
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              key={`${client.mainEmail}-${client.mainPhone}`}
-            >
-              Status: {status.statusType}
-            </Typography>
+        {client.quality &&
+          client.quality.map((quality, index) => (
+            <div key={`${client.mainEmail}-${client.mainPhone}`}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                key={`${client.mainEmail}-${client.mainPhone}`}
+              >
+                Calidad: {quality.typeQuality}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Calidad: {quality.typeQuality}
+                Descripcion: {quality.description}
+              </Typography>
+            </div>
           ))}
-        <Box sx={{ flexGrow: 1 }} />
       </CardContent>
     </Card>
   );
