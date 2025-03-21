@@ -87,12 +87,12 @@ export default function AdminPage() {
     }
   };
 
-  const handleProfilerChange = async (clientId, profilerId) => {
+  const handleProfilerChange = async (idUserProcess, profilerId) => {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${apiConfig.baseURL}/api/v1/status`,
-        { clientId, profilerId },
+        `${apiConfig.baseURL}/api/v1/userProcess/addProfiler`,
+        { idUserProcess, idProfiler: profilerId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -100,6 +100,13 @@ export default function AdminPage() {
         }
       );
       alert("Action registered successfully!");
+      fetchData(
+        page,
+        statusOptions[tabValue],
+        searchValue,
+        filterPhone,
+        filterEmail
+      );
     } catch (error) {
       setError(error.message);
     }

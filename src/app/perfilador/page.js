@@ -3,7 +3,7 @@ import * as React from "react";
 import axios from "axios";
 import { Typography, Box, Alert, Pagination } from "@mui/material";
 import { useRouter } from "next/navigation";
-import PerfiladorNavBar from "../components/PerfiladorNavBar";
+import PerfiladorNavBar from "../components/navBarProfiler";
 import ClientCard from "../components/ClientCard";
 import Grid from "@mui/material/Grid2";
 
@@ -60,7 +60,7 @@ export default function PerfiladorPage() {
         }}
       >
         <Typography variant="h4" gutterBottom>
-          Datos de Contacto
+          Usuarios
         </Typography>
         {unauthorized && (
           <Alert severity="warning">

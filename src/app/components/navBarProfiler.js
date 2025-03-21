@@ -9,18 +9,16 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useRouter } from "next/navigation";
 
-const perfiladorNavItems = ["Dashboard", "Users", "Settings"];
+const adminNavItems = ["Usuarios", "Metas"];
 
-export default function PerfiladorNavBar() {
+export default function ProfilerNavBar() {
   const router = useRouter();
 
   const handleNavigation = (item) => {
-    if (item === "Dashboard") {
-      router.push("/perfilador/dashboard");
-    } else if (item === "Users") {
-      router.push("/perfilador/users");
-    } else if (item === "Settings") {
-      router.push("/perfilador/settings");
+    if (item === "Usuarios") {
+      router.push("/perfilador");
+    } else if (item === "Metas") {
+      router.push("/perfilador/performance");
     }
   };
 
@@ -38,9 +36,9 @@ export default function PerfiladorNavBar() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            perfilador Panel
+            Perfilador Panel
           </Typography>
-          {perfiladorNavItems.map((item) => (
+          {adminNavItems.map((item) => (
             <Button
               key={item}
               color="inherit"

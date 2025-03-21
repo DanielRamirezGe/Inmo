@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import styles from "./login.module.css";
+import styles from "./loginAdmin.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,16 +21,13 @@ export default function LoginPage() {
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post(
-        "http://localhost:3010/api/v1/auth/profiler",
-        {
-          user,
-          password,
-        }
-      );
+      const response = await axios.post("http://localhost:3010/api/v1/auth", {
+        user,
+        password,
+      });
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
-        router.push("/perfilador");
+        router.push("/admin");
       }
     } catch (error) {
       setError("Usuario o Contraseña incorrecto");
