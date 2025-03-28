@@ -30,7 +30,7 @@ export default function LoginPage() {
       );
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
-        router.push("/perfilador");
+        router.push("/profiler");
       }
     } catch (error) {
       setError("Usuario o Contraseña incorrecto");

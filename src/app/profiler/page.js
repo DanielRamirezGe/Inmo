@@ -1,10 +1,10 @@
 "use client";
 import * as React from "react";
 import axios from "axios";
-import { Typography, Box, Alert, Pagination } from "@mui/material";
+import { Typography, Box, Alert, Pagination, Tabs, Tab } from "@mui/material";
 import { useRouter } from "next/navigation";
-import PerfiladorNavBar from "../components/navBarProfiler";
-import ClientCard from "../components/ClientCard";
+import PerfiladorNavBar from "./components/navBarProfiler";
+import ClientCardProfiler from "./components/ClientCardProfiler";
 import Grid from "@mui/material/Grid2";
 
 export default function PerfiladorPage() {
@@ -13,9 +13,19 @@ export default function PerfiladorPage() {
   const [unauthorized, setUnauthorized] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [tabValue, setTabValue] = React.useState(0); // State for tab selection
   const router = useRouter();
 
-  const fetchData = async (page) => {
+  const statusOptions = [
+    "call",
+    "message",
+    "pending",
+    "interested",
+    "discarded",
+    "all",
+  ]; // Status options for API requests
+
+  const fetchData = async (page, status) => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get("http://localhost:3010/api/v1/user", {
@@ -24,6 +34,7 @@ export default function PerfiladorPage() {
         },
         params: {
           page,
+          status, // Pass the status parameter to the API
         },
       });
       setData(response.data.data);
@@ -41,11 +52,16 @@ export default function PerfiladorPage() {
   };
 
   React.useEffect(() => {
-    fetchData(page);
-  }, [page, router]);
+    fetchData(page, statusOptions[tabValue]); // Fetch data based on the current tab
+  }, [page, tabValue, router]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    setPage(1); // Reset to the first page when switching tabs
   };
 
   return (
@@ -62,6 +78,18 @@ export default function PerfiladorPage() {
         <Typography variant="h4" gutterBottom>
           Usuarios
         </Typography>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          sx={{ marginBottom: 4 }}
+        >
+          <Tab label="Realizar Llamada" />
+          <Tab label="Realizar Mensaje" />
+          <Tab label="Pendiente" />
+          <Tab label="Interesado" />
+          <Tab label="Descartado" />
+          <Tab label="Todos mis clientes" />
+        </Tabs>
         {unauthorized && (
           <Alert severity="warning">
             No autorizado. Redirigiendo a la página de inicio de sesión...
@@ -73,7 +101,10 @@ export default function PerfiladorPage() {
         <Grid container spacing={2} justifyContent="center">
           {data.map((client, index) => (
             <Grid xs={12} sm={6} md={3} key={index} sx={{ display: "flex" }}>
-              <ClientCard client={client} />
+              <ClientCardProfiler
+                client={client}
+                statusOptions={statusOptions[tabValue]}
+              />
             </Grid>
           ))}
         </Grid>
