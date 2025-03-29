@@ -7,16 +7,51 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  FormControl,
   Checkbox,
-  FormControlLabel,
   Button,
+  FormLabel,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  FormControl,
 } from "@mui/material";
 import PerfiladorNavBar from "./../../components/navBarProfiler";
 import Grid from "@mui/material/Grid2";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import apiConfig from "./../../../../config/apiConfig";
+import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
 
 export default function UserPage({ params }) {
   const [userId, setUserId] = React.useState(null);
+  const [user, setUser] = React.useState({
+    name: "",
+    lastNameP: "",
+    lastNameM: "",
+    mainEmail: "",
+    mainPhone: "",
+    street: "",
+    neighborhood: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    gender: "",
+    maritalStatus: "",
+    children: "",
+    creditOption: "",
+    budget: "",
+    houseType: "casa",
+    bedrooms: "",
+    propertyCondition: "nueva",
+    comments: "",
+    credit: "Infonavit",
+  });
+  const [userStatus, setUserStatus] = React.useState(
+    "Interesado con seguimiento"
+  );
+  const router = useRouter();
+  const axiosInstance = useAxiosMiddleware();
+
   React.useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
@@ -26,11 +61,32 @@ export default function UserPage({ params }) {
     resolveParams();
   }, [params]);
 
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await axiosInstance.get(`/user/${userId}`);
+        if (response.status === 200) {
+          setUser(response.data.data); // Assuming the API returns user details
+          console.log("User details fetched successfully:", response.data.data);
+        } else {
+          console.error("Unexpected response status:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
   const [formData, setFormData] = React.useState({
     name: "",
     lastNameP: "",
     lastNameM: "",
-    email: "",
+    mainEmail: "",
+    mainPhone: "",
     street: "",
     neighborhood: "",
     city: "",
@@ -58,28 +114,6 @@ export default function UserPage({ params }) {
     },
   });
 
-  const user = {
-    name: "test info",
-    lastNameP: "test info",
-    lastNameM: "test info",
-    email: "test info",
-    street: "test info",
-    neighborhood: "test info",
-    city: "test info",
-    state: "test info",
-    zipCode: "test info",
-    gender: "test info",
-    maritalStatus: "test info",
-    children: "test info",
-    creditOption: "test info",
-    budget: "test info",
-    houseType: "casa",
-    bedrooms: "test info",
-    propertyCondition: "nueva",
-    comments: "test info",
-    credit: "Infonavit",
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -94,18 +128,45 @@ export default function UserPage({ params }) {
     });
   };
 
+  const handleUpdate = async (fieldName, value) => {
+    try {
+      const response = await axiosInstance.patch("/user", {
+        userId,
+        [fieldName]: value,
+      });
+      setUser({ ...user, [fieldName]: value });
+      console.log(`Field ${fieldName} updated successfully:`, response.data);
+    } catch (error) {
+      console.error(`Error updating field ${fieldName}:`, error);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    try {
+      await axiosInstance.put("/profiler/userProcess", {
+        userId,
+        status: userStatus,
+      });
+      router.push("/profiler"); // Redirect to /profiler after successful update
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
+  };
+
   return (
     <>
       <PerfiladorNavBar />
-      <Typography variant="h4">Datos del Cliente</Typography>
+      <Box textAlign={"center"} sx={{ padding: 4 }}>
+        <Typography variant="h4">Datos del Cliente</Typography>
+      </Box>
       <Grid container>
-        <Grid size={4}>
+        <Grid size={6}>
           <Box sx={{ padding: 4, maxWidth: 600, margin: "0 auto" }}>
             <Grid container spacing={2}>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Credito</Typography>
               </Grid>
-              <Grid container size={12}>
+              {/* <Grid container size={12} sx={{ height: "60px" }}>
                 <Grid size={10}>
                   <Box>
                     <FormControlLabel
@@ -141,10 +202,15 @@ export default function UserPage({ params }) {
                   </Box>
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate("credit", formData.credit)}
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
-              </Grid>
-              <Grid container size={12}>
+              </Grid> */}
+              <Grid container size={12} sx={{ height: "60px" }}>
                 <Grid size={10}>
                   <TextField
                     label="Presupuesto"
@@ -155,202 +221,214 @@ export default function UserPage({ params }) {
                   />
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate("budget", formData.budget)}
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Datos Personales</Typography>
               </Grid>
 
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Nombre"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
+              {[
+                { label: "Nombre", name: "name" },
+                { label: "Apellido Paterno", name: "lastNameP" },
+                { label: "Apellido Materno", name: "lastNameM" },
+                { label: "Correo Electrónico", name: "mainEmail" },
+                { label: "Telefono", name: "mainPhone" },
+              ].map((field) => (
+                <Grid
+                  container
+                  size={12}
+                  sx={{ height: "60px" }}
+                  key={field.name}
+                >
+                  <Grid size={10}>
+                    <TextField
+                      label={field.label}
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={{ marginBottom: 2 }}
+                    />
+                  </Grid>
+                  <Grid size={2}>
+                    <Button
+                      variant="contained"
+                      onClick={() =>
+                        handleUpdate(field.name, formData[field.name])
+                      }
+                    >
+                      Guardar
+                    </Button>
+                  </Grid>
+                </Grid>
+              ))}
+              <Grid
+                container
+                size={12}
+                sx={{ height: "60px", alignItems: "center" }}
+              >
+                <Grid size={4}>
+                  <Typography>Estado civil:</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <FormControl fullWidth>
+                    <InputLabel id="maritalStatus-label">
+                      Estado civil
+                    </InputLabel>
+                    <Select
+                      labelId="maritalStatus-label"
+                      name="maritalStatus"
+                      value={formData.maritalStatus}
+                      onChange={handleInputChange}
+                    >
+                      {["Soltero", "Casado", "Divorsiado", "Union libre"].map(
+                        (maritalStatus) => (
+                          <MenuItem key={maritalStatus} value={maritalStatus}>
+                            {maritalStatus}
+                          </MenuItem>
+                        )
+                      )}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Apellido Paterno"
-                    name="lastNameP"
-                    value={formData.lastNameP}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Apellido Materno"
-                    name="lastNameM"
-                    value={formData.lastNameM}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Correo Electrónico"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Sexo"
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Estado Civil"
-                    name="maritalStatus"
-                    value={formData.maritalStatus}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Número de Hijos"
-                    name="children"
-                    value={formData.children}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid size={12}>
-                <Typography variant="h6">Direccion</Typography>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Calle"
-                    name="street"
-                    value={formData.street}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Colonia"
-                    name="neighborhood"
-                    value={formData.neighborhood}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Municipio"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Estado"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
-                </Grid>
-              </Grid>
-              <Grid container size={12}>
-                <Grid size={10}>
-                  <TextField
-                    label="Código Postal"
-                    name="zipCode"
-                    value={formData.zipCode}
-                    onChange={handleInputChange}
-                    fullWidth
-                    sx={{ marginBottom: 2 }}
-                  />
-                </Grid>
-                <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      handleUpdate("maritalStatus", formData.maritalStatus)
+                    }
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
 
-              <Grid size={12}>
+              <Grid
+                container
+                size={12}
+                sx={{ height: "60px", alignItems: "center" }}
+              >
+                <Grid size={4}>
+                  <Typography>Número de Hijos:</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <FormControl fullWidth>
+                    <InputLabel id="children-label">Número de Hijos</InputLabel>
+                    <Select
+                      labelId="children-label"
+                      name="children"
+                      value={formData.children}
+                      onChange={handleInputChange}
+                    >
+                      {[1, 2, 3, 4, 5, 6].map((number) => (
+                        <MenuItem key={number} value={number}>
+                          {number}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={2}>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate("children", formData.children)}
+                  >
+                    Guardar
+                  </Button>
+                </Grid>
+              </Grid>
+
+              <Grid
+                container
+                size={12}
+                sx={{ height: "60px", alignItems: "center" }}
+              >
+                <Grid size={4}>
+                  <Typography>Sexo:</Typography>
+                </Grid>
+                <Grid size={6}>
+                  <FormControl component="fieldset">
+                    <RadioGroup
+                      row
+                      name="gender"
+                      value={formData.gender}
+                      onChange={(e) =>
+                        setFormData({ ...formData, gender: e.target.value })
+                      }
+                    >
+                      <FormControlLabel
+                        value="Masculino"
+                        control={<Radio />}
+                        label="Masculino"
+                      />
+                      <FormControlLabel
+                        value="Femenino"
+                        control={<Radio />}
+                        label="Femenino"
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Grid>
+                <Grid size={2}>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate("gender", formData.gender)}
+                  >
+                    Guardar
+                  </Button>
+                </Grid>
+              </Grid>
+
+              <Grid size={12} sx={{ height: "60px" }}>
+                <Typography variant="h6">Direccion</Typography>
+              </Grid>
+              {[
+                { label: "Calle", name: "street" },
+                { label: "Colonia", name: "neighborhood" },
+                { label: "Municipio", name: "city" },
+                { label: "Estado", name: "state" },
+                { label: "Código Postal", name: "zipCode" },
+              ].map((field) => (
+                <Grid
+                  container
+                  size={12}
+                  sx={{ height: "60px" }}
+                  key={field.name}
+                >
+                  <Grid size={10}>
+                    <TextField
+                      label={field.label}
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleInputChange}
+                      fullWidth
+                      sx={{ marginBottom: 2 }}
+                    />
+                  </Grid>
+                  <Grid size={2}>
+                    <Button
+                      variant="contained"
+                      onClick={() =>
+                        handleUpdate(field.name, formData[field.name])
+                      }
+                    >
+                      Guardar
+                    </Button>
+                  </Grid>
+                </Grid>
+              ))}
+
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Intereses</Typography>
               </Grid>
 
-              <Grid container size={12}>
+              <Grid container size={12} sx={{ height: "60px" }}>
                 <Grid size={10}>
                   <Box sx={{ display: "flex", gap: 2, marginBottom: 2 }}>
                     <FormControlLabel
@@ -377,13 +455,20 @@ export default function UserPage({ params }) {
                 </Grid>
 
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      handleUpdate("houseType", formData.houseType)
+                    }
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Habitaciones</Typography>
               </Grid>
-              <Grid container size={12}>
+              <Grid container size={12} sx={{ height: "60px" }}>
                 <Grid size={10}>
                   <Box sx={{ display: "flex", gap: 2, marginBottom: 2 }}>
                     <FormControlLabel
@@ -429,13 +514,20 @@ export default function UserPage({ params }) {
                   </Box>
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      handleUpdate("houseType", formData.houseType)
+                    }
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Tipo de Propiedad</Typography>
               </Grid>
-              <Grid container size={12}>
+              <Grid container size={12} sx={{ height: "60px" }}>
                 <Grid size={10}>
                   <Box sx={{ display: "flex", gap: 2, marginBottom: 2 }}>
                     <FormControlLabel
@@ -461,10 +553,20 @@ export default function UserPage({ params }) {
                   </Box>
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() =>
+                      handleUpdate(
+                        "propertyCondition",
+                        formData.propertyCondition
+                      )
+                    }
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Comentario</Typography>
               </Grid>
               <Grid container size={12}>
@@ -481,96 +583,174 @@ export default function UserPage({ params }) {
                   />
                 </Grid>
                 <Grid size={2}>
-                  <Button variant="contained">Guardar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleUpdate("comments", formData.comments)}
+                  >
+                    Guardar
+                  </Button>
                 </Grid>
               </Grid>
             </Grid>
           </Box>
         </Grid>
 
-        <Grid size={4}>
+        <Grid size={6}>
           <Box sx={{ padding: 4, maxWidth: 600, margin: "0 auto" }}>
             <Grid container spacing={2}>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Credito</Typography>
               </Grid>
-              <Grid container size={12}>
+              {/* <Grid container size={12} sx={{ height: "60px" }}>
                 <Typography>Tipo de credito: {user.credit}</Typography>
-              </Grid>
-              <Grid container size={12}>
+              </Grid> */}
+              <Grid container size={12} sx={{ height: "60px" }}>
                 <Typography>Presupuesto {user.budget}</Typography>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Datos Personales</Typography>
               </Grid>
 
-              <Grid container size={12}>
-                <Typography>Nombre: {user.name}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Nombre:</strong> {user.name}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Apellido Paterno: {user.lastNameP}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Apellido Paterno:</strong> {user.lastNameP}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Apellido Materno: {user.lastNameM}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Apellido Materno:</strong> {user.lastNameM}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Correo Electrónico: {user.email}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Correo Electrónico:</strong> {user.mainEmail}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Genero: {user.gender}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Telefono:</strong> {user.mainPhone}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Estado civil: {user.maritalStatus}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Estado civil:</strong> {user.maritalStatus}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Estado civil: {user.children}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Numero de hijos:</strong> {user.children}
+                </Typography>
               </Grid>
-              <Grid size={12}>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Genero:</strong> {user.gender}
+                </Typography>
+              </Grid>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Direccion</Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Calle: {user.street}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Calle:</strong> {user.street}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Colonia: {user.neighborhood}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Colonia:</strong> {user.neighborhood}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Municipio: {user.city}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Municipio:</strong> {user.city}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Estado: {user.state}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Estado:</strong> {user.state}
+                </Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Codigo postal: {user.zipCode}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Codigo postal:</strong> {user.zipCode}
+                </Typography>
               </Grid>
 
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Intereses</Typography>
               </Grid>
 
-              <Grid container size={12}>
-                <Typography>Tipo de Casa: {user.houseType}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Tipo de Casa:</strong> {user.houseType}
+                </Typography>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Habitaciones</Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Habitaciones: {user.bedrooms}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Habitaciones:</strong> {user.bedrooms}
+                </Typography>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Tipo de Propiedad</Typography>
               </Grid>
-              <Grid container size={12}>
-                <Typography>Habitaciones: {user.propertyCondition}</Typography>
+              <Grid container size={12} sx={{ height: "60px" }}>
+                <Typography>
+                  <strong>Tipo de Propiedad:</strong> {user.propertyCondition}
+                </Typography>
               </Grid>
-              <Grid size={12}>
+              <Grid size={12} sx={{ height: "60px" }}>
                 <Typography variant="h6">Comentario</Typography>
               </Grid>
               <Grid container size={12}>
-                <Typography>Comentarios:{user.comments} </Typography>
+                <Typography>
+                  <strong>Comentarios:</strong> {user.propertyCondition}
+                </Typography>
               </Grid>
             </Grid>
           </Box>
+        </Grid>
+      </Grid>
+      <Grid container textAlign={"center"} sx={{ padding: 4 }}>
+        <Grid size={12}>
+          <Typography variant="h4">Tipo de cliente</Typography>
+        </Grid>
+        <Grid size={12}>
+          <FormControl>
+            <RadioGroup
+              value={userStatus}
+              onChange={(e) => setUserStatus(e.target.value)}
+              name="radio-buttons-group"
+            >
+              <FormControlLabel
+                value="Interesado con seguimiento"
+                control={<Radio />}
+                label="Interesado con seguimiento"
+              />
+              <FormControlLabel
+                value="Interesado enviar a cerrador"
+                control={<Radio />}
+                label="Interesado enviar a cerrador"
+              />
+              <FormControlLabel
+                value="No interesado"
+                control={<Radio />}
+                label="No interesado"
+              />
+            </RadioGroup>
+          </FormControl>
+        </Grid>
+
+        <Grid size={12}>
+          <Button variant="contained" onClick={handleStatusUpdate}>
+            Guardar y salir
+          </Button>
         </Grid>
       </Grid>
     </>

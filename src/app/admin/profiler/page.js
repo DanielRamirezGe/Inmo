@@ -13,8 +13,7 @@ import {
   Alert,
 } from "@mui/material";
 import AdminNavbar from "../components/AdminNavbar";
-import apiConfig from "../../../config/apiConfig";
-import axios from "axios";
+import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
 
 export default function ProfilerPage() {
   const [tabValue, setTabValue] = useState(0);
@@ -26,11 +25,12 @@ export default function ProfilerPage() {
   });
   const [errorMessage, setErrorMessage] = useState(null); // State for error feedback
   const [successMessage, setSuccessMessage] = useState(null); // State for success feedback
+  const axiosInstance = useAxiosMiddleware();
 
   const fetchProfilers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${apiConfig.baseURL}/api/v1/profiler`, {
+      const response = await axiosInstance.get("/api/v1/profiler", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -55,33 +55,24 @@ export default function ProfilerPage() {
   const handleRegister = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `${apiConfig.baseURL}/api/v1/profiler`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post("/api/v1/profiler", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setSuccessMessage("Perfilador registrado exitosamente");
       setErrorMessage(null); // Clear any previous error messages
       setFormData({ user: "", name: "", password: "" });
       fetchProfilers(); // Refresh the list of profilers
     } catch (error) {
-      if (error.response) {
-        // Handle specific status codes
-        if (error.response.status === 400) {
-          setErrorMessage("Datos inválidos. Por favor verifica los campos.");
-        } else if (error.response.status === 409) {
-          setErrorMessage("El usuario ya existe. Intenta con otro nombre.");
-        } else {
-          setErrorMessage(
-            error.response.data.message || "Error al registrar el perfilador."
-          );
-        }
+      if (error.response?.status === 400) {
+        setErrorMessage("Datos inválidos. Por favor verifica los campos.");
+      } else if (error.response?.status === 409) {
+        setErrorMessage("El usuario ya existe. Intenta con otro nombre.");
       } else {
-        setErrorMessage("Error de conexión. Intenta nuevamente.");
+        setErrorMessage(
+          error.response?.data?.message || "Error al registrar el perfilador."
+        );
       }
       setSuccessMessage(null); // Clear any previous success messages
     }

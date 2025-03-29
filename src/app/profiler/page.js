@@ -1,8 +1,7 @@
 "use client";
 import * as React from "react";
-import axios from "axios";
 import { Typography, Box, Alert, Pagination, Tabs, Tab } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { useAxiosMiddleware } from "../../utils/axiosMiddleware";
 import PerfiladorNavBar from "./components/navBarProfiler";
 import ClientCardProfiler from "./components/ClientCardProfiler";
 import Grid from "@mui/material/Grid2";
@@ -10,11 +9,10 @@ import Grid from "@mui/material/Grid2";
 export default function PerfiladorPage() {
   const [data, setData] = React.useState([]);
   const [error, setError] = React.useState(null);
-  const [unauthorized, setUnauthorized] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
   const [tabValue, setTabValue] = React.useState(0); // State for tab selection
-  const router = useRouter();
+  const axiosInstance = useAxiosMiddleware();
 
   const statusOptions = [
     "call",
@@ -27,11 +25,7 @@ export default function PerfiladorPage() {
 
   const fetchData = async (page, status) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:3010/api/v1/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await axiosInstance.get("/user", {
         params: {
           page,
           status, // Pass the status parameter to the API
@@ -40,20 +34,13 @@ export default function PerfiladorPage() {
       setData(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        setUnauthorized(true);
-        setTimeout(() => {
-          router.push("/login");
-        }, 3000); // Redirect after 3 seconds
-      } else {
-        setError(error.message);
-      }
+      setError(error.message);
     }
   };
 
   React.useEffect(() => {
     fetchData(page, statusOptions[tabValue]); // Fetch data based on the current tab
-  }, [page, tabValue, router]);
+  }, [page, tabValue]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -90,12 +77,7 @@ export default function PerfiladorPage() {
           <Tab label="Descartado" />
           <Tab label="Todos mis clientes" />
         </Tabs>
-        {unauthorized && (
-          <Alert severity="warning">
-            No autorizado. Redirigiendo a la página de inicio de sesión...
-          </Alert>
-        )}
-        {error && !unauthorized && (
+        {error && (
           <Alert severity="error">{`Error fetching data: ${error}`}</Alert>
         )}
         <Grid container spacing={2} justifyContent="center">
