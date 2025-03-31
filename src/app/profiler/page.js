@@ -51,6 +51,11 @@ export default function PerfiladorPage() {
     setPage(1); // Reset to the first page when switching tabs
   };
 
+  // Exponer la función fetchData para que pueda ser usada por componentes hijos
+  const refreshData = () => {
+    fetchData(page, statusOptions[tabValue]);
+  };
+
   return (
     <>
       <PerfiladorNavBar />
@@ -81,11 +86,12 @@ export default function PerfiladorPage() {
           <Alert severity="error">{`Error fetching data: ${error}`}</Alert>
         )}
         <Grid container spacing={2} justifyContent="center">
-          {data.map((client, index) => (
-            <Grid xs={12} sm={6} md={3} key={index} sx={{ display: "flex" }}>
+          {data.map((client) => (
+            <Grid key={client.idUserProcess} xs={12} sm={6} md={4}>
               <ClientCardProfiler
                 client={client}
                 statusOptions={statusOptions[tabValue]}
+                refreshData={refreshData} // Pasar la función de actualización
               />
             </Grid>
           ))}

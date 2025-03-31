@@ -92,7 +92,7 @@ export default function AdminPage() {
       const token = localStorage.getItem("token");
       await axios.post(
         `${apiConfig.baseURL}/api/v1/userProcess/addProfiler`,
-        { idUserProcess, idProfiler: profilerId },
+        { userProcessId: idUserProcess, profilerId: profilerId },
         {
           headers: {
             Authorization: `Bearer ${token}`,

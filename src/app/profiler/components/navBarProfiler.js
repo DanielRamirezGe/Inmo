@@ -16,7 +16,7 @@ export default function ProfilerNavBar() {
 
   const handleNavigation = (item) => {
     if (item === "Usuarios") {
-      router.push("/perfilador");
+      router.push("/profiler");
     } else if (item === "Metas") {
       router.push("/perfilador/performance");
     }

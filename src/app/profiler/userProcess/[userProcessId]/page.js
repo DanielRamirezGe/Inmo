@@ -15,14 +15,15 @@ import {
   FormControlLabel,
   FormControl,
 } from "@mui/material";
-import PerfiladorNavBar from "./../../components/navBarProfiler";
+import PerfiladorNavBar from "../../components/navBarProfiler";
 import Grid from "@mui/material/Grid2";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import apiConfig from "./../../../../config/apiConfig";
+import apiConfig from "../../../../config/apiConfig";
 import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
 
 export default function UserPage({ params }) {
+  const [userProcessId, setUserProcessId] = React.useState(null);
   const [userId, setUserId] = React.useState(null);
   const [user, setUser] = React.useState({
     name: "",
@@ -46,9 +47,7 @@ export default function UserPage({ params }) {
     comments: [],
     credit: "Infonavit",
   });
-  const [userStatus, setUserStatus] = React.useState(
-    "Interesado con seguimiento"
-  );
+  const [userStatus, setUserStatus] = React.useState(null);
   const router = useRouter();
   const axiosInstance = useAxiosMiddleware();
 
@@ -69,17 +68,47 @@ export default function UserPage({ params }) {
     }
   };
 
+  const fetchUserProcess = async () => {
+    if (!userProcessId) return;
+
+    try {
+      const response = await axiosInstance.get(`/userProcess/${userProcessId}`);
+      if (response.status === 200) {
+        const userProcessData = response.data.data;
+        setUserId(userProcessData.idUser); // Set the userId from userProcess data
+        console.log("User process data fetched successfully:", userProcessData);
+      } else {
+        console.error("Unexpected response status:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching user process:", error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        console.error("Error status:", error.response.status);
+      }
+    }
+  };
+
   React.useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
-      setUserId(resolvedParams.userId);
+      console.log(resolvedParams);
+      setUserProcessId(resolvedParams.userProcessId);
     };
 
     resolveParams();
   }, [params]);
 
   React.useEffect(() => {
-    fetchUser();
+    if (userProcessId) {
+      fetchUserProcess();
+    }
+  }, [userProcessId]);
+
+  React.useEffect(() => {
+    if (userId) {
+      fetchUser();
+    }
   }, [userId]);
 
   const [formData, setFormData] = React.useState({
@@ -273,9 +302,35 @@ export default function UserPage({ params }) {
 
   const handleStatusUpdate = async () => {
     try {
-      const response = await axiosInstance.patch(`/api/userProcess/${userId}`, {
-        status: userStatus,
-      });
+      const token = localStorage.getItem("token");
+
+      // Mapear el estado a los valores correspondientes
+      let payload = {};
+      switch (userStatus) {
+        case "Interesado con seguimiento":
+          payload = { followUpMessage: false, initialCall: true };
+          break;
+        case "Interesado enviar a cerrador":
+          payload = { interested: true, initialCall: true };
+          break;
+        case "No interesado":
+          payload = { interested: false, initialCall: true };
+          break;
+        default:
+          console.error("Estado no reconocido:", userStatus);
+          return;
+      }
+
+      const response = await axios.patch(
+        `/api/userProcess/${userProcessId}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (response.status === 200) {
         router.push("/profiler"); // Redirect to /profiler after successful update
       }
@@ -373,6 +428,14 @@ export default function UserPage({ params }) {
                   <Button
                     variant="contained"
                     onClick={() => handleUpdate("budget", formData.budget)}
+                    disabled={!formData.budget}
+                    sx={{
+                      opacity: !formData.budget ? 0.6 : 1,
+                      "&.Mui-disabled": {
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                      },
+                    }}
                   >
                     Guardar
                   </Button>
@@ -442,6 +505,14 @@ export default function UserPage({ params }) {
                       onClick={() =>
                         handleUpdate(field.name, formData[field.name])
                       }
+                      disabled={!formData[field.name]}
+                      sx={{
+                        opacity: !formData[field.name] ? 0.6 : 1,
+                        "&.Mui-disabled": {
+                          backgroundColor: "#1976d2",
+                          color: "white",
+                        },
+                      }}
                     >
                       Guardar
                     </Button>
@@ -483,6 +554,14 @@ export default function UserPage({ params }) {
                     onClick={() =>
                       handleUpdate("maritalStatus", formData.maritalStatus)
                     }
+                    disabled={!formData.maritalStatus}
+                    sx={{
+                      opacity: !formData.maritalStatus ? 0.6 : 1,
+                      "&.Mui-disabled": {
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                      },
+                    }}
                   >
                     Guardar
                   </Button>
@@ -518,6 +597,14 @@ export default function UserPage({ params }) {
                   <Button
                     variant="contained"
                     onClick={() => handleUpdate("children", formData.children)}
+                    disabled={!formData.children}
+                    sx={{
+                      opacity: !formData.children ? 0.6 : 1,
+                      "&.Mui-disabled": {
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                      },
+                    }}
                   >
                     Guardar
                   </Button>
@@ -559,6 +646,14 @@ export default function UserPage({ params }) {
                   <Button
                     variant="contained"
                     onClick={() => handleUpdate("gender", formData.gender)}
+                    disabled={!formData.gender}
+                    sx={{
+                      opacity: !formData.gender ? 0.6 : 1,
+                      "&.Mui-disabled": {
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                      },
+                    }}
                   >
                     Guardar
                   </Button>
@@ -597,6 +692,14 @@ export default function UserPage({ params }) {
                       onClick={() =>
                         handleUpdate(field.name, formData[field.name])
                       }
+                      disabled={!formData[field.name]}
+                      sx={{
+                        opacity: !formData[field.name] ? 0.6 : 1,
+                        "&.Mui-disabled": {
+                          backgroundColor: "#1976d2",
+                          color: "white",
+                        },
+                      }}
                     >
                       Guardar
                     </Button>
@@ -766,6 +869,14 @@ export default function UserPage({ params }) {
                   <Button
                     variant="contained"
                     onClick={() => handleUpdate("comments", formData.comments)}
+                    disabled={!formData.comments}
+                    sx={{
+                      opacity: !formData.comments ? 0.6 : 1,
+                      "&.Mui-disabled": {
+                        backgroundColor: "#1976d2",
+                        color: "white",
+                      },
+                    }}
                   >
                     Guardar
                   </Button>
@@ -1000,7 +1111,18 @@ export default function UserPage({ params }) {
         </Grid>
 
         <Grid size={12}>
-          <Button variant="contained" onClick={handleStatusUpdate}>
+          <Button
+            variant="contained"
+            onClick={handleStatusUpdate}
+            disabled={!userStatus}
+            sx={{
+              opacity: !userStatus ? 0.6 : 1,
+              "&.Mui-disabled": {
+                backgroundColor: "#1976d2",
+                color: "white",
+              },
+            }}
+          >
             Guardar y salir
           </Button>
         </Grid>
