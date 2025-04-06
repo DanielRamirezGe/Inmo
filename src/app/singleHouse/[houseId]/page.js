@@ -55,7 +55,6 @@ export default function Page({ params }) {
   const [selectedValue, setSelectedValue] = React.useState();
 
   const handleClickOpen = (image) => {
-    console.log(image);
     setSelectedImage(image);
     setOpenDialog(true);
   };

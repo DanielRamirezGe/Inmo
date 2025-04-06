@@ -22,7 +22,7 @@ export default function LoginPage() {
     event.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3010/api/v1/auth/profiler",
+        "http://localhost:3010/api/v1/auth/login",
         {
           user,
           password,
@@ -30,7 +30,11 @@ export default function LoginPage() {
       );
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
-        router.push("/profiler");
+        if (response.data.role === "admin") {
+          router.push("/admin");
+        } else {
+          router.push("/profiler");
+        }
       }
     } catch (error) {
       setError("Usuario o Contraseña incorrecto");

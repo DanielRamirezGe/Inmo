@@ -30,7 +30,7 @@ export default function ProfilerPage() {
   const fetchProfilers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.get("/api/v1/profiler", {
+      const response = await axiosInstance.get("/profiler", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -55,7 +55,7 @@ export default function ProfilerPage() {
   const handleRegister = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.post("/api/v1/profiler", formData, {
+      const response = await axiosInstance.post("/profiler", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

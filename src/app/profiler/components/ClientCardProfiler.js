@@ -407,15 +407,18 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
             {client.name} {client.lastNameP}
           </Typography>
         </Box>
-        <Typography variant="body2" color="text.secondary">
-          Teléfono: {client.mainPhone}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Correo: {client.mainEmail}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Comentario: {client.comment}
-        </Typography>
+        {statusOptions != "interested" &&
+          statusOptions != "discarded" &&
+          statusOptions != "all" && (
+            <>
+              <Typography variant="body2" color="text.secondary">
+                Teléfono: {client.mainPhone}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Correo: {client.mainEmail}
+              </Typography>
+            </>
+          )}
         {client.quality &&
           client.quality.map((quality, index) => (
             <div key={`${client.mainEmail}-${client.mainPhone}`}>

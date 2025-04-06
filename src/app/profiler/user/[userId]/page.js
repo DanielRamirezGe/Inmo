@@ -57,10 +57,8 @@ export default function UserPage({ params }) {
 
     try {
       const response = await axiosInstance.get(`/user/${userId}`);
-      console.log(response.data.data);
       if (response.status === 200) {
         setUser(response.data.data); // Assuming the API returns user details
-        console.log("User details fetched successfully:", response.data.data);
       } else {
         console.error("Unexpected response status:", response.status);
       }
@@ -223,7 +221,6 @@ export default function UserPage({ params }) {
           ...prevData,
           [fieldName]: "",
         }));
-        console.log(`Field ${fieldName} updated successfully`);
       }
     } catch (error) {
       console.error(`Error updating field ${fieldName}:`, error);
@@ -256,7 +253,6 @@ export default function UserPage({ params }) {
           ...prevData,
           comments: "",
         }));
-        console.log("Comment added successfully");
       }
     } catch (error) {
       console.error("Error adding comment:", error);

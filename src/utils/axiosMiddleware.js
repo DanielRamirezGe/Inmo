@@ -29,7 +29,10 @@ export const useAxiosMiddleware = () => {
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error.response && error.response.status === 401) {
+      if (
+        error.response &&
+        (error.response.status === 401 || error.response.status === 403)
+      ) {
         console.error("Unauthorized. Redirecting to login...");
         router.push("/login"); // Redirect to login page
       }

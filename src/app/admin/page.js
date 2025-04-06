@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import axios from "axios";
 import {
   Typography,
   Box,
@@ -17,7 +16,7 @@ import { useRouter } from "next/navigation";
 import ClientCardWithSelect from "./components/ClientCardWithSelect";
 import Grid from "@mui/material/Grid2";
 import AdminNavbar from "./components/AdminNavbar";
-import apiConfig from "../../config/apiConfig";
+import { useAxiosMiddleware } from "../../utils/axiosMiddleware";
 
 export default function AdminPage() {
   const [data, setData] = React.useState([]);
@@ -32,35 +31,35 @@ export default function AdminPage() {
   const [filterPhone, setFilterPhone] = React.useState(false); // State for phone filter
   const [filterEmail, setFilterEmail] = React.useState(false); // State for email filter
   const router = useRouter();
+  const axiosInstance = useAxiosMiddleware();
+  const [totalUsers, setTotalUsers] = React.useState(0);
 
   const statusOptions = [
     "not_assign",
-    "assigned",
-    "initial_call",
-    "contact_message",
-    "follow_up",
+    // "assigned",
+    "call",
+    "message",
+    "pending",
+    "interested",
+    "discarded",
+    "all",
   ]; // Define status options
 
   const fetchData = async (page, status, query, phone, email) => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${apiConfig.baseURL}/api/v1/user/adminAll`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            page,
-            status, // Include status in the request
-            query, // Include search query
-            phone, // Include phone filter
-            email, // Include email filter
-          },
-        }
-      );
+      const response = await axiosInstance.get("/user/adminAll", {
+        params: {
+          page,
+          status,
+          query,
+          phone,
+          email,
+        },
+      });
+      console.log(response.data);
       setData(response.data.data);
       setTotalPages(response.data.pagination.totalPages);
+      setTotalUsers(response.data.pagination.totalItems);
     } catch (error) {
       if (error.response && error.response.status === 401) {
         setUnauthorized(true);
@@ -75,12 +74,7 @@ export default function AdminPage() {
 
   const fetchProfilers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${apiConfig.baseURL}/api/v1/profiler`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.get("/profiler");
       setProfilers(response.data.data);
     } catch (error) {
       setError(error.message);
@@ -89,16 +83,10 @@ export default function AdminPage() {
 
   const handleProfilerChange = async (idUserProcess, profilerId) => {
     try {
-      const token = localStorage.getItem("token");
-      await axios.post(
-        `${apiConfig.baseURL}/api/v1/userProcess/addProfiler`,
-        { userProcessId: idUserProcess, profilerId: profilerId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axiosInstance.post("/userProcess/addProfiler", {
+        userProcessId: idUserProcess,
+        profilerId: profilerId,
+      });
       alert("Action registered successfully!");
       fetchData(
         page,
@@ -140,6 +128,16 @@ export default function AdminPage() {
     setPage(1); // Reset to the first page when searching
   };
 
+  const refreshData = () => {
+    fetchData(
+      page,
+      statusOptions[tabValue],
+      searchValue,
+      filterPhone,
+      filterEmail
+    );
+  };
+
   return (
     <>
       <AdminNavbar />
@@ -160,10 +158,13 @@ export default function AdminPage() {
           sx={{ marginBottom: 4 }}
         >
           <Tab label="No asignado a perfilador" />
-          <Tab label="Asignado a perfilador" />
-          <Tab label="Llamada inicial" />
-          <Tab label="Mensaje contacto" />
-          <Tab label="Mensaje seguimiento" />
+          {/* <Tab label="Asignado a perfilador" /> */}
+          <Tab label="Sin realizar Llamada" />
+          <Tab label="En Mensaje" />
+          <Tab label="Pendiente" />
+          <Tab label="Interesado" />
+          <Tab label="Descartado" />
+          <Tab label="Todos mis clientes" />
         </Tabs>
         <Box
           sx={{
@@ -239,6 +240,7 @@ export default function AdminPage() {
                 client={client}
                 profilers={profilers}
                 onProfilerChange={handleProfilerChange}
+                refreshData={refreshData}
               />
             </Grid>
           ))}
