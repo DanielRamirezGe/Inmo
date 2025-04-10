@@ -11,7 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import styles from "./login.module.css";
-import apiConfig from "../config/apiConfig";
+import apiConfig from "../../config/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
