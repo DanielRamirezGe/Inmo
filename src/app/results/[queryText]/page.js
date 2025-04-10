@@ -25,7 +25,6 @@ export default function ResultsPage({ params }) {
       if (queryText) {
         const res = await fetch(`/api/results/${queryText}`);
         const data = await res.json();
-        console.log(data);
         setHouseDetails(data);
       }
     };

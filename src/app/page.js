@@ -19,7 +19,6 @@ export default function Home() {
       const res = await fetch("/api/houses");
       const data = await res.json();
       setHouseDetails(data);
-      console.log(data);
     };
 
     fetchHouseDetails();
