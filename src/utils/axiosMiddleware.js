@@ -1,12 +1,13 @@
 "use client";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import apiConfig from "../config/apiConfig";
 
 export const useAxiosMiddleware = () => {
   const router = useRouter();
 
   const axiosInstance = axios.create({
-    baseURL: "http://localhost:3010/api/v1", // Base URL for the API
+    baseURL: apiConfig.baseURL + "/api/v1",
   });
 
   // Add a request interceptor
@@ -15,7 +16,7 @@ export const useAxiosMiddleware = () => {
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("Token not found. Redirecting to login...");
-        router.push("/login"); // Redirect to login page
+        router.push("/login");
         return Promise.reject(new Error("No token found"));
       }
       config.headers.Authorization = `Bearer ${token}`;
@@ -26,7 +27,7 @@ export const useAxiosMiddleware = () => {
     }
   );
 
-  // Add a response interceptor (optional, for handling errors globally)
+  // Add a response interceptor
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -35,7 +36,7 @@ export const useAxiosMiddleware = () => {
         (error.response.status === 401 || error.response.status === 403)
       ) {
         console.error("Unauthorized. Redirecting to login...");
-        router.push("/login"); // Redirect to login page
+        router.push("/login");
       }
       return Promise.reject(error);
     }

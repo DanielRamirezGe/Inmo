@@ -18,8 +18,7 @@ import {
 import PerfiladorNavBar from "./../../components/navBarProfiler";
 import Grid from "@mui/material/Grid2";
 import axios from "axios";
-import { useRouter } from "next/navigation";
-import apiConfig from "./../../../../config/apiConfig";
+import { useRouter } from "next/navigation";\
 import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
 
 export default function UserPage({ params }) {

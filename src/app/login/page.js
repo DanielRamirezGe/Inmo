@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import styles from "./login.module.css";
+import apiConfig from "../config/apiConfig";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function LoginPage() {
     event.preventDefault();
     try {
       const response = await axios.post(
-        "http://localhost:3010/api/v1/auth/login",
+        `${apiConfig.baseURL}/api/v1/auth/login`,
         {
           user,
           password,

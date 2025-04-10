@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
+import apiConfig from "../../../../config/apiConfig";
 
 export async function PATCH(request, { params }) {
   try {
@@ -8,7 +9,7 @@ export async function PATCH(request, { params }) {
     const token = request.headers.get("authorization");
 
     const response = await axios.patch(
-      `http://localhost:3010/api/v1/user/${userId}`,
+      `${apiConfig.baseURL}/api/v1/user/${userId}`,
       body,
       {
         headers: {
