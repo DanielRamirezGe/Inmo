@@ -15,7 +15,7 @@ export const useAxiosMiddleware = () => {
     (config) => {
       const token = localStorage.getItem("token");
       if (!token) {
-        console.error("Token not found. Redirecting to login...");
+        // console.error("Token not found. Redirecting to login...");
         router.push("/login");
         return Promise.reject(new Error("No token found"));
       }
@@ -35,7 +35,7 @@ export const useAxiosMiddleware = () => {
         error.response &&
         (error.response.status === 401 || error.response.status === 403)
       ) {
-        console.error("Unauthorized. Redirecting to login...");
+        // console.error("Unauthorized. Redirecting to login...");
         router.push("/login");
       }
       return Promise.reject(error);

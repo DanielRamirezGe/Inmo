@@ -7,9 +7,7 @@ import {
   Select,
   MenuItem,
   InputLabel,
-  Checkbox,
   Button,
-  FormLabel,
   RadioGroup,
   Radio,
   FormControlLabel,
@@ -19,7 +17,6 @@ import PerfiladorNavBar from "../../components/navBarProfiler";
 import Grid from "@mui/material/Grid2";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import apiConfig from "../../../../config/apiConfig";
 import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
 
 export default function UserPage({ params }) {
@@ -302,13 +299,28 @@ export default function UserPage({ params }) {
       let payload = {};
       switch (userStatus) {
         case "Interesado con seguimiento":
-          payload = { followUpMessage: false, initialCall: true };
+          payload = {
+            followUpMessage: true,
+            initialCall: false,
+            message:
+              "El cliente está interesado, pero necesita mas informacion para adquirir una propiedad, contacto por el perfilador",
+          };
           break;
         case "Interesado enviar a cerrador":
-          payload = { interested: true, initialCall: true };
+          payload = {
+            interested: true,
+            initialCall: false,
+            message:
+              "El cliente está interesado en adquirir una propiedad, se le enviará a un cerrador, contacto por el perfilador",
+          };
           break;
         case "No interesado":
-          payload = { interested: false, initialCall: true };
+          payload = {
+            interested: false,
+            initialCall: false,
+            message:
+              "El cliente no está interesado en adquirir una propiedad, contacto por el perfilador",
+          };
           break;
         default:
           console.error("Estado no reconocido:", userStatus);

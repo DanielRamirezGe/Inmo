@@ -8,11 +8,6 @@ import {
   Box,
   Button,
   Modal,
-  TextField,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
   Checkbox,
   FormControlLabel,
   Collapse,
@@ -27,7 +22,6 @@ import { useRouter } from "next/navigation"; // Import useRouter
 import axios from "axios";
 import { styled } from "@mui/material/styles";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import Grid from "@mui/material/Grid2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentsSection from "./CommentsSection";
 import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
@@ -97,10 +91,6 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
     setCallModalOpen(false);
   };
 
-  const handleFormModalClose = () => {
-    setFormModalOpen(false);
-  };
-
   const handleCallOptionSelect = async (option) => {
     try {
       if (option === "contesto") {
@@ -110,8 +100,9 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
         const response = await axios.patch(
           `/api/userProcess/${client.idUserProcess}`,
           {
-            initialCall: true,
-            contactMessage: false,
+            initialCall: false,
+            contactMessage: true,
+            message: "No contesto la llamada del perfilador",
           },
           {
             headers: {
@@ -145,45 +136,29 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
 
   const handleWhatsAppMessage = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.patch(
-        `/api/userProcess/${client.idUserProcess}`,
-        {
-          contactMessage: true,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      // Limpiamos el número de teléfono de cualquier carácter no numérico
+      const phoneNumber = client.mainPhone.replace(/\D/g, "");
 
-      if (response.status === 200) {
-        // Limpiamos el número de teléfono de cualquier carácter no numérico
-        const phoneNumber = client.mainPhone.replace(/\D/g, "");
-
-        // Aseguramos que el número tenga el formato correcto
-        let formattedPhone = phoneNumber;
-        if (!phoneNumber.startsWith("52")) {
-          formattedPhone = `52${phoneNumber}`;
-        }
-
-        const message =
-          `Hola ${client.name}! 👋\n\n` +
-          `Mi nombre es ${client.profilerName}, soy asesor especializado de Minkaasa Inmobiliaria.\n\n` +
-          `Me comunico contigo porque recibimos tu solicitud de información sobre propiedades. ` +
-          `En Minkaasa nos especializamos en encontrar la casa ideal para ti y tu familia.\n\n` +
-          `Te gustaría que conversemos sobre las opciones que tenemos disponibles?`;
-
-        const encodedMessage = encodeURIComponent(message);
-
-        // Intentamos primero con api.whatsapp.com
-        const whatsappUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
-
-        // Abrimos en nueva ventana
-        window.open(whatsappUrl, "_blank");
-        refreshData();
+      // Aseguramos que el número tenga el formato correcto
+      let formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith("52")) {
+        formattedPhone = `52${phoneNumber}`;
       }
+
+      const message =
+        `Hola ${client.name}! 👋\n\n` +
+        `Mi nombre es ${client.profilerName}, soy asesor especializado de Minkaasa Inmobiliaria.\n\n` +
+        `Me comunico contigo porque recibimos tu solicitud de información sobre propiedades. ` +
+        `En Minkaasa nos especializamos en encontrar la casa ideal para ti y tu familia.\n\n` +
+        `Te gustaría que conversemos sobre las opciones que tenemos disponibles?`;
+
+      const encodedMessage = encodeURIComponent(message);
+
+      // Intentamos primero con api.whatsapp.com
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
+
+      // Abrimos en nueva ventana
+      window.open(whatsappUrl, "_blank");
     } catch (error) {
       console.error("Error updating contact message:", error);
       if (error.response) {
@@ -195,40 +170,25 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
 
   const handleWhatsAppGoodbye = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.patch(
-        `/api/userProcess/${client.idUserProcess}`,
-        {
-          contactMessage: true,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const phoneNumber = client.mainPhone.replace(/\D/g, "");
-        let formattedPhone = phoneNumber;
-        if (!phoneNumber.startsWith("52")) {
-          formattedPhone = `52${phoneNumber}`;
-        }
-
-        const message =
-          `Hola ${client.name}, gracias por tu tiempo. 👋\n\n` +
-          `Entiendo que por el momento no estás interesado o no ha sido posible comunicarnos. ` +
-          `Quedo a tus órdenes por si más adelante necesitas asesoría para encontrar tu hogar ideal.\n\n` +
-          `¡Que tengas excelente día!\n` +
-          `${client.profilerName}\n` +
-          `Asesor Especializado Minkaasa Inmobiliaria`;
-
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
-
-        window.open(whatsappUrl, "_blank");
-        refreshData();
+      const phoneNumber = client.mainPhone.replace(/\D/g, "");
+      let formattedPhone = phoneNumber;
+      if (!phoneNumber.startsWith("52")) {
+        formattedPhone = `52${phoneNumber}`;
       }
+
+      const message =
+        `Hola ${client.name}, gracias por tu tiempo. 👋\n\n` +
+        `Entiendo que por el momento no estás interesado o no ha sido posible comunicarnos. ` +
+        `Quedo a tus órdenes por si más adelante necesitas asesoría para encontrar tu hogar ideal.\n\n` +
+        `¡Que tengas excelente día!\n` +
+        `${client.profilerName}\n` +
+        `Asesor Especializado Minkaasa Inmobiliaria`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`;
+
+      window.open(whatsappUrl, "_blank");
+      // refreshData();
     } catch (error) {
       console.error("Error updating contact message:", error);
       if (error.response) {
@@ -274,6 +234,7 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
         `/api/userProcess/${client.idUserProcess}`,
         {
           introduceMessage: true,
+          message: "Primer contacto enviado al cliente",
         },
         {
           headers: {
@@ -298,6 +259,7 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
         `/api/userProcess/${client.idUserProcess}`,
         {
           endMessage: true,
+          message: "Mensaje de despedida enviado al cliente",
         },
         {
           headers: {
@@ -321,8 +283,9 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
       const response = await axios.patch(
         `/api/userProcess/${client.idUserProcess}`,
         {
-          contactMessage: true,
+          contactMessage: false,
           discarded: true,
+          message: "No contesto los menasajes del perfilador",
         },
         {
           headers: {
@@ -344,28 +307,48 @@ export default function ClientCard({ client, statusOptions, refreshData }) {
   const handleNotInterested = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axiosInstance.patch(`/api/userProcess/${client.idUserProcess}`, {
-        interested: false,
-        followUpMessage: true,
-      });
-      setNotInterestedModalOpen(false);
+      await axios.patch(
+        `/api/userProcess/${client.idUserProcess}`,
+        {
+          interested: false,
+          followUpMessage: false,
+          message:
+            "No esta interesado en adquirir una propiedad, contacto por el perfilador",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       refreshData();
     } catch (error) {
       console.error("Error marking as not interested:", error);
+      setNotInterestedModalOpen(false);
     }
   };
 
   const handleAssignCloser = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axiosInstance.patch(`/api/userProcess/${client.idUserProcess}`, {
-        followUpMessage: true,
-        interested: true,
-      });
+      await axios.patch(
+        `/api/userProcess/${client.idUserProcess}`,
+        {
+          followUpMessage: false,
+          interested: true,
+          message: "Asignado a un cerrador por el perfilador",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setAssignCloserModalOpen(false);
       refreshData();
     } catch (error) {
       console.error("Error assigning to closer:", error);
+      setAssignCloserModalOpen(false);
     }
   };
 
@@ -889,21 +872,28 @@ Asesor Especializado Minkaasa Inmobiliaria`}
       <Dialog
         open={notInterestedModalOpen}
         onClose={() => setNotInterestedModalOpen(false)}
+        aria-labelledby="not-interested-dialog-title"
+        aria-describedby="not-interested-dialog-description"
+        keepMounted={false}
       >
-        <DialogTitle>Confirmar No Interesado</DialogTitle>
+        <DialogTitle id="not-interested-dialog-title">
+          Confirmar No Interesado
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            ¿Está seguro que desea marcar este cliente como no interesado?
+          <DialogContentText id="not-interested-dialog-description">
+            ¿Está seguro que desea marcar este cliente como no interesado? Esta
+            acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setNotInterestedModalOpen(false)}>
+          <Button onClick={() => setNotInterestedModalOpen(false)} autoFocus>
             Cancelar
           </Button>
           <Button
             onClick={handleNotInterested}
             color="error"
             variant="contained"
+            tabIndex={0}
           >
             Confirmar
           </Button>
@@ -913,21 +903,27 @@ Asesor Especializado Minkaasa Inmobiliaria`}
       <Dialog
         open={assignCloserModalOpen}
         onClose={() => setAssignCloserModalOpen(false)}
+        aria-labelledby="assign-closer-dialog-title"
+        aria-describedby="assign-closer-dialog-description"
+        keepMounted={false}
       >
-        <DialogTitle>Confirmar Asignación</DialogTitle>
+        <DialogTitle id="assign-closer-dialog-title">
+          Confirmar Asignación
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="assign-closer-dialog-description">
             ¿Está seguro que desea asignar este cliente a un cerrador?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAssignCloserModalOpen(false)}>
+          <Button onClick={() => setAssignCloserModalOpen(false)} autoFocus>
             Cancelar
           </Button>
           <Button
             onClick={handleAssignCloser}
             color="primary"
             variant="contained"
+            tabIndex={0}
           >
             Confirmar
           </Button>
