@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import styles from "./page.module.css";
 import CardHouse from "./components/card";
 import MainHeader from "./components/mainHeader";
@@ -9,7 +8,8 @@ import Grid from "@mui/material/Grid2";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import DrawerAppBar from "./components/navBarGen";
-import SearchBar from "./components/SearchBar";
+import axios from "axios";
+import apiConfig from "../config/apiConfig";
 
 export default function Home() {
   const [houseDetails, setHouseDetails] = useState([]);
@@ -18,6 +18,7 @@ export default function Home() {
     const fetchHouseDetails = async () => {
       const res = await fetch("/api/houses");
       const data = await res.json();
+      await axios.post(`${apiConfig.baseURL}/api/v1/metadataWeb`);
       setHouseDetails(data);
     };
 

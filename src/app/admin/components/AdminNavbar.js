@@ -9,7 +9,7 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useRouter } from "next/navigation";
 
-const adminNavItems = ["Usuarios", "Perfiladores"];
+const adminNavItems = ["Usuarios", "Perfiladores", "Datos Web"];
 
 export default function AdminNavBar() {
   const router = useRouter();
@@ -19,6 +19,8 @@ export default function AdminNavBar() {
       router.push("/admin");
     } else if (item === "Perfiladores") {
       router.push("/admin/profiler");
+    } else if (item === "Datos Web") {
+      router.push("/admin/webPerformance");
     }
     //  else if (item === "Settings") {
     //   router.push("/admin/settings");
@@ -35,11 +37,9 @@ export default function AdminNavBar() {
             color="inherit"
             aria-label="menu"
             sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
+          ></IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            admin Panel
+            Admin Panel
           </Typography>
           {adminNavItems.map((item) => (
             <Button
