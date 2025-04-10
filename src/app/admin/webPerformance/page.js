@@ -59,7 +59,7 @@ export default function WebPerformancePage() {
           </Typography>
         </Box>
         <Typography
-          variant="h4"
+          variant={value !== "Información próximamente..." ? "h4" : "h6d"}
           sx={{ textAlign: "center", color: `${color}` }}
         >
           {value}
@@ -118,7 +118,10 @@ export default function WebPerformancePage() {
           <Grid xs={12} md={4}>
             <StatCard
               title="Usuarios Registrados"
-              value={performanceData?.registeredUsers || 0}
+              value={
+                performanceData?.registeredUsers ||
+                "Información próximamente..."
+              }
               icon={<PersonIcon sx={{ color: "#4caf50" }} />}
               color="#4caf50"
             />
@@ -127,11 +130,12 @@ export default function WebPerformancePage() {
           <Grid xs={12} md={4}>
             <StatCard
               title="Tasa de Conversión"
-              value={`${(
-                (performanceData?.registeredUsers /
-                  performanceData?.totalVisits) *
-                  100 || 0
-              ).toFixed(2)}%`}
+              //   value={`${(
+              //     (performanceData?.registeredUsers /
+              //       performanceData?.totalVisits) *
+              //       100 || 0
+              //   ).toFixed(2)}%`}
+              value={"Información próximamente..."}
               icon={<TrendingUpIcon sx={{ color: "#ff9800" }} />}
               color="#ff9800"
             />
