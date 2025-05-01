@@ -14,6 +14,7 @@ const adminNavItems = [
   "Agregar Usuario",
   "Perfiladores",
   "Datos Web",
+  "Propiedades",
 ];
 
 export default function AdminNavBar() {
@@ -28,6 +29,8 @@ export default function AdminNavBar() {
       router.push("/admin/webPerformance");
     } else if (item === "Agregar Usuario") {
       router.push("/admin/addUser");
+    } else if (item === "Propiedades") {
+      router.push("/admin/properties");
     }
     //  else if (item === "Settings") {
     //   router.push("/admin/settings");
