@@ -1,179 +1,132 @@
 import React from "react";
-import { Box, Card, Typography, IconButton } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardActions,
+  Typography,
+  Button,
+  Box,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import apiConfig from "../../../../config/apiConfig";
 
 // Componente para las tarjetas de elementos
 const ItemCard = ({ item, onEdit, onDelete, currentTab, allDevelopers }) => {
   // Función para obtener el nombre de la desarrolladora
-  const getDeveloperName = (id) => {
-    const developer = allDevelopers?.find(
-      (dev) => dev.realEstateDevelopmentId === id
+  const getDeveloperName = (developerId) => {
+    const developer = allDevelopers.find(
+      (dev) => dev.realEstateDevelopmentId === developerId
     );
-    return developer
-      ? developer.realEstateDevelopmentName
-      : "Desarrolladora no encontrada";
+    return developer ? developer.realEstateDevelopmentName : "No especificado";
+  };
+
+  const renderContent = () => {
+    if (currentTab === 0) {
+      // Desarrolladora
+      return (
+        <>
+          <Typography variant="h6" component="div" noWrap>
+            {item.realEstateDevelopmentName}
+          </Typography>
+          <Typography color="text.secondary" gutterBottom>
+            URL: {item.url || "No especificada"}
+          </Typography>
+        </>
+      );
+    } else if (currentTab === 1) {
+      // Desarrollo
+      return (
+        <>
+          <Typography variant="h6" component="div" noWrap>
+            {item.developmentName}
+          </Typography>
+          <Typography color="text.secondary" gutterBottom>
+            Desarrolladora: {getDeveloperName(item.realEstateDevelopmentId)}
+          </Typography>
+          <Typography variant="body2">
+            {item.state}, {item.city}
+          </Typography>
+        </>
+      );
+    } else if (currentTab === 2) {
+      // Inmobiliaria Externa
+      return (
+        <>
+          <Typography variant="h6" component="div" noWrap>
+            {item.name}
+          </Typography>
+          <Typography color="text.secondary" gutterBottom>
+            {item.contactName || "Sin contacto"}
+          </Typography>
+          <Typography variant="body2" noWrap>
+            {item.description || "Sin descripción"}
+          </Typography>
+        </>
+      );
+    } else if (currentTab === 3) {
+      // Propiedad
+      return (
+        <>
+          <Typography variant="h6" component="div" noWrap>
+            {item.prototypeName}
+          </Typography>
+          <Typography color="text.secondary" gutterBottom>
+            Precio: ${item.price?.toLocaleString() || "No especificado"}
+          </Typography>
+          <Typography variant="body2">
+            {item.bedroom} Rec, {item.bathroom} Baños
+            {item.halfBathroom ? `, ${item.halfBathroom} Medios Baños` : ""}
+          </Typography>
+          <Typography variant="body2">
+            {item.size} m² | {item.parking} Est.
+          </Typography>
+          {item.mainImage && (
+            <Box
+              component="img"
+              sx={{
+                width: "100%",
+                height: 140,
+                objectFit: "cover",
+                mt: 1,
+                borderRadius: 1,
+              }}
+              src={`${apiConfig.baseURL}/api/v1/image?path=${encodeURIComponent(item.mainImage)}`}
+              alt={item.prototypeName}
+            />
+          )}
+        </>
+      );
+    }
   };
 
   return (
     <Card
       sx={{
-        p: 2,
         height: "100%",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        transition: "transform 0.2s, box-shadow 0.2s",
-        "&:hover": {
-          transform: "translateY(-5px)",
-          boxShadow: 4,
-        },
       }}
     >
-      <Box>
-        {/* Para Desarrolladoras */}
-        {currentTab === 0 && (
-          <>
-            <Typography variant="h6" gutterBottom noWrap>
-              {item.realEstateDevelopmentName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              URL: {item.url || "No disponible"}
-            </Typography>
-
-            {item.contacts && item.contacts.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Contactos:
-                </Typography>
-                {item.contacts.map((contact, index) => (
-                  <Box
-                    key={contact.realEstateContactId || index}
-                    sx={{ ml: 1, mb: 1 }}
-                  >
-                    <Typography variant="body2">
-                      {`${contact.name} ${contact.lastNameP} ${contact.lastNameM}`}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {`${contact.role} - ${contact.mainPhone}`}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {contact.mainEmail}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </>
-        )}
-
-        {/* Para Desarrollos */}
-        {currentTab === 1 && (
-          <>
-            <Typography variant="h6" gutterBottom noWrap>
-              {item.developmentName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Desarrolladora: {getDeveloperName(item.realEstateDevelopmentId)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {`${item.street || ""} ${item.extNum || ""}${
-                item.intNum ? ", Int. " + item.intNum : ""
-              }`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {`${item.city || ""}, ${item.state || ""} ${
-                item.zipCode ? "- CP: " + item.zipCode : ""
-              }`}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              URL: {item.url || "No disponible"}
-            </Typography>
-
-            {item.contacts && item.contacts.length > 0 && (
-              <Box sx={{ mt: 1 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Contactos:
-                </Typography>
-                {item.contacts.map((contact, index) => (
-                  <Box
-                    key={contact.developmentContactId || index}
-                    sx={{ ml: 1, mb: 1 }}
-                  >
-                    <Typography variant="body2">
-                      {`${contact.name} ${contact.lastNameP} ${contact.lastNameM}`}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {`${contact.role} - ${contact.mainPhone}`}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {contact.mainEmail}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </>
-        )}
-
-        {/* Para Agencias Externas */}
-        {currentTab === 2 && (
-          <>
-            <Typography variant="h6" gutterBottom noWrap>
-              {item.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {item.description}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              Contacto: {item.contactName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {item.contactPhone}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {item.contactEmail}
-            </Typography>
-          </>
-        )}
-
-        {/* Para Propiedades */}
-        {currentTab === 3 && (
-          <>
-            <Typography variant="h6" gutterBottom noWrap>
-              {item.title}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {item.description}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              Precio: ${item.price?.toLocaleString()}
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              Ubicación: {item.location}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tipo: {item.type} - Estado: {item.status}
-            </Typography>
-          </>
-        )}
-      </Box>
-
-      <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-        <IconButton
+      <CardContent>{renderContent()}</CardContent>
+      <CardActions>
+        <Button
           size="small"
-          color="primary"
-          onClick={() => onEdit(item)}
-          sx={{ mr: 1 }}
+          startIcon={<EditIcon />}
+          onClick={() => onEdit(currentTab === 3 ? "property" : item)}
         >
-          <EditIcon />
-        </IconButton>
-        {currentTab !== 0 && (
-          <IconButton size="small" color="error" onClick={() => onDelete(item)}>
-            <DeleteIcon />
-          </IconButton>
-        )}
-      </Box>
+          Editar
+        </Button>
+        <Button
+          size="small"
+          color="error"
+          startIcon={<DeleteIcon />}
+          onClick={() => onDelete(item)}
+        >
+          Eliminar
+        </Button>
+      </CardActions>
     </Card>
   );
 };

@@ -6,49 +6,44 @@ import {
   Typography,
   Tabs,
   Tab,
-  Button,
-  CircularProgress,
   Alert,
 } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import AdminNavbar from "../components/AdminNavbar";
 import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
-import AddIcon from "@mui/icons-material/Add";
 
-// Importar componentes
-import ItemCard from "./components/ItemCard";
+// Componentes
+import AdminNavbar from "../components/AdminNavbar";
+import EntityList from "./components/EntityList";
 import FormDialog from "./components/FormDialog";
 import DeleteDialog from "./components/DeleteDialog";
 
-// Importar configuraciones
+// Hooks personalizados
+import { useEntityData } from "../../../hooks/useEntityData";
+import { useImageHandling } from "../../../hooks/useImageHandling";
+
+// Configuraciones
 import {
   developerFields,
   developmentFields,
-  externalAgencyFields,
   propertyFields,
 } from "./components/fieldsConfig";
 
-// Importar datos de ejemplo
-import {
-  MOCK_DEVELOPERS,
-  MOCK_DEVELOPMENTS,
-  MOCK_AGENCIES,
-  MOCK_PROPERTIES,
-} from "./components/mockData";
+const ENTITY_TYPES = {
+  DEVELOPER: 'developer',
+  DEVELOPMENT: 'development',
+  PROPERTY: 'property'
+};
+
+const TAB_TITLES = {
+  0: "Desarrolladoras Inmobiliarias",
+  1: "Desarrollos",
+  2: "Propiedades"
+};
 
 export default function PropertiesPage() {
   const axiosInstance = useAxiosMiddleware();
   const [tabValue, setTabValue] = useState(0);
-  const [loading, setLoading] = useState(false);
-
-  // Usar datos de ejemplo en lugar de obtenerlos de la API
-  const [developers, setDevelopers] = useState(MOCK_DEVELOPERS);
-  const [developments, setDevelopments] = useState(MOCK_DEVELOPMENTS);
-  const [externalAgencies, setExternalAgencies] = useState(MOCK_AGENCIES);
-  const [properties, setProperties] = useState(MOCK_PROPERTIES);
-
-  const [error, setError] = useState(null);
-
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
+  
   // Estados para diálogos
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
@@ -58,37 +53,64 @@ export default function PropertiesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
 
-  // Cargar datos iniciales
+  // Hooks personalizados para cada tipo de entidad
+  const {
+    items: developers,
+    loading: developersLoading,
+    error: developersError,
+    fetchItems: fetchDevelopers,
+    getItemDetails: getDeveloperDetails,
+    deleteItem: deleteDeveloper,
+    saveItem: saveDeveloper,
+  } = useEntityData(ENTITY_TYPES.DEVELOPER, axiosInstance);
+
+  const {
+    items: developments,
+    loading: developmentsLoading,
+    error: developmentsError,
+    fetchItems: fetchDevelopments,
+    getItemDetails: getDevelopmentDetails,
+    deleteItem: deleteDevelopment,
+    saveItem: saveDevelopment,
+  } = useEntityData(ENTITY_TYPES.DEVELOPMENT, axiosInstance);
+
+  const {
+    items: properties,
+    loading: propertiesLoading,
+    error: propertiesError,
+    fetchItems: fetchProperties,
+    getItemDetails: getPropertyDetails,
+    deleteItem: deleteProperty,
+    saveItem: saveProperty,
+  } = useEntityData(ENTITY_TYPES.PROPERTY, axiosInstance);
+
+  const {
+    processItemImages,
+    imageLoading,
+  } = useImageHandling(axiosInstance);
+
+  // Cargar datos iniciales solo una vez al montar el componente
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+    if (!initialLoadDone) {
+      fetchDevelopers(); // Siempre necesitamos los desarrolladores
+      setInitialLoadDone(true);
+    }
+  }, [fetchDevelopers, initialLoadDone]);
 
-      try {
-        // Obtener datos reales de Desarrolladoras Inmobiliarias
-        const devResponse = await axiosInstance.get("/realEstateDevelopment");
-        console.log("Datos de desarrolladoras:", devResponse.data);
-        setDevelopers(devResponse.data.data || []);
+  // Cargar datos específicos cuando cambia la pestaña
+  useEffect(() => {
+    if (!initialLoadDone) return; // Esperar a que se carguen los desarrolladores
 
-        // Obtener datos reales de Desarrollos
-        const developmentResponse = await axiosInstance.get("/development");
-        console.log("Datos de desarrollos:", developmentResponse.data);
-        setDevelopments(developmentResponse.data.data || []);
-
-        // Para el resto, seguimos usando datos simulados
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Error al cargar los datos. Por favor, inténtalo de nuevo.");
-        // Si falla la carga de datos reales, usamos los datos simulados
-        setDevelopers(MOCK_DEVELOPERS);
-        setDevelopments(MOCK_DEVELOPMENTS);
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    switch (tabValue) {
+      case 1:
+        fetchDevelopments();
+        break;
+      case 2:
+        fetchProperties();
+        break;
+      // case 0 no necesita nada porque los desarrolladores ya se cargaron
+    }
+  }, [tabValue, fetchDevelopments, fetchProperties, initialLoadDone]);
 
   // Manejo de cambio de pestaña
   const handleTabChange = (event, newValue) => {
@@ -96,28 +118,46 @@ export default function PropertiesPage() {
   };
 
   // Función para abrir diálogo
-  const handleOpenDialog = (type, item = null) => {
-    setCurrentItem(item);
+  const handleOpenDialog = async (type, item = null) => {
+    let updatedItem = item;
 
-    if (type === "developer") {
-      setDialogTitle(
-        item ? "Editar Desarrolladora" : "Agregar Desarrolladora Inmobiliaria"
-      );
+    if (item) {
+      try {
+        let detailedItem;
+        switch (type) {
+          case ENTITY_TYPES.DEVELOPER:
+            detailedItem = await getDeveloperDetails(item.realEstateDevelopmentId);
+            break;
+          case ENTITY_TYPES.DEVELOPMENT:
+            detailedItem = await getDevelopmentDetails(item.developmentId);
+            break;
+          case ENTITY_TYPES.PROPERTY:
+            detailedItem = await getPropertyDetails(item.prototypeId);
+            break;
+        }
+        
+        if (detailedItem) {
+          updatedItem = await processItemImages(detailedItem);
+        }
+      } catch (error) {
+        console.error("Error al obtener detalles:", error);
+      }
+    }
+
+    setCurrentItem(updatedItem);
+
+    if (type === ENTITY_TYPES.DEVELOPER) {
+      setDialogTitle(updatedItem ? "Editar Desarrolladora" : "Agregar Desarrolladora Inmobiliaria");
       setCurrentFields(developerFields);
-    } else if (type === "development") {
-      setDialogTitle(item ? "Editar Desarrollo" : "Agregar Desarrollo");
+    } else if (type === ENTITY_TYPES.DEVELOPMENT) {
+      setDialogTitle(updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo");
       setCurrentFields(developmentFields);
-    } else if (type === "agency") {
-      setDialogTitle(
-        item ? "Editar Inmobiliaria Externa" : "Agregar Inmobiliaria Externa"
-      );
-      setCurrentFields(externalAgencyFields);
-    } else if (type === "property") {
-      setDialogTitle(item ? "Editar Propiedad" : "Agregar Propiedad");
+    } else if (type === ENTITY_TYPES.PROPERTY) {
+      setDialogTitle(updatedItem ? "Editar Propiedad" : "Agregar Propiedad");
       setCurrentFields(propertyFields);
     }
 
-    setFormData(item || {});
+    setFormData(updatedItem || {});
     setDialogOpen(true);
   };
 
@@ -129,215 +169,98 @@ export default function PropertiesPage() {
 
   // Función para eliminar elementos
   const handleDelete = async () => {
-    setLoading(true);
-
     try {
       if (tabValue === 0) {
-        // Implementación real para Desarrolladora Inmobiliaria
-        await axiosInstance.delete(
-          `/realEstateDevelopment/${itemToDelete.realEstateDevelopmentId}`
-        );
-
-        // Recargar los datos actualizados desde la API
-        const response = await axiosInstance.get("/realEstateDevelopment");
-        setDevelopers(response.data.data || []);
+        await deleteDeveloper(itemToDelete.realEstateDevelopmentId);
       } else if (tabValue === 1) {
-        // Implementación real para Desarrollo
-        await axiosInstance.delete(
-          `/development/${itemToDelete.developmentId}`
-        );
-
-        // Recargar los datos actualizados
-        const response = await axiosInstance.get("/development");
-        setDevelopments(response.data.data || []);
-      } else {
-        // Para los demás casos, mantener la simulación
-        if (tabValue === 2) {
-          setExternalAgencies(
-            externalAgencies.filter((agency) => agency.id !== itemToDelete.id)
-          );
-        } else if (tabValue === 3) {
-          setProperties(
-            properties.filter((prop) => prop.id !== itemToDelete.id)
-          );
-        }
+        await deleteDevelopment(itemToDelete.developmentId);
+      } else if (tabValue === 2) {
+        await deleteProperty(itemToDelete.prototypeId);
       }
-
       setDeleteDialogOpen(false);
       setItemToDelete(null);
     } catch (error) {
       console.error("Error al eliminar:", error);
-      setError(`Error al eliminar el elemento: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Función para guardar elementos
   const handleSaveForm = async () => {
-    setLoading(true);
-
+    let success = false;
+    
     try {
       if (tabValue === 0) {
-        // Desarrolladora Inmobiliaria
-        let endpoint = "/realEstateDevelopment";
-
-        if (currentItem) {
-          const id = currentItem.realEstateDevelopmentId;
-          console.log(currentItem);
-          // Actualizar desarrolladora existente
-          endpoint = `/realEstateDevelopment/${id}`;
-          await axiosInstance.put(endpoint, formData);
-        } else {
-          // Crear nueva desarrolladora
-          await axiosInstance.post(endpoint, formData);
-        }
-
-        // Después de crear/editar, volvemos a cargar los datos actualizados de la API
-        const response = await axiosInstance.get("/realEstateDevelopment");
-        setDevelopers(response.data.data || []);
-
-        setDialogOpen(false);
+        success = await saveDeveloper(
+          formData,
+          currentItem?.realEstateDevelopmentId
+        );
       } else if (tabValue === 1) {
-        // Desarrollo
-        let endpoint = "/development";
-
-        if (currentItem) {
-          const id = currentItem.developmentId;
-          // Actualizar desarrollo existente
-          endpoint = `/development/${id}`;
-          await axiosInstance.put(endpoint, formData);
-        } else {
-          // Crear nuevo desarrollo
-          await axiosInstance.post(endpoint, formData);
-        }
-
-        // Después de crear/editar, volvemos a cargar los datos actualizados
-        const response = await axiosInstance.get("/development");
-        setDevelopments(response.data.data || []);
-
-        setDialogOpen(false);
-      } else {
-        // Para los demás casos, mantener la simulación
-        setTimeout(() => {
-          let updatedData = [];
-          const newId = Date.now();
-
-          if (tabValue === 2) {
-            // Inmobiliaria Externa
-            if (currentItem) {
-              updatedData = externalAgencies.map((agency) =>
-                agency.id === currentItem.id
-                  ? { ...agency, ...formData }
-                  : agency
-              );
-            } else {
-              updatedData = [...externalAgencies, { ...formData, id: newId }];
+        const formDataToSend = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (!key.includes('Preview')) {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              formDataToSend.append(key, value);
             }
-            setExternalAgencies(updatedData);
-          } else if (tabValue === 3) {
-            // Propiedades
-            if (currentItem) {
-              updatedData = properties.map((prop) =>
-                prop.id === currentItem.id ? { ...prop, ...formData } : prop
-              );
-            } else {
-              updatedData = [...properties, { ...formData, id: newId }];
-            }
-            setProperties(updatedData);
           }
+        });
+        success = await saveDevelopment(
+          formDataToSend,
+          currentItem?.developmentId
+        );
+      } else if (tabValue === 2) {
+        const formDataToSend = new FormData();
+        Object.keys(formData).forEach(key => {
+          if (!key.includes('Preview')) {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              formDataToSend.append(key, value);
+            }
+          }
+        });
+        success = await saveProperty(
+          formDataToSend,
+          currentItem?.prototypeId
+        );
+      }
 
-          setDialogOpen(false);
-          setLoading(false);
-        }, 800);
+      if (success) {
+        setDialogOpen(false);
       }
     } catch (error) {
-      console.error("Error al guardar los datos:", error);
-      setError(`Error al guardar los datos: ${error.message}`);
-    } finally {
-      setLoading(false);
+      console.error("Error al guardar:", error);
     }
   };
 
-  // Función para renderizar el contenido según la pestaña
-  const renderTabContent = () => {
-    let items = [];
-    let type = "";
-
-    if (tabValue === 0) {
-      items = developers;
-      type = "developer";
-    } else if (tabValue === 1) {
-      items = developments;
-      type = "development";
-    } else if (tabValue === 2) {
-      items = externalAgencies;
-      type = "agency";
-    } else if (tabValue === 3) {
-      items = properties;
-      type = "property";
+  const getCurrentItems = () => {
+    switch (tabValue) {
+      case 0:
+        return {
+          items: developers,
+          loading: developersLoading || imageLoading,
+          error: developersError,
+          type: ENTITY_TYPES.DEVELOPER
+        };
+      case 1:
+        return {
+          items: developments,
+          loading: developmentsLoading || imageLoading,
+          error: developmentsError,
+          type: ENTITY_TYPES.DEVELOPMENT
+        };
+      case 2:
+        return {
+          items: properties,
+          loading: propertiesLoading || imageLoading,
+          error: propertiesError,
+          type: ENTITY_TYPES.PROPERTY
+        };
+      default:
+        return { items: [], loading: false, error: null, type: null };
     }
-
-    if (loading && items.length === 0) {
-      return (
-        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-          <CircularProgress />
-        </Box>
-      );
-    }
-
-    return (
-      <>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <Typography variant="h6">
-            {tabValue === 0 && "Desarrolladoras Inmobiliarias"}
-            {tabValue === 1 && "Desarrollos"}
-            {tabValue === 2 && "Inmobiliarias Externas"}
-            {tabValue === 3 && "Propiedades"}
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog(type)}
-            sx={{
-              bgcolor: "#25D366",
-              "&:hover": { bgcolor: "#128C7E" },
-            }}
-          >
-            Agregar
-          </Button>
-        </Box>
-
-        {items.length === 0 ? (
-          <Alert severity="info" sx={{ mt: 2 }}>
-            No hay elementos para mostrar. Agrega uno nuevo con el botón
-            superior.
-          </Alert>
-        ) : (
-          <Grid container spacing={3}>
-            {items.map((item, index) => (
-              <Grid xs={12} sm={6} md={4} lg={3} key={index}>
-                <ItemCard
-                  item={item}
-                  onEdit={() => handleOpenDialog(type, item)}
-                  onDelete={() => handleOpenDeleteDialog(item)}
-                  currentTab={tabValue}
-                  allDevelopers={developers}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-      </>
-    );
   };
+
+  const { items, loading, error, type } = getCurrentItems();
 
   return (
     <>
@@ -356,7 +279,6 @@ export default function PropertiesPage() {
           >
             <Tab label="Desarrolladora Inmobiliaria" />
             <Tab label="Desarrollo" />
-            <Tab label="Inmobiliaria Externa" />
             <Tab label="Propiedades" />
           </Tabs>
         </Box>
@@ -367,9 +289,19 @@ export default function PropertiesPage() {
           </Alert>
         )}
 
-        <Box sx={{ p: 2 }}>{renderTabContent()}</Box>
+        <Box sx={{ p: 2 }}>
+          <EntityList
+            title={TAB_TITLES[tabValue]}
+            items={items}
+            loading={loading}
+            onAdd={() => handleOpenDialog(type)}
+            onEdit={(item) => handleOpenDialog(type, item)}
+            onDelete={handleOpenDeleteDialog}
+            currentTab={tabValue}
+            allDevelopers={developers}
+          />
+        </Box>
 
-        {/* Formulario modal */}
         <FormDialog
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
@@ -379,9 +311,9 @@ export default function PropertiesPage() {
           setFormData={setFormData}
           fields={currentFields}
           loading={loading}
+          error={error}
         />
 
-        {/* Diálogo de confirmación para eliminar */}
         <DeleteDialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
