@@ -27,21 +27,30 @@ export const developmentFields = [
   { name: "url", label: "URL" },
 ];
 
-export const externalAgencyFields = [
-  { name: "name", label: "Nombre", required: true },
-  { name: "description", label: "Descripción", multiline: true, rows: 3 },
-  { name: "contactName", label: "Nombre de Contacto" },
-  { name: "contactPhone", label: "Teléfono de Contacto" },
-  { name: "contactEmail", label: "Email de Contacto" },
-];
-
 export const propertyFields = [
-  { name: "title", label: "Título", required: true },
-  { name: "description", label: "Descripción", multiline: true, rows: 3 },
+  { name: "prototypeName", label: "Nombre del Prototipo", required: true },
+  { 
+    name: "developmentId", 
+    label: "Desarrollo", 
+    required: true,
+    type: "select",
+    endpoint: "/development/basic",
+    optionLabel: (option) => `${option.developmentName} - ${option.realEstateDevelopmentName}`,
+    optionValue: "developmentId"
+  },
+  { name: "condominium", label: "Condominio" },
   { name: "price", label: "Precio", type: "number", required: true },
-  { name: "location", label: "Ubicación" },
-  { name: "developmentId", label: "ID del Desarrollo" },
-  { name: "externalAgencyId", label: "ID de Agencia Externa" },
-  { name: "type", label: "Tipo de Propiedad" },
-  { name: "status", label: "Estado" },
+  { name: "street", label: "Calle" },
+  { name: "exteriorNumber", label: "Número Exterior" },
+  { name: "interiorNumber", label: "Número Interior" },
+  { name: "suburb", label: "Colonia" },
+  { name: "city", label: "Ciudad" },
+  { name: "state", label: "Estado" },
+  { name: "zipCode", label: "Código Postal" },
+  { name: "bedroom", label: "Recámaras" },
+  { name: "bathroom", label: "Baños" },
+  { name: "halfBathroom", label: "Medios Baños" },
+  { name: "parking", label: "Estacionamiento" },
+  { name: "size", label: "Tamaño" },
+  { name: "mapLocation", label: "Ubicación en Mapa" },
 ];
