@@ -7,10 +7,17 @@ const handleApiError = (error) => {
 
 export const api = {
   // Developer endpoints
-  getDevelopers: async (axiosInstance) => {
+  getDevelopers: async (axiosInstance, page = 1, pageSize = 10) => {
     try {
-      const response = await axiosInstance.get("/realEstateDevelopment");
-      return response.data.data || [];
+      const response = await axiosInstance.get("/realEstateDevelopment", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
     } catch (error) {
       handleApiError(error);
     }
@@ -50,10 +57,17 @@ export const api = {
   },
 
   // Development endpoints
-  getDevelopments: async (axiosInstance) => {
+  getDevelopments: async (axiosInstance, page = 1, pageSize = 10) => {
     try {
-      const response = await axiosInstance.get("/development");
-      return response.data.data || [];
+      const response = await axiosInstance.get("/development", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
     } catch (error) {
       handleApiError(error);
     }
@@ -71,7 +85,7 @@ export const api = {
   createDevelopment: async (axiosInstance, formData) => {
     try {
       await axiosInstance.post("/development", formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
       handleApiError(error);
@@ -81,7 +95,7 @@ export const api = {
   updateDevelopment: async (axiosInstance, id, formData) => {
     try {
       await axiosInstance.put(`/development/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
       handleApiError(error);
@@ -97,10 +111,17 @@ export const api = {
   },
 
   // Property endpoints
-  getProperties: async (axiosInstance) => {
+  getProperties: async (axiosInstance, page = 1, pageSize = 10) => {
     try {
-      const response = await axiosInstance.get("/prototype");
-      return response.data.data || [];
+      const response = await axiosInstance.get("/prototype", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
     } catch (error) {
       handleApiError(error);
     }
@@ -118,7 +139,7 @@ export const api = {
   createProperty: async (axiosInstance, formData) => {
     try {
       await axiosInstance.post("/prototype", formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
       handleApiError(error);
@@ -128,7 +149,7 @@ export const api = {
   updateProperty: async (axiosInstance, id, formData) => {
     try {
       await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
       handleApiError(error);
@@ -146,12 +167,17 @@ export const api = {
   // Image handling
   getImage: async (axiosInstance, path) => {
     try {
-      const response = await axiosInstance.get(`/image?path=${encodeURIComponent(path)}`, {
-        responseType: 'blob'
+      const response = await axiosInstance.get(
+        `/image?path=${encodeURIComponent(path)}`,
+        {
+          responseType: "blob",
+        }
+      );
+      return new Blob([response.data], {
+        type: response.headers["content-type"],
       });
-      return new Blob([response.data], { type: response.headers['content-type'] });
     } catch (error) {
       handleApiError(error);
     }
-  }
-}; 
+  },
+};

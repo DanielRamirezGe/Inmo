@@ -32,6 +32,7 @@ const FormDialog = ({
   setFormData,
   fields,
   loading,
+  setLoading,
   error,
   setError,
 }) => {
@@ -89,21 +90,23 @@ const FormDialog = ({
   // Cargar opciones para campos select
   useEffect(() => {
     const fetchSelectOptions = async () => {
-      const selectFields = fields.filter(field => field.type === 'select' && field.endpoint);
-      
+      const selectFields = fields.filter(
+        (field) => field.type === "select" && field.endpoint
+      );
+
       for (const field of selectFields) {
-        setLoadingOptions(prev => ({ ...prev, [field.name]: true }));
+        setLoadingOptions((prev) => ({ ...prev, [field.name]: true }));
         try {
           const response = await axiosInstance.get(field.endpoint);
-          setSelectOptions(prev => ({
+          setSelectOptions((prev) => ({
             ...prev,
-            [field.name]: response.data.data || []
+            [field.name]: response.data.data || [],
           }));
         } catch (error) {
           console.error(`Error loading options for ${field.name}:`, error);
           setError(`Error al cargar opciones para ${field.label}`);
         } finally {
-          setLoadingOptions(prev => ({ ...prev, [field.name]: false }));
+          setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
         }
       }
     };
@@ -151,7 +154,7 @@ const FormDialog = ({
 
   // Renderizar campo según su tipo
   const renderField = (field) => {
-    if (field.type === 'select') {
+    if (field.type === "select") {
       return (
         <FormControl
           fullWidth
@@ -165,8 +168,10 @@ const FormDialog = ({
           <Select
             labelId={`${field.name}-select-label`}
             id={`${field.name}-select`}
-            value={formData[field.name] || ''}
-            onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+            value={formData[field.name] || ""}
+            onChange={(e) =>
+              setFormData({ ...formData, [field.name]: e.target.value })
+            }
             label={field.label}
             required={field.required}
             disabled={loadingOptions[field.name]}
@@ -184,11 +189,13 @@ const FormDialog = ({
               </MenuItem>
             ) : (
               selectOptions[field.name]?.map((option) => (
-                <MenuItem 
-                  key={option[field.optionValue]} 
+                <MenuItem
+                  key={option[field.optionValue]}
                   value={option[field.optionValue]}
                 >
-                  {field.optionLabel ? field.optionLabel(option) : option[field.optionValue]}
+                  {field.optionLabel
+                    ? field.optionLabel(option)
+                    : option[field.optionValue]}
                 </MenuItem>
               ))
             )}
@@ -204,9 +211,11 @@ const FormDialog = ({
         margin="normal"
         label={field.label}
         name={field.name}
-        type={field.type || 'text'}
-        value={formData[field.name] || ''}
-        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+        type={field.type || "text"}
+        value={formData[field.name] || ""}
+        onChange={(e) =>
+          setFormData({ ...formData, [field.name]: e.target.value })
+        }
         required={field.required}
         multiline={field.multiline}
         rows={field.rows}
@@ -215,78 +224,84 @@ const FormDialog = ({
   };
 
   const handleSaveForm = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
-      if (tabValue === 0) {
-        // ... existing developer code ...
-      } else if (tabValue === 1) {
-        // ... existing development code ...
-      } else if (tabValue === 2) {
-        // ... existing agency code ...
-      } else if (tabValue === 3 || title.includes("Propiedad")) {
-        let endpoint = "/prototype";
-        const formDataToSend = new FormData();
+      // Para desarrollos
+      let endpoint = "/development";
+      const formDataToSend = new FormData();
 
-        // Procesar todos los campos del formulario
-        Object.keys(formData).forEach(key => {
-          if (
-            key !== 'mainImage' &&
-            key !== 'mainImagePreview' &&
-            key !== 'secondaryImages' &&
-            key !== 'secondaryImagesPreview'
-          ) {
-            const value = formData[key];
-            if (value !== null && value !== undefined) {
-              if (typeof value === 'boolean') {
-                formDataToSend.append(key, value ? '1' : '0');
-              } else if (typeof value === 'string' || typeof value === 'number') {
-                formDataToSend.append(key, value.toString());
-              }
-            }
+      // Agregar campos básicos
+      formDataToSend.append("developmentName", formData.developmentName || "");
+      formDataToSend.append(
+        "realEstateDevelopmentId",
+        formData.realEstateDevelopmentId || ""
+      );
+      formDataToSend.append("url", formData.url || "");
+      formDataToSend.append("state", formData.state || "");
+      formDataToSend.append("city", formData.city || "");
+      formDataToSend.append("zipCode", formData.zipCode || "");
+      formDataToSend.append("street", formData.street || "");
+      formDataToSend.append("extNum", formData.extNum || "");
+      formDataToSend.append("intNum", formData.intNum || "");
+      formDataToSend.append("mapLocation", formData.mapLocation || "");
+
+      // Agregar contactos si existen
+      if (formData.contacts) {
+        formDataToSend.append("contacts", JSON.stringify(formData.contacts));
+      }
+
+      // Agregar imagen principal
+      if (formData.mainImage instanceof File) {
+        console.log("Agregando imagen principal:", formData.mainImage.name);
+        formDataToSend.append("mainImage", formData.mainImage);
+      }
+
+      // Agregar imágenes secundarias
+      if (formData.secondaryImages && Array.isArray(formData.secondaryImages)) {
+        console.log(
+          "Número de imágenes secundarias:",
+          formData.secondaryImages.length
+        );
+
+        // Verificar cada imagen antes de agregarla
+        formData.secondaryImages.forEach((file, index) => {
+          console.log(`Verificando imagen secundaria ${index}:`, file);
+          console.log(`Tipo de archivo:`, file.type);
+          console.log(`Es instancia de File:`, file instanceof File);
+
+          if (file instanceof File) {
+            console.log(`Agregando imagen secundaria ${index}:`, file.name);
+            formDataToSend.append("secondaryImages", file);
           }
         });
+      }
 
-        // Manejar la imagen principal
-        if (formData.mainImage && typeof formData.mainImage !== 'string') {
-          formDataToSend.append('mainImage', formData.mainImage);
-        }
-
-        // Manejar las imágenes secundarias
-        if (formData.secondaryImages && Array.isArray(formData.secondaryImages)) {
-          formData.secondaryImages.forEach((file) => {
-            if (file instanceof File) {
-              formDataToSend.append('secondaryImages', file);
-            }
-          });
-        }
-
-        if (currentItem) {
-          endpoint = `/prototype/${currentItem.prototypeId}`;
-          await axiosInstance.put(endpoint, formDataToSend, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+      // Verificar el contenido final del FormData
+      console.log("Contenido final del FormData:");
+      for (let [key, value] of formDataToSend.entries()) {
+        if (value instanceof File) {
+          console.log(
+            `${key}: File - ${value.name} (${value.size} bytes) [${value.type}]`
+          );
         } else {
-          await axiosInstance.post(endpoint, formDataToSend, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          console.log(`${key}:`, value);
         }
-
-        const response = await axiosInstance.get("/prototype");
-        setProperties(response.data.data || []);
       }
 
-      setDialogOpen(false);
+      // Enviar la petición con el content-type correcto
+      const response = await axiosInstance.post(endpoint, formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Accept: "*/*",
+        },
+      });
+
+      console.log("Respuesta del servidor:", response.data);
+      onClose();
     } catch (error) {
-      console.error("Error al guardar los datos:", error);
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError(`Error al guardar los datos: ${error.message}`);
+      console.error("Error en la petición:", error);
+      if (setError) {
+        setError(error.response?.data?.message || "Error al guardar los datos");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -301,38 +316,55 @@ const FormDialog = ({
       // Si estamos editando, obtener la información actualizada
       if (item) {
         if (type === "developer") {
-          const response = await axiosInstance.get(`/realEstateDevelopment/${item.realEstateDevelopmentId}`);
+          const response = await axiosInstance.get(
+            `/realEstateDevelopment/${item.realEstateDevelopmentId}`
+          );
           updatedItem = response.data.data;
         } else if (type === "development") {
-          const response = await axiosInstance.get(`/development/${item.developmentId}`);
+          const response = await axiosInstance.get(
+            `/development/${item.developmentId}`
+          );
           updatedItem = response.data.data;
-          
+
           // Preparar las imágenes para el formulario
           if (updatedItem) {
             // Agregar la URL de la imagen principal
             if (updatedItem.mainImage) {
               try {
-                const filename = updatedItem.mainImage.split('/').pop();
-                const imageResponse = await axiosInstance.get(`/image/${filename}`, {
-                  responseType: 'blob'
+                const filename = updatedItem.mainImage.split("/").pop();
+                const imageResponse = await axiosInstance.get(
+                  `/image/${filename}`,
+                  {
+                    responseType: "blob",
+                  }
+                );
+                const blob = new Blob([imageResponse.data], {
+                  type: imageResponse.headers["content-type"],
                 });
-                const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] });
                 updatedItem.mainImagePreview = URL.createObjectURL(blob);
               } catch (error) {
                 console.error("Error al cargar la imagen principal:", error);
               }
             }
-            
+
             // Agregar las URLs de las imágenes secundarias
-            if (updatedItem.secondaryImages && updatedItem.secondaryImages.length > 0) {
+            if (
+              updatedItem.secondaryImages &&
+              updatedItem.secondaryImages.length > 0
+            ) {
               updatedItem.secondaryImagesPreview = await Promise.all(
                 updatedItem.secondaryImages.map(async (img) => {
                   try {
-                    const filename = img.imagePath.split('/').pop();
-                    const imageResponse = await axiosInstance.get(`/image/${filename}`, {
-                      responseType: 'blob'
+                    const filename = img.imagePath.split("/").pop();
+                    const imageResponse = await axiosInstance.get(
+                      `/image/${filename}`,
+                      {
+                        responseType: "blob",
+                      }
+                    );
+                    const blob = new Blob([imageResponse.data], {
+                      type: imageResponse.headers["content-type"],
                     });
-                    const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] });
                     return URL.createObjectURL(blob);
                   } catch (error) {
                     console.error("Error al cargar imagen secundaria:", error);
@@ -340,11 +372,16 @@ const FormDialog = ({
                   }
                 })
               );
-              updatedItem.secondaryImagesPreview = updatedItem.secondaryImagesPreview.filter(url => url !== null);
+              updatedItem.secondaryImagesPreview =
+                updatedItem.secondaryImagesPreview.filter(
+                  (url) => url !== null
+                );
             }
           }
         } else if (type === "property") {
-          const response = await axiosInstance.get(`/prototype/${item.prototypeId}`);
+          const response = await axiosInstance.get(
+            `/prototype/${item.prototypeId}`
+          );
           updatedItem = response.data.data;
 
           // Preparar las imágenes para el formulario de propiedad
@@ -352,10 +389,15 @@ const FormDialog = ({
             // Cargar la imagen principal
             if (updatedItem.mainImage) {
               try {
-                const imageResponse = await axiosInstance.get(`/image?path=${encodeURIComponent(updatedItem.mainImage)}`, {
-                  responseType: 'blob'
+                const imageResponse = await axiosInstance.get(
+                  `/image?path=${encodeURIComponent(updatedItem.mainImage)}`,
+                  {
+                    responseType: "blob",
+                  }
+                );
+                const blob = new Blob([imageResponse.data], {
+                  type: imageResponse.headers["content-type"],
                 });
-                const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] });
                 updatedItem.mainImagePreview = URL.createObjectURL(blob);
               } catch (error) {
                 console.error("Error al cargar la imagen principal:", error);
@@ -363,14 +405,22 @@ const FormDialog = ({
             }
 
             // Cargar las imágenes secundarias
-            if (updatedItem.secondaryImages && updatedItem.secondaryImages.length > 0) {
+            if (
+              updatedItem.secondaryImages &&
+              updatedItem.secondaryImages.length > 0
+            ) {
               updatedItem.secondaryImagesPreview = await Promise.all(
                 updatedItem.secondaryImages.map(async (img) => {
                   try {
-                    const imageResponse = await axiosInstance.get(`/image?path=${encodeURIComponent(img.pathImage)}`, {
-                      responseType: 'blob'
+                    const imageResponse = await axiosInstance.get(
+                      `/image?path=${encodeURIComponent(img.pathImage)}`,
+                      {
+                        responseType: "blob",
+                      }
+                    );
+                    const blob = new Blob([imageResponse.data], {
+                      type: imageResponse.headers["content-type"],
                     });
-                    const blob = new Blob([imageResponse.data], { type: imageResponse.headers['content-type'] });
                     return URL.createObjectURL(blob);
                   } catch (error) {
                     console.error("Error al cargar imagen secundaria:", error);
@@ -378,7 +428,10 @@ const FormDialog = ({
                   }
                 })
               );
-              updatedItem.secondaryImagesPreview = updatedItem.secondaryImagesPreview.filter(url => url !== null);
+              updatedItem.secondaryImagesPreview =
+                updatedItem.secondaryImagesPreview.filter(
+                  (url) => url !== null
+                );
             }
           }
         }
@@ -388,15 +441,21 @@ const FormDialog = ({
 
       if (type === "developer") {
         setDialogTitle(
-          updatedItem ? "Editar Desarrolladora" : "Agregar Desarrolladora Inmobiliaria"
+          updatedItem
+            ? "Editar Desarrolladora"
+            : "Agregar Desarrolladora Inmobiliaria"
         );
         setCurrentFields(developerFields);
       } else if (type === "development") {
-        setDialogTitle(updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo");
+        setDialogTitle(
+          updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo"
+        );
         setCurrentFields(developmentFields);
       } else if (type === "agency") {
         setDialogTitle(
-          updatedItem ? "Editar Inmobiliaria Externa" : "Agregar Inmobiliaria Externa"
+          updatedItem
+            ? "Editar Inmobiliaria Externa"
+            : "Agregar Inmobiliaria Externa"
         );
         setCurrentFields(externalAgencyFields);
       } else if (type === "property") {
@@ -408,7 +467,9 @@ const FormDialog = ({
       setDialogOpen(true);
     } catch (error) {
       console.error("Error al obtener los datos:", error);
-      setError("Error al cargar los datos del elemento. Por favor, inténtalo de nuevo.");
+      setError(
+        "Error al cargar los datos del elemento. Por favor, inténtalo de nuevo."
+      );
     } finally {
       setLoading(false);
     }
@@ -420,15 +481,15 @@ const FormDialog = ({
       <DialogContent>
         <Box component="form" sx={{ mt: 2 }}>
           {error && (
-            <Alert 
-              severity="error" 
+            <Alert
+              severity="error"
               sx={{ mb: 2 }}
               onClose={() => setError(null)}
             >
               {error}
             </Alert>
           )}
-          
+
           {/* Renderizar campos según el tipo de formulario */}
           {title.includes("Desarrolladora") ? (
             // Formulario para desarrolladoras
@@ -470,76 +531,11 @@ const FormDialog = ({
                 Datos del Desarrollo
               </Typography>
               <Grid container spacing={2}>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Nombre del Desarrollo"
-                    name="developmentName"
-                    value={formData.developmentName || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        developmentName: e.target.value,
-                      })
-                    }
-                    required
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="URL"
-                    name="url"
-                    value={formData.url || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, url: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <FormControl
-                    fullWidth
-                    required
-                    margin="normal"
-                    sx={{ minWidth: 240, width: "100%" }}
-                  >
-                    <InputLabel id="developer-select-label">
-                      Desarrolladora
-                    </InputLabel>
-                    <Select
-                      labelId="developer-select-label"
-                      id="developer-select"
-                      value={formData.realEstateDevelopmentId || ""}
-                      label="Desarrolladora"
-                      onChange={handleDeveloperChange}
-                      disabled={loadingDevelopers}
-                    >
-                      {loadingDevelopers ? (
-                        <MenuItem value="" disabled>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <CircularProgress size={20} sx={{ mr: 1 }} />
-                            Cargando desarrolladoras...
-                          </Box>
-                        </MenuItem>
-                      ) : availableDevelopers.length === 0 ? (
-                        <MenuItem value="" disabled>
-                          No hay desarrolladoras disponibles
-                        </MenuItem>
-                      ) : (
-                        availableDevelopers.map((developer) => (
-                          <MenuItem
-                            key={developer.realEstateDevelopmentId}
-                            value={developer.realEstateDevelopmentId}
-                          >
-                            {developer.realEstateDevelopmentName}
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                {fields.map((field) => (
+                  <Grid xs={12} sm={6} md={4} key={field.name}>
+                    {renderField(field)}
+                  </Grid>
+                ))}
               </Grid>
 
               {/* Sección de Imágenes */}
@@ -593,108 +589,20 @@ const FormDialog = ({
                       multiple
                       hidden
                       onChange={(e) => {
-                        const files = Array.from(e.target.files);
+                        const filesArray = Array.from(e.target.files);
+                        console.log("Archivos seleccionados:", filesArray);
+
+                        // Guardar los archivos directamente sin crear copias
                         setFormData({
                           ...formData,
-                          secondaryImages: files,
-                          secondaryImagesPreview: files.map((file) =>
+                          secondaryImages: filesArray,
+                          secondaryImagesPreview: filesArray.map((file) =>
                             URL.createObjectURL(file)
                           ),
                         });
                       }}
                     />
                   </Button>
-                </Grid>
-              </Grid>
-
-              {/* Sección de Ubicación */}
-              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                Ubicación
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Estado"
-                    name="state"
-                    value={formData.state || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, state: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Ciudad"
-                    name="city"
-                    value={formData.city || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, city: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Código Postal"
-                    name="zipCode"
-                    value={formData.zipCode || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, zipCode: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Calle"
-                    name="street"
-                    value={formData.street || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, street: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Número Exterior"
-                    name="extNum"
-                    value={formData.extNum || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, extNum: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Número Interior"
-                    name="intNum"
-                    value={formData.intNum || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, intNum: e.target.value })
-                    }
-                  />
-                </Grid>
-                <Grid xs={12}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Ubicación en Mapa"
-                    name="mapLocation"
-                    value={formData.mapLocation || ""}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mapLocation: e.target.value })
-                    }
-                  />
                 </Grid>
               </Grid>
             </>
@@ -759,17 +667,16 @@ const FormDialog = ({
                       multiple
                       hidden
                       onChange={(e) => {
-                        const files = Array.from(e.target.files);
-                        const currentSecondaryImages = formData.secondaryImages || [];
-                        const currentPreviews = formData.secondaryImagesPreview || [];
-                        
+                        const filesArray = Array.from(e.target.files);
+                        console.log("Archivos seleccionados:", filesArray);
+
+                        // Guardar los archivos directamente sin crear copias
                         setFormData({
                           ...formData,
-                          secondaryImages: [...currentSecondaryImages, ...files],
-                          secondaryImagesPreview: [
-                            ...currentPreviews,
-                            ...files.map((file) => URL.createObjectURL(file))
-                          ],
+                          secondaryImages: filesArray,
+                          secondaryImagesPreview: filesArray.map((file) =>
+                            URL.createObjectURL(file)
+                          ),
                         });
                       }}
                     />
