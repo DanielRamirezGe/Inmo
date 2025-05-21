@@ -1,13 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-  Alert,
-} from "@mui/material";
+import React, { useState, useEffect, useCallback } from "react";
+import { Box, Container, Typography, Tabs, Tab, Alert } from "@mui/material";
 import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
 
 // Componentes
@@ -28,22 +21,22 @@ import {
 } from "./components/fieldsConfig";
 
 const ENTITY_TYPES = {
-  DEVELOPER: 'developer',
-  DEVELOPMENT: 'development',
-  PROPERTY: 'property'
+  DEVELOPER: "developer",
+  DEVELOPMENT: "development",
+  PROPERTY: "property",
 };
 
 const TAB_TITLES = {
   0: "Desarrolladoras Inmobiliarias",
   1: "Desarrollos",
-  2: "Propiedades"
+  2: "Propiedades",
 };
 
 export default function PropertiesPage() {
   const axiosInstance = useAxiosMiddleware();
   const [tabValue, setTabValue] = useState(0);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
-  
+
   // Estados para diálogos
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
@@ -62,6 +55,7 @@ export default function PropertiesPage() {
     getItemDetails: getDeveloperDetails,
     deleteItem: deleteDeveloper,
     saveItem: saveDeveloper,
+    pagination: developersPagination,
   } = useEntityData(ENTITY_TYPES.DEVELOPER, axiosInstance);
 
   const {
@@ -72,6 +66,7 @@ export default function PropertiesPage() {
     getItemDetails: getDevelopmentDetails,
     deleteItem: deleteDevelopment,
     saveItem: saveDevelopment,
+    pagination: developmentsPagination,
   } = useEntityData(ENTITY_TYPES.DEVELOPMENT, axiosInstance);
 
   const {
@@ -82,12 +77,53 @@ export default function PropertiesPage() {
     getItemDetails: getPropertyDetails,
     deleteItem: deleteProperty,
     saveItem: saveProperty,
+    pagination: propertiesPagination,
   } = useEntityData(ENTITY_TYPES.PROPERTY, axiosInstance);
 
-  const {
-    processItemImages,
-    imageLoading,
-  } = useImageHandling(axiosInstance);
+  const { processItemImages, imageLoading } = useImageHandling(axiosInstance);
+
+  // Manejadores de paginación
+  const handleDeveloperPageChange = useCallback(
+    (newPage) => {
+      fetchDevelopers(newPage);
+    },
+    [fetchDevelopers]
+  );
+
+  const handleDeveloperPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchDevelopers(1, newPageSize);
+    },
+    [fetchDevelopers]
+  );
+
+  const handleDevelopmentPageChange = useCallback(
+    (newPage) => {
+      fetchDevelopments(newPage);
+    },
+    [fetchDevelopments]
+  );
+
+  const handleDevelopmentPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchDevelopments(1, newPageSize);
+    },
+    [fetchDevelopments]
+  );
+
+  const handlePropertyPageChange = useCallback(
+    (newPage) => {
+      fetchProperties(newPage);
+    },
+    [fetchProperties]
+  );
+
+  const handlePropertyPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchProperties(1, newPageSize);
+    },
+    [fetchProperties]
+  );
 
   // Cargar datos iniciales solo una vez al montar el componente
   useEffect(() => {
@@ -126,7 +162,9 @@ export default function PropertiesPage() {
         let detailedItem;
         switch (type) {
           case ENTITY_TYPES.DEVELOPER:
-            detailedItem = await getDeveloperDetails(item.realEstateDevelopmentId);
+            detailedItem = await getDeveloperDetails(
+              item.realEstateDevelopmentId
+            );
             break;
           case ENTITY_TYPES.DEVELOPMENT:
             detailedItem = await getDevelopmentDetails(item.developmentId);
@@ -135,7 +173,7 @@ export default function PropertiesPage() {
             detailedItem = await getPropertyDetails(item.prototypeId);
             break;
         }
-        
+
         if (detailedItem) {
           updatedItem = await processItemImages(detailedItem);
         }
@@ -147,7 +185,11 @@ export default function PropertiesPage() {
     setCurrentItem(updatedItem);
 
     if (type === ENTITY_TYPES.DEVELOPER) {
-      setDialogTitle(updatedItem ? "Editar Desarrolladora" : "Agregar Desarrolladora Inmobiliaria");
+      setDialogTitle(
+        updatedItem
+          ? "Editar Desarrolladora"
+          : "Agregar Desarrolladora Inmobiliaria"
+      );
       setCurrentFields(developerFields);
     } else if (type === ENTITY_TYPES.DEVELOPMENT) {
       setDialogTitle(updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo");
@@ -187,7 +229,7 @@ export default function PropertiesPage() {
   // Función para guardar elementos
   const handleSaveForm = async () => {
     let success = false;
-    
+
     try {
       if (tabValue === 0) {
         success = await saveDeveloper(
@@ -196,32 +238,91 @@ export default function PropertiesPage() {
         );
       } else if (tabValue === 1) {
         const formDataToSend = new FormData();
-        Object.keys(formData).forEach(key => {
-          if (!key.includes('Preview')) {
-            const value = formData[key];
-            if (value !== null && value !== undefined) {
-              formDataToSend.append(key, value);
-            }
+
+        // Agregar campos básicos
+        const basicFields = [
+          "developmentName",
+          "realEstateDevelopmentId",
+          "url",
+          "state",
+          "city",
+          "zipCode",
+          "street",
+          "extNum",
+          "intNum",
+          "mapLocation",
+        ];
+
+        basicFields.forEach((field) => {
+          if (formData[field] !== null && formData[field] !== undefined) {
+            formDataToSend.append(field, formData[field]);
           }
         });
+
+        // Agregar contactos si existen
+        if (formData.contacts) {
+          formDataToSend.append("contacts", JSON.stringify(formData.contacts));
+        }
+
+        // Agregar imagen principal
+        if (formData.mainImage instanceof File) {
+          console.log("Agregando imagen principal:", formData.mainImage.name);
+          formDataToSend.append("mainImage", formData.mainImage);
+        }
+
+        // Agregar imágenes secundarias
+        if (
+          formData.secondaryImages &&
+          Array.isArray(formData.secondaryImages)
+        ) {
+          console.log(
+            "Número de imágenes secundarias:",
+            formData.secondaryImages.length
+          );
+
+          formData.secondaryImages.forEach((file, index) => {
+            if (file instanceof File) {
+              console.log(`Agregando imagen secundaria ${index}:`, file.name);
+              formDataToSend.append("secondaryImages", file);
+            }
+          });
+        }
+
         success = await saveDevelopment(
           formDataToSend,
           currentItem?.developmentId
         );
       } else if (tabValue === 2) {
         const formDataToSend = new FormData();
-        Object.keys(formData).forEach(key => {
-          if (!key.includes('Preview')) {
+
+        // Filtrar campos que no son de preview
+        Object.keys(formData).forEach((key) => {
+          if (!key.includes("Preview")) {
             const value = formData[key];
             if (value !== null && value !== undefined) {
-              formDataToSend.append(key, value);
+              if (key === "contacts" && Array.isArray(value)) {
+                formDataToSend.append(key, JSON.stringify(value));
+              } else if (
+                (key === "mainImage" && value instanceof File) ||
+                (key === "secondaryImages" && Array.isArray(value))
+              ) {
+                if (key === "mainImage") {
+                  formDataToSend.append(key, value);
+                } else {
+                  value.forEach((file) => {
+                    if (file instanceof File) {
+                      formDataToSend.append(key, file);
+                    }
+                  });
+                }
+              } else {
+                formDataToSend.append(key, value);
+              }
             }
           }
         });
-        success = await saveProperty(
-          formDataToSend,
-          currentItem?.prototypeId
-        );
+
+        success = await saveProperty(formDataToSend, currentItem?.prototypeId);
       }
 
       if (success) {
@@ -239,28 +340,53 @@ export default function PropertiesPage() {
           items: developers,
           loading: developersLoading || imageLoading,
           error: developersError,
-          type: ENTITY_TYPES.DEVELOPER
+          type: ENTITY_TYPES.DEVELOPER,
+          pagination: developersPagination,
+          onPageChange: handleDeveloperPageChange,
+          onPageSizeChange: handleDeveloperPageSizeChange,
         };
       case 1:
         return {
           items: developments,
           loading: developmentsLoading || imageLoading,
           error: developmentsError,
-          type: ENTITY_TYPES.DEVELOPMENT
+          type: ENTITY_TYPES.DEVELOPMENT,
+          pagination: developmentsPagination,
+          onPageChange: handleDevelopmentPageChange,
+          onPageSizeChange: handleDevelopmentPageSizeChange,
         };
       case 2:
         return {
           items: properties,
           loading: propertiesLoading || imageLoading,
           error: propertiesError,
-          type: ENTITY_TYPES.PROPERTY
+          type: ENTITY_TYPES.PROPERTY,
+          pagination: propertiesPagination,
+          onPageChange: handlePropertyPageChange,
+          onPageSizeChange: handlePropertyPageSizeChange,
         };
       default:
-        return { items: [], loading: false, error: null, type: null };
+        return {
+          items: [],
+          loading: false,
+          error: null,
+          type: null,
+          pagination: null,
+          onPageChange: () => {},
+          onPageSizeChange: () => {},
+        };
     }
   };
 
-  const { items, loading, error, type } = getCurrentItems();
+  const {
+    items,
+    loading,
+    error,
+    type,
+    pagination,
+    onPageChange,
+    onPageSizeChange,
+  } = getCurrentItems();
 
   return (
     <>
@@ -299,6 +425,9 @@ export default function PropertiesPage() {
             onDelete={handleOpenDeleteDialog}
             currentTab={tabValue}
             allDevelopers={developers}
+            pagination={pagination}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
           />
         </Box>
 
@@ -310,8 +439,16 @@ export default function PropertiesPage() {
           formData={formData}
           setFormData={setFormData}
           fields={currentFields}
-          loading={loading}
-          error={error}
+          loading={
+            developersLoading ||
+            developmentsLoading ||
+            propertiesLoading ||
+            imageLoading
+          }
+          error={developersError || developmentsError || propertiesError}
+          setError={() => {}}
+          tabValue={tabValue}
+          currentItem={currentItem}
         />
 
         <DeleteDialog
