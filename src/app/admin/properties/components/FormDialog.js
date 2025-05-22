@@ -155,6 +155,21 @@ const FormDialog = ({
   // Renderizar campo según su tipo
   const renderField = (field) => {
     if (field.type === "select") {
+      let options = [];
+
+      // Si el campo tiene opciones estáticas, usarlas
+      if (field.options) {
+        options = field.options;
+      } else {
+        // Si no, usar las opciones del endpoint
+        options = selectOptions[field.name] || [];
+      }
+
+      const value = formData[field.name] || "";
+      const isValidValue = field.options
+        ? options.some((option) => option.value === value)
+        : options.some((option) => option[field.optionValue] === value);
+
       return (
         <FormControl
           fullWidth
@@ -168,36 +183,47 @@ const FormDialog = ({
           <Select
             labelId={`${field.name}-select-label`}
             id={`${field.name}-select`}
-            value={formData[field.name] || ""}
+            value={isValidValue ? value : ""}
             onChange={(e) =>
               setFormData({ ...formData, [field.name]: e.target.value })
             }
             label={field.label}
             required={field.required}
-            disabled={loadingOptions[field.name]}
+            disabled={!field.options && loadingOptions[field.name]}
           >
-            {loadingOptions[field.name] ? (
+            {!field.options && loadingOptions[field.name] ? (
               <MenuItem value="" disabled>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <CircularProgress size={20} sx={{ mr: 1 }} />
                   Cargando opciones...
                 </Box>
               </MenuItem>
-            ) : selectOptions[field.name]?.length === 0 ? (
+            ) : options.length === 0 ? (
               <MenuItem value="" disabled>
                 No hay opciones disponibles
               </MenuItem>
             ) : (
-              selectOptions[field.name]?.map((option) => (
-                <MenuItem
-                  key={option[field.optionValue]}
-                  value={option[field.optionValue]}
-                >
-                  {field.optionLabel
-                    ? field.optionLabel(option)
-                    : option[field.optionValue]}
-                </MenuItem>
-              ))
+              [
+                <MenuItem key="empty" value="">
+                  <em>Ninguno</em>
+                </MenuItem>,
+                ...options.map((option) => (
+                  <MenuItem
+                    key={
+                      field.options ? option.value : option[field.optionValue]
+                    }
+                    value={
+                      field.options ? option.value : option[field.optionValue]
+                    }
+                  >
+                    {field.options
+                      ? option.label
+                      : field.optionLabel
+                      ? field.optionLabel(option)
+                      : option[field.optionValue]}
+                  </MenuItem>
+                )),
+              ]
             )}
           </Select>
         </FormControl>
@@ -221,88 +247,6 @@ const FormDialog = ({
         rows={field.rows}
       />
     );
-  };
-
-  const handleSaveForm = async () => {
-    try {
-      // Para desarrollos
-      let endpoint = "/development";
-      const formDataToSend = new FormData();
-
-      // Agregar campos básicos
-      formDataToSend.append("developmentName", formData.developmentName || "");
-      formDataToSend.append(
-        "realEstateDevelopmentId",
-        formData.realEstateDevelopmentId || ""
-      );
-      formDataToSend.append("url", formData.url || "");
-      formDataToSend.append("state", formData.state || "");
-      formDataToSend.append("city", formData.city || "");
-      formDataToSend.append("zipCode", formData.zipCode || "");
-      formDataToSend.append("street", formData.street || "");
-      formDataToSend.append("extNum", formData.extNum || "");
-      formDataToSend.append("intNum", formData.intNum || "");
-      formDataToSend.append("mapLocation", formData.mapLocation || "");
-
-      // Agregar contactos si existen
-      if (formData.contacts) {
-        formDataToSend.append("contacts", JSON.stringify(formData.contacts));
-      }
-
-      // Agregar imagen principal
-      if (formData.mainImage instanceof File) {
-        console.log("Agregando imagen principal:", formData.mainImage.name);
-        formDataToSend.append("mainImage", formData.mainImage);
-      }
-
-      // Agregar imágenes secundarias
-      if (formData.secondaryImages && Array.isArray(formData.secondaryImages)) {
-        console.log(
-          "Número de imágenes secundarias:",
-          formData.secondaryImages.length
-        );
-
-        // Verificar cada imagen antes de agregarla
-        formData.secondaryImages.forEach((file, index) => {
-          console.log(`Verificando imagen secundaria ${index}:`, file);
-          console.log(`Tipo de archivo:`, file.type);
-          console.log(`Es instancia de File:`, file instanceof File);
-
-          if (file instanceof File) {
-            console.log(`Agregando imagen secundaria ${index}:`, file.name);
-            formDataToSend.append("secondaryImages", file);
-          }
-        });
-      }
-
-      // Verificar el contenido final del FormData
-      console.log("Contenido final del FormData:");
-      for (let [key, value] of formDataToSend.entries()) {
-        if (value instanceof File) {
-          console.log(
-            `${key}: File - ${value.name} (${value.size} bytes) [${value.type}]`
-          );
-        } else {
-          console.log(`${key}:`, value);
-        }
-      }
-
-      // Enviar la petición con el content-type correcto
-      const response = await axiosInstance.post(endpoint, formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Accept: "*/*",
-        },
-      });
-
-      console.log("Respuesta del servidor:", response.data);
-      onClose();
-    } catch (error) {
-      console.error("Error en la petición:", error);
-      if (setError) {
-        setError(error.response?.data?.message || "Error al guardar los datos");
-      }
-    }
   };
 
   // Función para abrir diálogo

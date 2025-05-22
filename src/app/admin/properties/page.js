@@ -45,6 +45,7 @@ export default function PropertiesPage() {
   const [currentFields, setCurrentFields] = useState([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   // Hooks personalizados para cada tipo de entidad
   const {
@@ -243,6 +244,7 @@ export default function PropertiesPage() {
         const basicFields = [
           "developmentName",
           "realEstateDevelopmentId",
+          "commission",
           "url",
           "state",
           "city",
@@ -266,7 +268,6 @@ export default function PropertiesPage() {
 
         // Agregar imagen principal
         if (formData.mainImage instanceof File) {
-          console.log("Agregando imagen principal:", formData.mainImage.name);
           formDataToSend.append("mainImage", formData.mainImage);
         }
 
@@ -275,14 +276,8 @@ export default function PropertiesPage() {
           formData.secondaryImages &&
           Array.isArray(formData.secondaryImages)
         ) {
-          console.log(
-            "Número de imágenes secundarias:",
-            formData.secondaryImages.length
-          );
-
           formData.secondaryImages.forEach((file, index) => {
             if (file instanceof File) {
-              console.log(`Agregando imagen secundaria ${index}:`, file.name);
               formDataToSend.append("secondaryImages", file);
             }
           });
@@ -327,9 +322,14 @@ export default function PropertiesPage() {
 
       if (success) {
         setDialogOpen(false);
+        setCurrentItem(null);
+        setFormData({});
       }
     } catch (error) {
       console.error("Error al guardar:", error);
+      setFormError(
+        "Error al guardar los datos. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
@@ -381,7 +381,7 @@ export default function PropertiesPage() {
   const {
     items,
     loading,
-    error,
+    error: currentError,
     type,
     pagination,
     onPageChange,
@@ -409,9 +409,9 @@ export default function PropertiesPage() {
           </Tabs>
         </Box>
 
-        {error && (
+        {currentError && (
           <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
+            {currentError}
           </Alert>
         )}
 
@@ -446,7 +446,7 @@ export default function PropertiesPage() {
             imageLoading
           }
           error={developersError || developmentsError || propertiesError}
-          setError={() => {}}
+          setError={setFormError}
           tabValue={tabValue}
           currentItem={currentItem}
         />
