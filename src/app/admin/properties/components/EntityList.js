@@ -11,19 +11,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ItemCard from "./ItemCard";
-
-const getItemKey = (item, currentTab) => {
-  switch (currentTab) {
-    case 0: // Desarrolladora
-      return item.realEstateDevelopmentId;
-    case 1: // Desarrollo
-      return item.developmentId;
-    case 2: // Propiedad
-      return item.prototypeId;
-    default:
-      return item.id;
-  }
-};
+import { FORM_TYPES, TAB_INDICES, TAB_FORM_TYPE_MAP } from "../constants";
 
 const EntityList = ({
   title,
@@ -32,6 +20,7 @@ const EntityList = ({
   onAdd,
   onEdit,
   onDelete,
+  onPublish,
   currentTab,
   allDevelopers,
   pagination,
@@ -54,6 +43,56 @@ const EntityList = ({
     );
   }
 
+  const currentFormType = TAB_FORM_TYPE_MAP[currentTab];
+  const isPublishedTab = currentFormType === FORM_TYPES.PROPERTY_PUBLISHED;
+
+  const getItemKey = (item) => {
+    switch (currentTab) {
+      case TAB_INDICES.DEVELOPER:
+        return item.realEstateDevelopmentId;
+      case TAB_INDICES.DEVELOPMENT:
+        return item.developmentId;
+      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+      case TAB_INDICES.PROPERTY_PUBLISHED:
+        return item.prototypeId;
+      default:
+        return null;
+    }
+  };
+
+  const getItemTitle = (item) => {
+    switch (currentTab) {
+      case TAB_INDICES.DEVELOPER:
+        return item.realEstateDevelopmentName;
+      case TAB_INDICES.DEVELOPMENT:
+        return item.developmentName;
+      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+      case TAB_INDICES.PROPERTY_PUBLISHED:
+        return item.propertyName;
+      default:
+        return "";
+    }
+  };
+
+  const getItemSubtitle = (item) => {
+    switch (currentTab) {
+      case TAB_INDICES.DEVELOPER:
+        return item.url || "Sin URL";
+      case TAB_INDICES.DEVELOPMENT:
+        const developer = allDevelopers.find(
+          (dev) => dev.realEstateDevelopmentId === item.realEstateDevelopmentId
+        );
+        return developer
+          ? developer.realEstateDevelopmentName
+          : "Sin desarrolladora";
+      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+      case TAB_INDICES.PROPERTY_PUBLISHED:
+        return `${item.propertyType} - ${item.state}, ${item.city}`;
+      default:
+        return "";
+    }
+  };
+
   return (
     <Box>
       <Box
@@ -65,17 +104,19 @@ const EntityList = ({
         }}
       >
         <Typography variant="h5">{title}</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={onAdd}
-          sx={{
-            bgcolor: "#25D366",
-            "&:hover": { bgcolor: "#128C7E" },
-          }}
-        >
-          Agregar
-        </Button>
+        {!isPublishedTab && (
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onAdd}
+            sx={{
+              bgcolor: "#25D366",
+              "&:hover": { bgcolor: "#128C7E" },
+            }}
+          >
+            Agregar
+          </Button>
+        )}
       </Box>
 
       {loading ? (
@@ -97,19 +138,15 @@ const EntityList = ({
         <>
           <Grid container spacing={3}>
             {items.map((item) => (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
-                key={getItemKey(item, currentTab)}
-              >
+              <Grid item xs={12} sm={6} md={4} key={getItemKey(item)}>
                 <ItemCard
                   item={item}
-                  onEdit={() => onEdit(item)}
-                  onDelete={() => onDelete(item)}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onPublish={onPublish}
                   currentTab={currentTab}
                   allDevelopers={allDevelopers}
+                  onRefresh={onPageChange}
                 />
               </Grid>
             ))}
@@ -143,6 +180,7 @@ EntityList.propTypes = {
   onAdd: PropTypes.func.isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onPublish: PropTypes.func,
   currentTab: PropTypes.number.isRequired,
   allDevelopers: PropTypes.array,
   pagination: PropTypes.object,

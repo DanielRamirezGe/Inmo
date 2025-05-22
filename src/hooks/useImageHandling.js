@@ -1,70 +1,152 @@
-import { useState, useCallback } from 'react';
-import { api } from '../services/api';
+import { useState, useCallback } from "react";
+import { api } from "../services/api";
+import { useAxiosMiddleware } from "../utils/axiosMiddleware";
 
-export const useImageHandling = (axiosInstance) => {
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageError, setImageError] = useState(null);
+export const useImageHandling = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const loadImage = useCallback(async (path) => {
+  // Manejar axiosInstance internamente
+  const axiosInstance = useAxiosMiddleware();
+
+  const loadImage = useCallback(async (path, isFullPath = false) => {
     if (!path) return null;
-    
-    setImageLoading(true);
-    setImageError(null);
+
+    setLoading(true);
+    setError(null);
     try {
-      const blob = await api.getImage(axiosInstance, path);
+      const blob = await api.getImage(axiosInstance, path, isFullPath);
       return URL.createObjectURL(blob);
     } catch (error) {
-      setImageError(error.message);
+      setError("Error al cargar la imagen");
+      console.error("Error al cargar la imagen:", error);
       return null;
     } finally {
-      setImageLoading(false);
+      setLoading(false);
     }
-  }, [axiosInstance]);
+  }, []);
 
-  const loadImages = useCallback(async (images) => {
-    if (!images || !Array.isArray(images) || images.length === 0) return [];
+  const loadImages = useCallback(
+    async (images, isFullPath = false) => {
+      if (!images || !Array.isArray(images) || images.length === 0) return [];
 
-    setImageLoading(true);
-    setImageError(null);
-    try {
-      const loadedImages = await Promise.all(
-        images.map(async (img) => {
-          const path = img.imagePath || img.pathImage;
-          if (!path) return null;
-          return loadImage(path);
-        })
-      );
-      return loadedImages.filter(url => url !== null);
-    } catch (error) {
-      setImageError(error.message);
-      return [];
-    } finally {
-      setImageLoading(false);
-    }
-  }, [loadImage]);
+      setLoading(true);
+      setError(null);
+      try {
+        const loadedImages = await Promise.all(
+          images.map(async (img) => {
+            const path = isFullPath ? img.pathImage : img.imagePath;
+            if (!path) return null;
+            return loadImage(path, isFullPath);
+          })
+        );
+        return loadedImages.filter((url) => url !== null);
+      } catch (error) {
+        setError("Error al cargar las imágenes");
+        console.error("Error al cargar las imágenes:", error);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadImage]
+  );
 
-  const processItemImages = useCallback(async (item) => {
-    if (!item) return null;
+  const loadPropertyImages = useCallback(
+    async (item) => {
+      if (!item) return item;
+      const processedItem = { ...item };
 
-    const processedItem = { ...item };
-    
-    if (item.mainImage) {
-      processedItem.mainImagePreview = await loadImage(item.mainImage);
-    }
+      setLoading(true);
+      setError(null);
+      try {
+        // Cargar la imagen principal
+        if (item.mainImage) {
+          processedItem.mainImagePreview = await loadImage(
+            item.mainImage,
+            true
+          );
+        }
 
-    if (item.secondaryImages && item.secondaryImages.length > 0) {
-      processedItem.secondaryImagesPreview = await loadImages(item.secondaryImages);
-    }
+        // Cargar las imágenes secundarias
+        if (item.secondaryImages && item.secondaryImages.length > 0) {
+          processedItem.secondaryImagesPreview = await loadImages(
+            item.secondaryImages,
+            true
+          );
+        }
 
-    return processedItem;
-  }, [loadImage, loadImages]);
+        return processedItem;
+      } catch (error) {
+        console.error("Error al cargar imágenes de la propiedad:", error);
+        setError("Error al cargar las imágenes de la propiedad");
+        return processedItem;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadImage, loadImages]
+  );
+
+  const loadDevelopmentImages = useCallback(
+    async (item) => {
+      if (!item) return item;
+      const processedItem = { ...item };
+
+      setLoading(true);
+      setError(null);
+      try {
+        // Cargar la imagen principal
+        if (item.mainImage) {
+          const filename = item.mainImage.split("/").pop();
+          processedItem.mainImagePreview = await loadImage(filename);
+        }
+
+        // Cargar las imágenes secundarias
+        if (item.secondaryImages && item.secondaryImages.length > 0) {
+          processedItem.secondaryImagesPreview = await Promise.all(
+            item.secondaryImages.map(async (img) => {
+              const filename = img.imagePath.split("/").pop();
+              return loadImage(filename);
+            })
+          );
+          processedItem.secondaryImagesPreview =
+            processedItem.secondaryImagesPreview.filter((url) => url !== null);
+        }
+
+        return processedItem;
+      } catch (error) {
+        console.error("Error al cargar imágenes del desarrollo:", error);
+        setError("Error al cargar las imágenes del desarrollo");
+        return processedItem;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadImage]
+  );
+
+  const createImagePreview = useCallback((file) => {
+    if (!file || !(file instanceof File)) return null;
+    return URL.createObjectURL(file);
+  }, []);
+
+  const createImagesPreview = useCallback((files) => {
+    if (!files || !Array.isArray(files)) return [];
+    return files
+      .filter((file) => file instanceof File)
+      .map((file) => URL.createObjectURL(file));
+  }, []);
 
   return {
-    imageLoading,
-    imageError,
+    loading,
+    error,
     loadImage,
     loadImages,
-    processItemImages,
-    setImageError
+    loadPropertyImages,
+    loadDevelopmentImages,
+    createImagePreview,
+    createImagesPreview,
+    setError,
   };
-}; 
+};

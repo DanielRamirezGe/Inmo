@@ -19,8 +19,11 @@ import {
 import Grid from "@mui/material/Grid2";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
 import ImageGallery from "./ImageGallery";
+import { FORM_TYPES } from "../constants";
+import { useEntityData } from "../../../../hooks/useEntityData";
+import { useImageHandling } from "../../../../hooks/useImageHandling";
+import { useFieldOptions } from "../../../../hooks/useFieldOptions";
 
 // Componente de formulario genérico
 const FormDialog = ({
@@ -28,14 +31,17 @@ const FormDialog = ({
   onClose,
   onSubmit,
   title,
-  formData,
+  formData = {},
   setFormData,
   fields,
-  loading,
-  setLoading,
+  loading: externalLoading,
+  setLoading: setExternalLoading,
   error,
   setError,
+  formType,
+  currentItem,
 }) => {
+  // Estados locales
   const [contacts, setContacts] = useState([
     {
       role: "",
@@ -47,74 +53,167 @@ const FormDialog = ({
     },
   ]);
 
-  // Estado para almacenar las desarrolladoras disponibles
-  const [availableDevelopers, setAvailableDevelopers] = useState([]);
-  const [loadingDevelopers, setLoadingDevelopers] = useState(false);
-  const axiosInstance = useAxiosMiddleware();
-  const [selectOptions, setSelectOptions] = useState({});
-  const [loadingOptions, setLoadingOptions] = useState({});
+  // Estado local para manejar la carga cuando no se proporciona setExternalLoading
+  const [localLoading, setLocalLoading] = useState(false);
+  const setLoadingState = setExternalLoading || setLocalLoading;
 
-  // Cargar desarrolladoras al abrir el formulario de desarrollo
+  // Hooks personalizados
+  const {
+    selectOptions,
+    loadingOptions,
+    error: fieldOptionsError,
+    loadFieldOptions,
+  } = useFieldOptions(fields);
+
+  const {
+    loading: loadingImages,
+    error: imageError,
+    loadPropertyImages,
+    loadDevelopmentImages,
+    createImagePreview,
+    createImagesPreview,
+  } = useImageHandling();
+
+  const {
+    items: availableDevelopers,
+    loading: loadingDevelopers,
+    error: developersError,
+    fetchItems: fetchDevelopers,
+    getItemDetails,
+  } = useEntityData(formType);
+
+  // Definir isLoading después de inicializar todos los hooks
+  const isLoading =
+    externalLoading ||
+    localLoading ||
+    loadingImages ||
+    loadingDevelopers ||
+    loadingOptions;
+
+  // Inicializar formData según el tipo de formulario
   useEffect(() => {
-    if (open && title.includes("Desarrollo")) {
-      const fetchDevelopers = async () => {
-        setLoadingDevelopers(true);
-        try {
-          const response = await axiosInstance.get("/realEstateDevelopment");
-          setAvailableDevelopers(response.data.data || []);
-        } catch (error) {
-          console.error("Error al cargar desarrolladoras:", error);
-        } finally {
-          setLoadingDevelopers(false);
-        }
-      };
-      fetchDevelopers();
+    if (!open) return;
+
+    let initialData = {};
+    switch (formType) {
+      case FORM_TYPES.DEVELOPER:
+        initialData = {
+          realEstateDevelopmentName: "",
+          url: "",
+        };
+        break;
+      case FORM_TYPES.DEVELOPMENT:
+        initialData = {
+          developmentName: "",
+          realEstateDevelopmentId: "",
+          commission: "",
+          url: "",
+          state: "",
+          city: "",
+          zipCode: "",
+          street: "",
+          extNum: "",
+          intNum: "",
+          mapLocation: "",
+          mainImage: null,
+          mainImagePreview: null,
+          secondaryImages: [],
+          secondaryImagesPreview: [],
+        };
+        break;
+      case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
+      case FORM_TYPES.PROPERTY_PUBLISHED:
+        initialData = {
+          prototypeName: "",
+          developmentId: "",
+          price: "",
+          description: "",
+          bedrooms: "",
+          bathrooms: "",
+          halfBathrooms: "",
+          parkingSpots: "",
+          constructionSize: "",
+          lotSize: "",
+          mainImage: null,
+          mainImagePreview: null,
+          secondaryImages: [],
+          secondaryImagesPreview: [],
+        };
+        break;
+      default:
+        break;
     }
-  }, [open, title]);
 
+    // Si no hay currentItem, usar los datos iniciales
+    if (!currentItem) {
+      setFormData(initialData);
+    }
+  }, [open, formType, currentItem]);
+
+  // Cargar datos iniciales cuando se abre el diálogo
   useEffect(() => {
-    setContacts(
-      formData.contacts || [
-        {
-          role: "",
-          name: "",
-          lastNameP: "",
-          lastNameM: "",
-          mainEmail: "",
-          mainPhone: "",
-        },
-      ]
-    );
-  }, [formData.contacts]);
+    if (!open) return;
 
-  // Cargar opciones para campos select
-  useEffect(() => {
-    const fetchSelectOptions = async () => {
-      const selectFields = fields.filter(
-        (field) => field.type === "select" && field.endpoint
-      );
+    const loadInitialData = async () => {
+      try {
+        setLoadingState(true);
 
-      for (const field of selectFields) {
-        setLoadingOptions((prev) => ({ ...prev, [field.name]: true }));
-        try {
-          const response = await axiosInstance.get(field.endpoint);
-          setSelectOptions((prev) => ({
-            ...prev,
-            [field.name]: response.data.data || [],
-          }));
-        } catch (error) {
-          console.error(`Error loading options for ${field.name}:`, error);
-          setError(`Error al cargar opciones para ${field.label}`);
-        } finally {
-          setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
+        // Cargar opciones de campos select solo si hay campos que lo necesiten
+        const selectFields = fields?.filter(
+          (field) => field.type === "select" && field.endpoint
+        );
+        if (selectFields?.length > 0) {
+          await loadFieldOptions();
         }
+
+        // Si estamos editando, cargar detalles del item
+        if (currentItem) {
+          const details = await getItemDetails(currentItem.id);
+          setFormData((prev) => ({
+            ...prev,
+            ...details,
+          }));
+
+          // Cargar imágenes si es necesario
+          if (
+            formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED
+          ) {
+            await loadPropertyImages(details);
+          } else if (formType === FORM_TYPES.DEVELOPMENT) {
+            await loadDevelopmentImages(details);
+          }
+        }
+
+        // Si es un desarrollo, cargar la lista de desarrolladoras
+        if (formType === FORM_TYPES.DEVELOPMENT) {
+          await fetchDevelopers();
+        }
+      } catch (error) {
+        console.error("Error al cargar datos iniciales:", error);
+        setError?.("Error al cargar los datos. Por favor, inténtalo de nuevo.");
+      } finally {
+        setLoadingState(false);
       }
     };
 
-    if (open) {
-      fetchSelectOptions();
+    loadInitialData();
+  }, [open, currentItem?.id, formType, fields]);
+
+  // Manejar errores de los hooks
+  useEffect(() => {
+    const currentError = fieldOptionsError || imageError || developersError;
+    if (currentError) {
+      setError(currentError);
     }
-  }, [open, fields]);
+  }, [fieldOptionsError, imageError, developersError]);
+
+  // Inicializar formData si es null
+  useEffect(() => {
+    if (!formData) {
+      setFormData({});
+    }
+  }, [formData, setFormData]);
 
   const handleContactChange = (index, field, value) => {
     const newContacts = [...contacts];
@@ -152,270 +251,224 @@ const FormDialog = ({
     });
   };
 
-  // Renderizar campo según su tipo
-  const renderField = (field) => {
-    if (field.type === "select") {
-      let options = [];
-
-      // Si el campo tiene opciones estáticas, usarlas
-      if (field.options) {
-        options = field.options;
-      } else {
-        // Si no, usar las opciones del endpoint
-        options = selectOptions[field.name] || [];
-      }
-
-      const value = formData[field.name] || "";
-      const isValidValue = field.options
-        ? options.some((option) => option.value === value)
-        : options.some((option) => option[field.optionValue] === value);
-
-      return (
-        <FormControl
-          fullWidth
-          required={field.required}
-          margin="normal"
-          sx={{ minWidth: 240, width: "100%" }}
-        >
-          <InputLabel id={`${field.name}-select-label`}>
-            {field.label}
-          </InputLabel>
-          <Select
-            labelId={`${field.name}-select-label`}
-            id={`${field.name}-select`}
-            value={isValidValue ? value : ""}
-            onChange={(e) =>
-              setFormData({ ...formData, [field.name]: e.target.value })
-            }
-            label={field.label}
-            required={field.required}
-            disabled={!field.options && loadingOptions[field.name]}
-          >
-            {!field.options && loadingOptions[field.name] ? (
-              <MenuItem value="" disabled>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <CircularProgress size={20} sx={{ mr: 1 }} />
-                  Cargando opciones...
-                </Box>
-              </MenuItem>
-            ) : options.length === 0 ? (
-              <MenuItem value="" disabled>
-                No hay opciones disponibles
-              </MenuItem>
-            ) : (
-              [
-                <MenuItem key="empty" value="">
-                  <em>Ninguno</em>
-                </MenuItem>,
-                ...options.map((option) => (
-                  <MenuItem
-                    key={
-                      field.options ? option.value : option[field.optionValue]
-                    }
-                    value={
-                      field.options ? option.value : option[field.optionValue]
-                    }
-                  >
-                    {field.options
-                      ? option.label
-                      : field.optionLabel
-                      ? field.optionLabel(option)
-                      : option[field.optionValue]}
-                  </MenuItem>
-                )),
-              ]
-            )}
-          </Select>
-        </FormControl>
-      );
-    }
-
-    return (
-      <TextField
-        key={field.name}
-        fullWidth
-        margin="normal"
-        label={field.label}
-        name={field.name}
-        type={field.type || "text"}
-        value={formData[field.name] || ""}
-        onChange={(e) =>
-          setFormData({ ...formData, [field.name]: e.target.value })
-        }
-        required={field.required}
-        multiline={field.multiline}
-        rows={field.rows}
-      />
-    );
+  // Manejadores de cambios en los campos
+  const handleFieldChange = (fieldName, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
   };
 
-  // Función para abrir diálogo
-  const handleOpenDialog = async (type, item = null) => {
-    setLoading(true);
-    setError(null);
+  const handleImageChange = (fieldName, file) => {
+    if (!file) return;
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: file,
+    }));
+  };
 
-    try {
-      let updatedItem = item;
+  const handleImagesChange = (fieldName, files) => {
+    if (!files || !files.length) return;
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: files,
+    }));
+  };
 
-      // Si estamos editando, obtener la información actualizada
-      if (item) {
-        if (type === "developer") {
-          const response = await axiosInstance.get(
-            `/realEstateDevelopment/${item.realEstateDevelopmentId}`
-          );
-          updatedItem = response.data.data;
-        } else if (type === "development") {
-          const response = await axiosInstance.get(
-            `/development/${item.developmentId}`
-          );
-          updatedItem = response.data.data;
+  const handleImageDelete = (fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: null,
+    }));
+  };
 
-          // Preparar las imágenes para el formulario
-          if (updatedItem) {
-            // Agregar la URL de la imagen principal
-            if (updatedItem.mainImage) {
-              try {
-                const filename = updatedItem.mainImage.split("/").pop();
-                const imageResponse = await axiosInstance.get(
-                  `/image/${filename}`,
-                  {
-                    responseType: "blob",
-                  }
-                );
-                const blob = new Blob([imageResponse.data], {
-                  type: imageResponse.headers["content-type"],
-                });
-                updatedItem.mainImagePreview = URL.createObjectURL(blob);
-              } catch (error) {
-                console.error("Error al cargar la imagen principal:", error);
+  const handleImageDeleteFromGallery = (fieldName, index) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: prev[fieldName].filter((_, i) => i !== index),
+    }));
+  };
+
+  // Función para renderizar cada campo según su tipo
+  const renderField = (field) => {
+    const fieldValue = formData[field.name] || "";
+
+    switch (field.type) {
+      case "select":
+        const fieldOptions = selectOptions[field.name] || [];
+        return (
+          <FormControl fullWidth key={field.name} margin="normal">
+            <InputLabel>{field.label}</InputLabel>
+            <Select
+              value={fieldValue}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              label={field.label}
+              disabled={loadingOptions[field.name]}
+            >
+              {Array.isArray(fieldOptions) &&
+                fieldOptions.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        );
+
+      case "text":
+      case "email":
+      case "tel":
+        return (
+          <TextField
+            key={field.name}
+            fullWidth
+            label={field.label}
+            type={field.type}
+            value={fieldValue}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            margin="normal"
+          />
+        );
+
+      case "textarea":
+        return (
+          <TextField
+            key={field.name}
+            fullWidth
+            label={field.label}
+            multiline
+            rows={4}
+            value={fieldValue}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            margin="normal"
+          />
+        );
+
+      case "number":
+        return (
+          <TextField
+            key={field.name}
+            fullWidth
+            label={field.label}
+            type="number"
+            value={fieldValue}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            margin="normal"
+            InputProps={{
+              inputProps: {
+                min: field.min,
+                max: field.max,
+                step: field.step,
+              },
+            }}
+          />
+        );
+
+      case "image":
+        return (
+          <Box key={field.name} sx={{ mt: 2, mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              {field.label}
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageChange(field.name, e.target.files[0])}
+              style={{ display: "none" }}
+              id={`image-input-${field.name}`}
+            />
+            <label htmlFor={`image-input-${field.name}`}>
+              <Button
+                variant="contained"
+                component="span"
+                startIcon={<AddIcon />}
+              >
+                Seleccionar Imagen
+              </Button>
+            </label>
+            {formData[field.name] && (
+              <Box sx={{ mt: 2, position: "relative" }}>
+                <img
+                  src={createImagePreview(formData[field.name])}
+                  alt={field.label}
+                  style={{ maxWidth: "200px", maxHeight: "200px" }}
+                />
+                <IconButton
+                  onClick={() => handleImageDelete(field.name)}
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    bgcolor: "background.paper",
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+        );
+
+      case "images":
+        return (
+          <Box key={field.name} sx={{ mt: 2, mb: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              {field.label}
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) =>
+                handleImagesChange(field.name, Array.from(e.target.files))
               }
-            }
-
-            // Agregar las URLs de las imágenes secundarias
-            if (
-              updatedItem.secondaryImages &&
-              updatedItem.secondaryImages.length > 0
-            ) {
-              updatedItem.secondaryImagesPreview = await Promise.all(
-                updatedItem.secondaryImages.map(async (img) => {
-                  try {
-                    const filename = img.imagePath.split("/").pop();
-                    const imageResponse = await axiosInstance.get(
-                      `/image/${filename}`,
-                      {
-                        responseType: "blob",
-                      }
-                    );
-                    const blob = new Blob([imageResponse.data], {
-                      type: imageResponse.headers["content-type"],
-                    });
-                    return URL.createObjectURL(blob);
-                  } catch (error) {
-                    console.error("Error al cargar imagen secundaria:", error);
-                    return null;
-                  }
-                })
-              );
-              updatedItem.secondaryImagesPreview =
-                updatedItem.secondaryImagesPreview.filter(
-                  (url) => url !== null
-                );
-            }
-          }
-        } else if (type === "property") {
-          const response = await axiosInstance.get(
-            `/prototype/${item.prototypeId}`
-          );
-          updatedItem = response.data.data;
-
-          // Preparar las imágenes para el formulario de propiedad
-          if (updatedItem) {
-            // Cargar la imagen principal
-            if (updatedItem.mainImage) {
-              try {
-                const imageResponse = await axiosInstance.get(
-                  `/image?path=${encodeURIComponent(updatedItem.mainImage)}`,
-                  {
-                    responseType: "blob",
-                  }
-                );
-                const blob = new Blob([imageResponse.data], {
-                  type: imageResponse.headers["content-type"],
-                });
-                updatedItem.mainImagePreview = URL.createObjectURL(blob);
-              } catch (error) {
-                console.error("Error al cargar la imagen principal:", error);
-              }
-            }
-
-            // Cargar las imágenes secundarias
-            if (
-              updatedItem.secondaryImages &&
-              updatedItem.secondaryImages.length > 0
-            ) {
-              updatedItem.secondaryImagesPreview = await Promise.all(
-                updatedItem.secondaryImages.map(async (img) => {
-                  try {
-                    const imageResponse = await axiosInstance.get(
-                      `/image?path=${encodeURIComponent(img.pathImage)}`,
-                      {
-                        responseType: "blob",
-                      }
-                    );
-                    const blob = new Blob([imageResponse.data], {
-                      type: imageResponse.headers["content-type"],
-                    });
-                    return URL.createObjectURL(blob);
-                  } catch (error) {
-                    console.error("Error al cargar imagen secundaria:", error);
-                    return null;
-                  }
-                })
-              );
-              updatedItem.secondaryImagesPreview =
-                updatedItem.secondaryImagesPreview.filter(
-                  (url) => url !== null
-                );
-            }
-          }
-        }
-      }
-
-      setCurrentItem(updatedItem);
-
-      if (type === "developer") {
-        setDialogTitle(
-          updatedItem
-            ? "Editar Desarrolladora"
-            : "Agregar Desarrolladora Inmobiliaria"
+              style={{ display: "none" }}
+              id={`images-input-${field.name}`}
+            />
+            <label htmlFor={`images-input-${field.name}`}>
+              <Button
+                variant="contained"
+                component="span"
+                startIcon={<AddIcon />}
+              >
+                Seleccionar Imágenes
+              </Button>
+            </label>
+            {formData[field.name] && Array.isArray(formData[field.name]) && (
+              <ImageGallery
+                images={formData[field.name].map(createImagePreview)}
+                onDelete={(index) =>
+                  handleImageDeleteFromGallery(field.name, index)
+                }
+              />
+            )}
+          </Box>
         );
-        setCurrentFields(developerFields);
-      } else if (type === "development") {
-        setDialogTitle(
-          updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo"
-        );
-        setCurrentFields(developmentFields);
-      } else if (type === "agency") {
-        setDialogTitle(
-          updatedItem
-            ? "Editar Inmobiliaria Externa"
-            : "Agregar Inmobiliaria Externa"
-        );
-        setCurrentFields(externalAgencyFields);
-      } else if (type === "property") {
-        setDialogTitle(updatedItem ? "Editar Propiedad" : "Agregar Propiedad");
-        setCurrentFields(propertyFields);
-      }
 
-      setFormData(updatedItem || {});
-      setDialogOpen(true);
-    } catch (error) {
-      console.error("Error al obtener los datos:", error);
-      setError(
-        "Error al cargar los datos del elemento. Por favor, inténtalo de nuevo."
-      );
-    } finally {
-      setLoading(false);
+      default:
+        return null;
+    }
+  };
+
+  // Actualizar el manejo de imágenes en los botones de carga
+  const handleMainImageChange = (file) => {
+    if (file) {
+      setFormData({
+        ...formData,
+        mainImage: file,
+        mainImagePreview: createImagePreview(file),
+      });
+    }
+  };
+
+  const handleSecondaryImagesChange = (files) => {
+    if (files && files.length > 0) {
+      const filesArray = Array.from(files);
+      setFormData({
+        ...formData,
+        secondaryImages: filesArray,
+        secondaryImagesPreview: createImagesPreview(filesArray),
+      });
     }
   };
 
@@ -435,7 +488,7 @@ const FormDialog = ({
           )}
 
           {/* Renderizar campos según el tipo de formulario */}
-          {title.includes("Desarrolladora") ? (
+          {formType === FORM_TYPES.DEVELOPER && (
             // Formulario para desarrolladoras
             <Grid container spacing={2}>
               <Grid xs={12} sm={6} md={4}>
@@ -444,12 +497,12 @@ const FormDialog = ({
                   margin="normal"
                   label="Nombre de la Desarrolladora"
                   name="realEstateDevelopmentName"
-                  value={formData.realEstateDevelopmentName || ""}
+                  value={formData?.realEstateDevelopmentName || ""}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      realEstateDevelopmentName: e.target.value,
-                    })
+                    handleFieldChange(
+                      "realEstateDevelopmentName",
+                      e.target.value
+                    )
                   }
                   required
                 />
@@ -460,22 +513,21 @@ const FormDialog = ({
                   margin="normal"
                   label="URL"
                   name="url"
-                  value={formData.url || ""}
-                  onChange={(e) =>
-                    setFormData({ ...formData, url: e.target.value })
-                  }
+                  value={formData?.url || ""}
+                  onChange={(e) => handleFieldChange("url", e.target.value)}
                 />
               </Grid>
             </Grid>
-          ) : title.includes("Desarrollo") ? (
+          )}
+
+          {formType === FORM_TYPES.DEVELOPMENT && (
             // Formulario para desarrollos
             <>
-              {/* Sección de Datos del Desarrollo */}
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
                 Datos del Desarrollo
               </Typography>
               <Grid container spacing={2}>
-                {fields.map((field) => (
+                {fields?.map((field) => (
                   <Grid xs={12} sm={6} md={4} key={field.name}>
                     {renderField(field)}
                   </Grid>
@@ -487,10 +539,9 @@ const FormDialog = ({
                 Imágenes
               </Typography>
               <ImageGallery
-                mainImage={formData.mainImagePreview}
-                secondaryImages={formData.secondaryImagesPreview}
+                mainImage={formData?.mainImagePreview}
+                secondaryImages={formData?.secondaryImagesPreview}
               />
-              {/* Botones para cambiar imágenes */}
               <Grid container spacing={2} sx={{ mt: 2 }}>
                 {/* Imagen principal */}
                 <Grid xs={12} sm={6} md={4}>
@@ -505,16 +556,7 @@ const FormDialog = ({
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setFormData({
-                            ...formData,
-                            mainImage: file,
-                            mainImagePreview: URL.createObjectURL(file),
-                          });
-                        }
-                      }}
+                      onChange={(e) => handleMainImageChange(e.target.files[0])}
                     />
                   </Button>
                 </Grid>
@@ -532,28 +574,21 @@ const FormDialog = ({
                       accept="image/*"
                       multiple
                       hidden
-                      onChange={(e) => {
-                        const filesArray = Array.from(e.target.files);
-                        console.log("Archivos seleccionados:", filesArray);
-
-                        // Guardar los archivos directamente sin crear copias
-                        setFormData({
-                          ...formData,
-                          secondaryImages: filesArray,
-                          secondaryImagesPreview: filesArray.map((file) =>
-                            URL.createObjectURL(file)
-                          ),
-                        });
-                      }}
+                      onChange={(e) =>
+                        handleSecondaryImagesChange(e.target.files)
+                      }
                     />
                   </Button>
                 </Grid>
               </Grid>
             </>
-          ) : title.includes("Propiedad") ? (
+          )}
+
+          {(formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED) && (
             <>
               <Grid container spacing={2}>
-                {fields.map((field) => (
+                {fields?.map((field) => (
                   <Grid xs={12} sm={6} md={4} key={field.name}>
                     {renderField(field)}
                   </Grid>
@@ -565,8 +600,8 @@ const FormDialog = ({
                 Imágenes
               </Typography>
               <ImageGallery
-                mainImage={formData.mainImagePreview}
-                secondaryImages={formData.secondaryImagesPreview || []}
+                mainImage={formData?.mainImagePreview}
+                secondaryImages={formData?.secondaryImagesPreview || []}
               />
               {/* Botones para cambiar imágenes */}
               <Grid container spacing={2} sx={{ mt: 2 }}>
@@ -583,16 +618,7 @@ const FormDialog = ({
                       type="file"
                       accept="image/*"
                       hidden
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setFormData({
-                            ...formData,
-                            mainImage: file,
-                            mainImagePreview: URL.createObjectURL(file),
-                          });
-                        }
-                      }}
+                      onChange={(e) => handleMainImageChange(e.target.files[0])}
                     />
                   </Button>
                 </Grid>
@@ -610,167 +636,22 @@ const FormDialog = ({
                       accept="image/*"
                       multiple
                       hidden
-                      onChange={(e) => {
-                        const filesArray = Array.from(e.target.files);
-                        console.log("Archivos seleccionados:", filesArray);
-
-                        // Guardar los archivos directamente sin crear copias
-                        setFormData({
-                          ...formData,
-                          secondaryImages: filesArray,
-                          secondaryImagesPreview: filesArray.map((file) =>
-                            URL.createObjectURL(file)
-                          ),
-                        });
-                      }}
+                      onChange={(e) =>
+                        handleSecondaryImagesChange(e.target.files)
+                      }
                     />
                   </Button>
                 </Grid>
               </Grid>
             </>
-          ) : (
-            <Grid container spacing={2}>
-              {fields.map((field) => (
-                <Grid xs={12} sm={6} md={4} key={field.name}>
-                  {renderField(field)}
-                </Grid>
-              ))}
-            </Grid>
           )}
 
-          {/* Sección de contactos para desarrolladoras y desarrollos */}
-          {/* {(title.includes("Desarrolladora") ||
-            title.includes("Desarrollo")) && (
-            <>
-              <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-                Contactos
-              </Typography>
-              {contacts.map((contact, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    mb: 3,
-                    p: 2,
-                    border: "1px solid #e0e0e0",
-                    borderRadius: 1,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 2,
-                    }}
-                  >
-                    <Typography variant="subtitle1">
-                      Contacto {index + 1}
-                    </Typography>
-                    {contacts.length > 1 && (
-                      <IconButton
-                        size="small"
-                        onClick={() => removeContact(index)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                  <Grid container spacing={2}>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Nombre"
-                        value={contact.name || ""}
-                        onChange={(e) =>
-                          handleContactChange(index, "name", e.target.value)
-                        }
-                      />
-                    </Grid>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Rol"
-                        value={contact.role || ""}
-                        onChange={(e) =>
-                          handleContactChange(index, "role", e.target.value)
-                        }
-                      />
-                    </Grid>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Apellido Paterno"
-                        value={contact.lastNameP || ""}
-                        onChange={(e) =>
-                          handleContactChange(
-                            index,
-                            "lastNameP",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </Grid>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Apellido Materno"
-                        value={contact.lastNameM || ""}
-                        onChange={(e) =>
-                          handleContactChange(
-                            index,
-                            "lastNameM",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </Grid>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Email"
-                        value={contact.mainEmail || ""}
-                        onChange={(e) =>
-                          handleContactChange(
-                            index,
-                            "mainEmail",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </Grid>
-                    <Grid xs={6}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Teléfono"
-                        value={contact.mainPhone || ""}
-                        onChange={(e) =>
-                          handleContactChange(
-                            index,
-                            "mainPhone",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </Grid>
-                  </Grid>
-                </Box>
-              ))}
-              <Button
-                variant="outlined"
-                onClick={addContact}
-                startIcon={<AddIcon />}
-                sx={{ mt: 2 }}
-              >
-                Agregar Contacto
-              </Button>
-            </>
-          )} */}
+          {!formType &&
+            fields?.map((field) => (
+              <Grid xs={12} sm={6} md={4} key={field.name}>
+                {renderField(field)}
+              </Grid>
+            ))}
         </Box>
       </DialogContent>
       <DialogActions>
@@ -778,13 +659,13 @@ const FormDialog = ({
         <Button
           onClick={onSubmit}
           variant="contained"
-          disabled={loading}
+          disabled={isLoading}
           sx={{
             bgcolor: "#25D366",
             "&:hover": { bgcolor: "#128C7E" },
           }}
         >
-          {loading ? (
+          {isLoading ? (
             <CircularProgress size={24} sx={{ color: "white" }} />
           ) : (
             "Guardar"

@@ -1,7 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { api } from "../services/api";
+import { useAxiosMiddleware } from "../utils/axiosMiddleware";
+import { FORM_TYPES } from "../app/admin/properties/constants";
 
-export const useEntityData = (entityType, axiosInstance) => {
+export const useEntityData = (entityType) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,184 +13,90 @@ export const useEntityData = (entityType, axiosInstance) => {
     total: 0,
   });
 
-  // Usar una ref para mantener una referencia estable al axiosInstance
-  const axiosInstanceRef = useRef(axiosInstance);
-
-  // Actualizar la ref si cambia axiosInstance
-  useEffect(() => {
-    axiosInstanceRef.current = axiosInstance;
-  }, [axiosInstance]);
+  // Obtener axiosInstance
+  const axiosInstance = useAxiosMiddleware();
 
   const fetchItems = useCallback(
-    async (page = 1, pageSize = 10) => {
-      if (loading) return; // Prevenir múltiples llamadas simultáneas
+    async (page = 1, pageSize = 15) => {
+      if (!entityType) return;
 
       setLoading(true);
       setError(null);
       try {
         let response;
         switch (entityType) {
-          case "developer":
-            response = await api.getDevelopers(
-              axiosInstanceRef.current,
+          case FORM_TYPES.DEVELOPER:
+            response = await api.getDevelopers(axiosInstance, page, pageSize);
+            break;
+          case FORM_TYPES.DEVELOPMENT:
+            response = await api.getDevelopments(axiosInstance, page, pageSize);
+            break;
+          case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
+            response = await api.getNotPublishedProperties(
+              axiosInstance,
               page,
               pageSize
             );
             break;
-          case "development":
-            response = await api.getDevelopments(
-              axiosInstanceRef.current,
-              page,
-              pageSize
-            );
-            break;
-          case "property":
-            response = await api.getProperties(
-              axiosInstanceRef.current,
+          case FORM_TYPES.PROPERTY_PUBLISHED:
+            response = await api.getPublishedProperties(
+              axiosInstance,
               page,
               pageSize
             );
             break;
           default:
-            throw new Error("Invalid entity type");
+            throw new Error("Tipo de entidad no válido");
         }
-        setItems(response.data);
+
+        setItems(response.data || []);
         setPagination({
-          page: response.page,
-          pageSize: response.pageSize,
-          total: response.total,
+          page: response.page || page,
+          pageSize: response.pageSize || pageSize,
+          total: response.total || 0,
         });
       } catch (error) {
-        setError(error.message);
+        console.error("Error al obtener items:", error);
+        setError("Error al cargar los datos");
       } finally {
         setLoading(false);
       }
     },
-    [entityType]
-  );
-
-  const handlePageChange = useCallback(
-    (newPage) => {
-      fetchItems(newPage, pagination.pageSize);
-    },
-    [fetchItems, pagination.pageSize]
-  );
-
-  const handlePageSizeChange = useCallback(
-    (newPageSize) => {
-      fetchItems(1, newPageSize);
-    },
-    [fetchItems]
+    [entityType, axiosInstance]
   );
 
   const getItemDetails = useCallback(
-    async (id) => {
-      if (!id) return null;
+    async (itemId) => {
+      if (!entityType || !itemId) return null;
 
       setLoading(true);
       setError(null);
       try {
-        let data;
+        let response;
         switch (entityType) {
-          case "developer":
-            data = await api.getDeveloper(axiosInstanceRef.current, id);
+          case FORM_TYPES.DEVELOPER:
+            response = await api.getDeveloper(axiosInstance, itemId);
             break;
-          case "development":
-            data = await api.getDevelopment(axiosInstanceRef.current, id);
+          case FORM_TYPES.DEVELOPMENT:
+            response = await api.getDevelopment(axiosInstance, itemId);
             break;
-          case "property":
-            data = await api.getProperty(axiosInstanceRef.current, id);
+          case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
+          case FORM_TYPES.PROPERTY_PUBLISHED:
+            response = await api.getProperty(axiosInstance, itemId);
             break;
           default:
-            throw new Error("Invalid entity type");
+            throw new Error("Tipo de entidad no válido");
         }
-        return data;
+        return response;
       } catch (error) {
-        setError(error.message);
+        console.error("Error al obtener detalles del item:", error);
+        setError("Error al cargar los detalles");
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [entityType]
-  );
-
-  const deleteItem = useCallback(
-    async (id) => {
-      if (loading) return;
-
-      setLoading(true);
-      setError(null);
-      try {
-        switch (entityType) {
-          case "developer":
-            await api.deleteDeveloper(axiosInstanceRef.current, id);
-            break;
-          case "development":
-            await api.deleteDevelopment(axiosInstanceRef.current, id);
-            break;
-          case "property":
-            await api.deleteProperty(axiosInstanceRef.current, id);
-            break;
-          default:
-            throw new Error("Invalid entity type");
-        }
-        await fetchItems();
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [entityType, fetchItems]
-  );
-
-  const saveItem = useCallback(
-    async (formData, id = null) => {
-      if (loading) return false;
-
-      setLoading(true);
-      setError(null);
-      try {
-        switch (entityType) {
-          case "developer":
-            if (id) {
-              await api.updateDeveloper(axiosInstanceRef.current, id, formData);
-            } else {
-              await api.createDeveloper(axiosInstanceRef.current, formData);
-            }
-            break;
-          case "development":
-            if (id) {
-              await api.updateDevelopment(
-                axiosInstanceRef.current,
-                id,
-                formData
-              );
-            } else {
-              await api.createDevelopment(axiosInstanceRef.current, formData);
-            }
-            break;
-          case "property":
-            if (id) {
-              await api.updateProperty(axiosInstanceRef.current, id, formData);
-            } else {
-              await api.createProperty(axiosInstanceRef.current, formData);
-            }
-            break;
-          default:
-            throw new Error("Invalid entity type");
-        }
-        await fetchItems();
-        return true;
-      } catch (error) {
-        setError(error.message);
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [entityType, fetchItems]
+    [entityType, axiosInstance]
   );
 
   return {
@@ -197,11 +105,6 @@ export const useEntityData = (entityType, axiosInstance) => {
     error,
     pagination,
     fetchItems,
-    handlePageChange,
-    handlePageSizeChange,
     getItemDetails,
-    deleteItem,
-    saveItem,
-    setError,
   };
 };

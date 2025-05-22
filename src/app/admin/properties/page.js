@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { Box, Container, Typography, Tabs, Tab, Alert } from "@mui/material";
-import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
 
 // Componentes
 import AdminNavbar from "../components/AdminNavbar";
@@ -20,21 +19,25 @@ import {
   propertyFields,
 } from "./components/fieldsConfig";
 
-const ENTITY_TYPES = {
-  DEVELOPER: "developer",
-  DEVELOPMENT: "development",
-  PROPERTY: "property",
-};
+import {
+  FORM_TYPES,
+  TAB_FORM_TYPE_MAP,
+  TAB_TITLES,
+  TAB_LABELS,
+  getTabLabel,
+  ENTITY_LABELS,
+  TAB_INDICES,
+} from "./constants";
 
-const TAB_TITLES = {
-  0: "Desarrolladoras Inmobiliarias",
-  1: "Desarrollos",
-  2: "Propiedades",
+const ENTITY_TYPES = {
+  DEVELOPER: FORM_TYPES.DEVELOPER,
+  DEVELOPMENT: FORM_TYPES.DEVELOPMENT,
+  PROPERTY_NOT_PUBLISHED: FORM_TYPES.PROPERTY_NOT_PUBLISHED,
+  PROPERTY_PUBLISHED: FORM_TYPES.PROPERTY_PUBLISHED,
 };
 
 export default function PropertiesPage() {
-  const axiosInstance = useAxiosMiddleware();
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(TAB_INDICES.DEVELOPER);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   // Estados para diálogos
@@ -57,7 +60,7 @@ export default function PropertiesPage() {
     deleteItem: deleteDeveloper,
     saveItem: saveDeveloper,
     pagination: developersPagination,
-  } = useEntityData(ENTITY_TYPES.DEVELOPER, axiosInstance);
+  } = useEntityData(ENTITY_TYPES.DEVELOPER);
 
   const {
     items: developments,
@@ -68,7 +71,7 @@ export default function PropertiesPage() {
     deleteItem: deleteDevelopment,
     saveItem: saveDevelopment,
     pagination: developmentsPagination,
-  } = useEntityData(ENTITY_TYPES.DEVELOPMENT, axiosInstance);
+  } = useEntityData(ENTITY_TYPES.DEVELOPMENT);
 
   const {
     items: properties,
@@ -79,9 +82,23 @@ export default function PropertiesPage() {
     deleteItem: deleteProperty,
     saveItem: saveProperty,
     pagination: propertiesPagination,
-  } = useEntityData(ENTITY_TYPES.PROPERTY, axiosInstance);
+  } = useEntityData(ENTITY_TYPES.PROPERTY_NOT_PUBLISHED);
 
-  const { processItemImages, imageLoading } = useImageHandling(axiosInstance);
+  const {
+    items: publishedProperties,
+    loading: publishedPropertiesLoading,
+    error: publishedPropertiesError,
+    fetchItems: fetchPublishedProperties,
+    getItemDetails: getPublishedPropertyDetails,
+    pagination: publishedPropertiesPagination,
+  } = useEntityData(ENTITY_TYPES.PROPERTY_PUBLISHED);
+
+  const {
+    loading: imageLoading,
+    error: imageError,
+    loadPropertyImages,
+    loadDevelopmentImages,
+  } = useImageHandling();
 
   // Manejadores de paginación
   const handleDeveloperPageChange = useCallback(
@@ -126,28 +143,50 @@ export default function PropertiesPage() {
     [fetchProperties]
   );
 
-  // Cargar datos iniciales solo una vez al montar el componente
+  const handlePublishedPropertyPageChange = useCallback(
+    (newPage) => {
+      fetchPublishedProperties(newPage);
+    },
+    [fetchPublishedProperties]
+  );
+
+  const handlePublishedPropertyPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchPublishedProperties(1, newPageSize);
+    },
+    [fetchPublishedProperties]
+  );
+
+  // Cargar desarrolladoras solo una vez al montar el componente
   useEffect(() => {
-    if (!initialLoadDone) {
-      fetchDevelopers(); // Siempre necesitamos los desarrolladores
+    const loadInitialData = async () => {
+      await fetchDevelopers();
       setInitialLoadDone(true);
-    }
-  }, [fetchDevelopers, initialLoadDone]);
+    };
+    loadInitialData();
+  }, []); // Solo se ejecuta al montar
 
   // Cargar datos específicos cuando cambia la pestaña
   useEffect(() => {
-    if (!initialLoadDone) return; // Esperar a que se carguen los desarrolladores
+    if (!initialLoadDone) return;
 
-    switch (tabValue) {
-      case 1:
-        fetchDevelopments();
-        break;
-      case 2:
-        fetchProperties();
-        break;
-      // case 0 no necesita nada porque los desarrolladores ya se cargaron
-    }
-  }, [tabValue, fetchDevelopments, fetchProperties, initialLoadDone]);
+    const loadTabData = async () => {
+      switch (tabValue) {
+        case TAB_INDICES.DEVELOPMENT:
+          await fetchDevelopments();
+          break;
+        case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+          await fetchProperties();
+          break;
+        case TAB_INDICES.PROPERTY_PUBLISHED:
+          await fetchPublishedProperties();
+          break;
+        // TAB_INDICES.DEVELOPER ya está manejado en el primer useEffect
+      }
+    };
+
+    loadTabData();
+  }, [tabValue, initialLoadDone]); // Agregamos initialLoadDone como dependencia
 
   // Manejo de cambio de pestaña
   const handleTabChange = (event, newValue) => {
@@ -155,53 +194,45 @@ export default function PropertiesPage() {
   };
 
   // Función para abrir diálogo
-  const handleOpenDialog = async (type, item = null) => {
-    let updatedItem = item;
-
-    if (item) {
-      try {
-        let detailedItem;
-        switch (type) {
-          case ENTITY_TYPES.DEVELOPER:
-            detailedItem = await getDeveloperDetails(
-              item.realEstateDevelopmentId
-            );
-            break;
-          case ENTITY_TYPES.DEVELOPMENT:
-            detailedItem = await getDevelopmentDetails(item.developmentId);
-            break;
-          case ENTITY_TYPES.PROPERTY:
-            detailedItem = await getPropertyDetails(item.prototypeId);
-            break;
-        }
-
-        if (detailedItem) {
-          updatedItem = await processItemImages(detailedItem);
-        }
-      } catch (error) {
-        console.error("Error al obtener detalles:", error);
-      }
-    }
-
-    setCurrentItem(updatedItem);
-
-    if (type === ENTITY_TYPES.DEVELOPER) {
-      setDialogTitle(
-        updatedItem
-          ? "Editar Desarrolladora"
-          : "Agregar Desarrolladora Inmobiliaria"
-      );
-      setCurrentFields(developerFields);
-    } else if (type === ENTITY_TYPES.DEVELOPMENT) {
-      setDialogTitle(updatedItem ? "Editar Desarrollo" : "Agregar Desarrollo");
-      setCurrentFields(developmentFields);
-    } else if (type === ENTITY_TYPES.PROPERTY) {
-      setDialogTitle(updatedItem ? "Editar Propiedad" : "Agregar Propiedad");
-      setCurrentFields(propertyFields);
-    }
-
-    setFormData(updatedItem || {});
+  const handleOpenDialog = () => {
+    const formType = TAB_FORM_TYPE_MAP[tabValue];
+    setCurrentItem(null);
+    setFormData({});
+    setDialogTitle(getDialogTitle(formType, false));
+    setCurrentFields(getFieldsForType(formType));
     setDialogOpen(true);
+  };
+
+  // Función para abrir diálogo de edición
+  const handleOpenEditDialog = (item) => {
+    const formType = TAB_FORM_TYPE_MAP[tabValue];
+    setCurrentItem(item);
+    setFormData(item || {});
+    setDialogTitle(getDialogTitle(formType, true));
+    setCurrentFields(getFieldsForType(formType));
+    setDialogOpen(true);
+  };
+
+  const getDialogTitle = (formType, isEditing) => {
+    const entityLabel = ENTITY_LABELS[formType].singular;
+    if (formType === FORM_TYPES.PROPERTY_PUBLISHED) {
+      return `Ver ${entityLabel}`;
+    }
+    return isEditing ? `Editar ${entityLabel}` : `Agregar ${entityLabel}`;
+  };
+
+  const getFieldsForType = (formType) => {
+    switch (formType) {
+      case FORM_TYPES.DEVELOPER:
+        return developerFields;
+      case FORM_TYPES.DEVELOPMENT:
+        return developmentFields;
+      case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
+      case FORM_TYPES.PROPERTY_PUBLISHED:
+        return propertyFields;
+      default:
+        return [];
+    }
   };
 
   // Función para manejar eliminación
@@ -213,12 +244,16 @@ export default function PropertiesPage() {
   // Función para eliminar elementos
   const handleDelete = async () => {
     try {
-      if (tabValue === 0) {
-        await deleteDeveloper(itemToDelete.realEstateDevelopmentId);
-      } else if (tabValue === 1) {
-        await deleteDevelopment(itemToDelete.developmentId);
-      } else if (tabValue === 2) {
-        await deleteProperty(itemToDelete.prototypeId);
+      switch (tabValue) {
+        case TAB_INDICES.DEVELOPER:
+          await deleteDeveloper(itemToDelete.realEstateDevelopmentId);
+          break;
+        case TAB_INDICES.DEVELOPMENT:
+          await deleteDevelopment(itemToDelete.developmentId);
+          break;
+        case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+          await deleteProperty(itemToDelete.prototypeId);
+          break;
       }
       setDeleteDialogOpen(false);
       setItemToDelete(null);
@@ -232,92 +267,102 @@ export default function PropertiesPage() {
     let success = false;
 
     try {
-      if (tabValue === 0) {
-        success = await saveDeveloper(
-          formData,
-          currentItem?.realEstateDevelopmentId
-        );
-      } else if (tabValue === 1) {
-        const formDataToSend = new FormData();
+      switch (tabValue) {
+        case TAB_INDICES.DEVELOPER:
+          success = await saveDeveloper(
+            formData,
+            currentItem?.realEstateDevelopmentId
+          );
+          break;
+        case TAB_INDICES.DEVELOPMENT:
+          const formDataToSend = new FormData();
 
-        // Agregar campos básicos
-        const basicFields = [
-          "developmentName",
-          "realEstateDevelopmentId",
-          "commission",
-          "url",
-          "state",
-          "city",
-          "zipCode",
-          "street",
-          "extNum",
-          "intNum",
-          "mapLocation",
-        ];
+          // Agregar campos básicos
+          const basicFields = [
+            "developmentName",
+            "realEstateDevelopmentId",
+            "commission",
+            "url",
+            "state",
+            "city",
+            "zipCode",
+            "street",
+            "extNum",
+            "intNum",
+            "mapLocation",
+          ];
 
-        basicFields.forEach((field) => {
-          if (formData[field] !== null && formData[field] !== undefined) {
-            formDataToSend.append(field, formData[field]);
-          }
-        });
-
-        // Agregar contactos si existen
-        if (formData.contacts) {
-          formDataToSend.append("contacts", JSON.stringify(formData.contacts));
-        }
-
-        // Agregar imagen principal
-        if (formData.mainImage instanceof File) {
-          formDataToSend.append("mainImage", formData.mainImage);
-        }
-
-        // Agregar imágenes secundarias
-        if (
-          formData.secondaryImages &&
-          Array.isArray(formData.secondaryImages)
-        ) {
-          formData.secondaryImages.forEach((file, index) => {
-            if (file instanceof File) {
-              formDataToSend.append("secondaryImages", file);
+          basicFields.forEach((field) => {
+            if (formData[field] !== null && formData[field] !== undefined) {
+              formDataToSend.append(field, formData[field]);
             }
           });
-        }
 
-        success = await saveDevelopment(
-          formDataToSend,
-          currentItem?.developmentId
-        );
-      } else if (tabValue === 2) {
-        const formDataToSend = new FormData();
+          // Agregar contactos si existen
+          if (formData.contacts) {
+            formDataToSend.append(
+              "contacts",
+              JSON.stringify(formData.contacts)
+            );
+          }
 
-        // Filtrar campos que no son de preview
-        Object.keys(formData).forEach((key) => {
-          if (!key.includes("Preview")) {
-            const value = formData[key];
-            if (value !== null && value !== undefined) {
-              if (key === "contacts" && Array.isArray(value)) {
-                formDataToSend.append(key, JSON.stringify(value));
-              } else if (
-                (key === "mainImage" && value instanceof File) ||
-                (key === "secondaryImages" && Array.isArray(value))
-              ) {
-                if (key === "mainImage") {
-                  formDataToSend.append(key, value);
+          // Agregar imagen principal
+          if (formData.mainImage instanceof File) {
+            formDataToSend.append("mainImage", formData.mainImage);
+          }
+
+          // Agregar imágenes secundarias
+          if (
+            formData.secondaryImages &&
+            Array.isArray(formData.secondaryImages)
+          ) {
+            formData.secondaryImages.forEach((file, index) => {
+              if (file instanceof File) {
+                formDataToSend.append("secondaryImages", file);
+              }
+            });
+          }
+
+          success = await saveDevelopment(
+            formDataToSend,
+            currentItem?.developmentId
+          );
+          break;
+        case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+          const propertyFormData = new FormData();
+
+          // Filtrar campos que no son de preview
+          Object.keys(formData).forEach((key) => {
+            if (!key.includes("Preview")) {
+              const value = formData[key];
+              if (value !== null && value !== undefined) {
+                if (key === "contacts" && Array.isArray(value)) {
+                  propertyFormData.append(key, JSON.stringify(value));
+                } else if (
+                  (key === "mainImage" && value instanceof File) ||
+                  (key === "secondaryImages" && Array.isArray(value))
+                ) {
+                  if (key === "mainImage") {
+                    propertyFormData.append(key, value);
+                  } else {
+                    value.forEach((file) => {
+                      if (file instanceof File) {
+                        propertyFormData.append(key, file);
+                      }
+                    });
+                  }
                 } else {
-                  value.forEach((file) => {
-                    if (file instanceof File) {
-                      formDataToSend.append(key, file);
-                    }
-                  });
+                  propertyFormData.append(key, value);
                 }
-              } else {
-                formDataToSend.append(key, value);
               }
             }
-          }
-        });
+          });
 
-        success = await saveProperty(formDataToSend, currentItem?.prototypeId);
+          success = await saveProperty(
+            propertyFormData,
+            currentItem?.prototypeId
+          );
+          break;
       }
 
       if (success) {
@@ -335,7 +380,7 @@ export default function PropertiesPage() {
 
   const getCurrentItems = () => {
     switch (tabValue) {
-      case 0:
+      case TAB_INDICES.DEVELOPER:
         return {
           items: developers,
           loading: developersLoading || imageLoading,
@@ -345,7 +390,7 @@ export default function PropertiesPage() {
           onPageChange: handleDeveloperPageChange,
           onPageSizeChange: handleDeveloperPageSizeChange,
         };
-      case 1:
+      case TAB_INDICES.DEVELOPMENT:
         return {
           items: developments,
           loading: developmentsLoading || imageLoading,
@@ -355,15 +400,25 @@ export default function PropertiesPage() {
           onPageChange: handleDevelopmentPageChange,
           onPageSizeChange: handleDevelopmentPageSizeChange,
         };
-      case 2:
+      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
         return {
           items: properties,
           loading: propertiesLoading || imageLoading,
           error: propertiesError,
-          type: ENTITY_TYPES.PROPERTY,
+          type: ENTITY_TYPES.PROPERTY_NOT_PUBLISHED,
           pagination: propertiesPagination,
           onPageChange: handlePropertyPageChange,
           onPageSizeChange: handlePropertyPageSizeChange,
+        };
+      case TAB_INDICES.PROPERTY_PUBLISHED:
+        return {
+          items: publishedProperties,
+          loading: publishedPropertiesLoading || imageLoading,
+          error: publishedPropertiesError,
+          type: ENTITY_TYPES.PROPERTY_PUBLISHED,
+          pagination: publishedPropertiesPagination,
+          onPageChange: handlePublishedPropertyPageChange,
+          onPageSizeChange: handlePublishedPropertyPageSizeChange,
         };
       default:
         return {
@@ -403,9 +458,9 @@ export default function PropertiesPage() {
             variant="scrollable"
             scrollButtons="auto"
           >
-            <Tab label="Desarrolladora Inmobiliaria" />
-            <Tab label="Desarrollo" />
-            <Tab label="Propiedades" />
+            {TAB_LABELS.map((label, index) => (
+              <Tab key={index} label={label} />
+            ))}
           </Tabs>
         </Box>
 
@@ -417,11 +472,11 @@ export default function PropertiesPage() {
 
         <Box sx={{ p: 2 }}>
           <EntityList
-            title={TAB_TITLES[tabValue]}
+            title={TAB_TITLES[TAB_FORM_TYPE_MAP[tabValue]]}
             items={items}
             loading={loading}
-            onAdd={() => handleOpenDialog(type)}
-            onEdit={(item) => handleOpenDialog(type, item)}
+            onAdd={() => handleOpenDialog()}
+            onEdit={(item) => handleOpenEditDialog(item)}
             onDelete={handleOpenDeleteDialog}
             currentTab={tabValue}
             allDevelopers={developers}
@@ -447,7 +502,7 @@ export default function PropertiesPage() {
           }
           error={developersError || developmentsError || propertiesError}
           setError={setFormError}
-          tabValue={tabValue}
+          formType={TAB_FORM_TYPE_MAP[tabValue]}
           currentItem={currentItem}
         />
 

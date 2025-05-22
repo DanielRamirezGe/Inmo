@@ -127,6 +127,38 @@ export const api = {
     }
   },
 
+  getPublishedProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+    try {
+      const response = await axiosInstance.get("/prototype/published", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getNotPublishedProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+    try {
+      const response = await axiosInstance.get("/prototype/not-published", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
   getProperty: async (axiosInstance, id) => {
     try {
       const response = await axiosInstance.get(`/prototype/${id}`);
@@ -156,6 +188,26 @@ export const api = {
     }
   },
 
+  updateNotPublishedProperties: async (axiosInstance, id, formData) => {
+    try {
+      await axiosInstance.put(`/prototype/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  updatePublishedProperties: async (axiosInstance, id, formData) => {
+    try {
+      await axiosInstance.put(`/prototype/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
   deleteProperty: async (axiosInstance, id) => {
     try {
       await axiosInstance.delete(`/prototype/${id}`);
@@ -165,19 +217,30 @@ export const api = {
   },
 
   // Image handling
-  getImage: async (axiosInstance, path) => {
+  getImage: async (axiosInstance, path, isFullPath = false) => {
     try {
-      const response = await axiosInstance.get(
-        `/image?path=${encodeURIComponent(path)}`,
-        {
-          responseType: "blob",
-        }
-      );
+      const endpoint = isFullPath
+        ? `/image?path=${encodeURIComponent(path)}`
+        : `/image/${path}`;
+
+      const response = await axiosInstance.get(endpoint, {
+        responseType: "blob",
+      });
       return new Blob([response.data], {
         type: response.headers["content-type"],
       });
     } catch (error) {
       handleApiError(error);
+    }
+  },
+
+  getFieldOptions: async (axiosInstance, endpoint) => {
+    try {
+      const response = await axiosInstance.get(endpoint);
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+      throw error;
     }
   },
 };
