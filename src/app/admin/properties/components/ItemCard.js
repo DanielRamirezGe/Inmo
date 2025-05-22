@@ -10,6 +10,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import apiConfig from "../../../../config/apiConfig";
+import PropertyCard from "@/components/PropertyCard";
 
 // Componente para las tarjetas de elementos
 const ItemCard = ({ item, onEdit, onDelete, currentTab, allDevelopers }) => {
@@ -50,52 +51,17 @@ const ItemCard = ({ item, onEdit, onDelete, currentTab, allDevelopers }) => {
         </>
       );
     } else if (currentTab === 2) {
-      // Inmobiliaria Externa
-      return (
-        <>
-          <Typography variant="h6" component="div" noWrap>
-            {item.name}
-          </Typography>
-          <Typography color="text.secondary" gutterBottom>
-            {item.contactName || "Sin contacto"}
-          </Typography>
-          <Typography variant="body2" noWrap>
-            {item.description || "Sin descripción"}
-          </Typography>
-        </>
-      );
-    } else if (currentTab === 3) {
       // Propiedad
       return (
-        <>
-          <Typography variant="h6" component="div" noWrap>
-            {item.prototypeName}
-          </Typography>
-          <Typography color="text.secondary" gutterBottom>
-            Precio: ${item.price?.toLocaleString() || "No especificado"}
-          </Typography>
-          <Typography variant="body2">
-            {item.bedroom} Rec, {item.bathroom} Baños
-            {item.halfBathroom ? `, ${item.halfBathroom} Medios Baños` : ""}
-          </Typography>
-          <Typography variant="body2">
-            {item.size} m² | {item.parking} Est.
-          </Typography>
-          {item.mainImage && (
-            <Box
-              component="img"
-              sx={{
-                width: "100%",
-                height: 140,
-                objectFit: "cover",
-                mt: 1,
-                borderRadius: 1,
-              }}
-              src={`${apiConfig.baseURL}/api/v1/image?path=${encodeURIComponent(item.mainImage)}`}
-              alt={item.prototypeName}
-            />
-          )}
-        </>
+        <PropertyCard
+          property={item}
+          onWhatsAppClick={() => {
+            /* Implementar lógica de WhatsApp */
+          }}
+          onAgendaClick={() => {
+            /* Implementar lógica de Agenda */
+          }}
+        />
       );
     }
   };
