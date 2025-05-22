@@ -16,10 +16,27 @@ export default function Home() {
 
   useEffect(() => {
     const fetchHouseDetails = async () => {
-      const res = await fetch("/api/houses");
-      const data = await res.json();
-      await axios.post(`${apiConfig.baseURL}/api/v1/metadataWeb`);
-      setHouseDetails(data);
+      try {
+        // First fetch houses
+        const res = await fetch("/api/houses");
+        const data = await res.json();
+
+        // Then try to post metadata
+        try {
+          await axios.post(`${apiConfig.baseURL}/api/v1/metadataWeb`);
+        } catch (metadataError) {
+          console.log(
+            "Error posting metadata:",
+            metadataError.response?.data || metadataError.message
+          );
+          // Continue execution even if metadata post fails
+        }
+
+        setHouseDetails(data);
+      } catch (error) {
+        console.error("Error fetching house details:", error);
+        // Handle the error appropriately - maybe set an error state
+      }
     };
 
     fetchHouseDetails();
