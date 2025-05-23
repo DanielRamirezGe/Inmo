@@ -21,6 +21,7 @@ const EntityList = ({
   onEdit,
   onDelete,
   onPublish,
+  onUnpublish,
   currentTab,
   allDevelopers,
   pagination,
@@ -144,6 +145,7 @@ const EntityList = ({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onPublish={onPublish}
+                  onUnpublish={onUnpublish}
                   currentTab={currentTab}
                   allDevelopers={allDevelopers}
                   onRefresh={onPageChange}
@@ -181,6 +183,7 @@ EntityList.propTypes = {
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onPublish: PropTypes.func,
+  onUnpublish: PropTypes.func,
   currentTab: PropTypes.number.isRequired,
   allDevelopers: PropTypes.array,
   pagination: PropTypes.object,

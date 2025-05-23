@@ -11,6 +11,8 @@ import DeleteDialog from "./components/DeleteDialog";
 // Hooks personalizados
 import { useEntityData } from "../../../hooks/useEntityData";
 import { useImageHandling } from "../../../hooks/useImageHandling";
+import { api } from "../../../services/api";
+import { useAxiosMiddleware } from "../../../utils/axiosMiddleware";
 
 // Configuraciones
 import {
@@ -39,6 +41,7 @@ const ENTITY_TYPES = {
 export default function PropertiesPage() {
   const [tabValue, setTabValue] = useState(TAB_INDICES.DEVELOPER);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
 
   // Estados para diálogos
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -90,6 +93,8 @@ export default function PropertiesPage() {
     error: publishedPropertiesError,
     fetchItems: fetchPublishedProperties,
     getItemDetails: getPublishedPropertyDetails,
+    deleteItem: deletePublishedProperty,
+    saveItem: savePublishedProperty,
     pagination: publishedPropertiesPagination,
   } = useEntityData(ENTITY_TYPES.PROPERTY_PUBLISHED);
 
@@ -99,6 +104,9 @@ export default function PropertiesPage() {
     loadPropertyImages,
     loadDevelopmentImages,
   } = useImageHandling();
+
+  // Obtener axiosInstance
+  const axiosInstance = useAxiosMiddleware();
 
   // Manejadores de paginación
   const handleDeveloperPageChange = useCallback(
@@ -199,7 +207,11 @@ export default function PropertiesPage() {
     setCurrentItem(null);
     setFormData({});
     setDialogTitle(getDialogTitle(formType, false));
-    setCurrentFields(getFieldsForType(formType));
+
+    // Obtener campos según el tipo de formulario
+    const formFields = getFieldsForType(formType);
+
+    setCurrentFields(formFields);
     setDialogOpen(true);
   };
 
@@ -209,7 +221,11 @@ export default function PropertiesPage() {
     setCurrentItem(item);
     setFormData(item || {});
     setDialogTitle(getDialogTitle(formType, true));
-    setCurrentFields(getFieldsForType(formType));
+
+    // Obtener campos según el tipo de formulario
+    const formFields = getFieldsForType(formType);
+
+    setCurrentFields(formFields);
     setDialogOpen(true);
   };
 
@@ -254,6 +270,9 @@ export default function PropertiesPage() {
         case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
           await deleteProperty(itemToDelete.prototypeId);
           break;
+        case TAB_INDICES.PROPERTY_PUBLISHED:
+          await deletePublishedProperty(itemToDelete.prototypeId);
+          break;
       }
       setDeleteDialogOpen(false);
       setItemToDelete(null);
@@ -269,8 +288,11 @@ export default function PropertiesPage() {
     try {
       switch (tabValue) {
         case TAB_INDICES.DEVELOPER:
+          // Ya no es necesario filtrar contactos
+          const developerData = { ...formData };
+
           success = await saveDeveloper(
-            formData,
+            developerData,
             currentItem?.realEstateDevelopmentId
           );
           break;
@@ -298,14 +320,6 @@ export default function PropertiesPage() {
             }
           });
 
-          // Agregar contactos si existen
-          if (formData.contacts) {
-            formDataToSend.append(
-              "contacts",
-              JSON.stringify(formData.contacts)
-            );
-          }
-
           // Agregar imagen principal
           if (formData.mainImage instanceof File) {
             formDataToSend.append("mainImage", formData.mainImage);
@@ -331,35 +345,93 @@ export default function PropertiesPage() {
         case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
           const propertyFormData = new FormData();
 
-          // Filtrar campos que no son de preview
-          Object.keys(formData).forEach((key) => {
-            if (!key.includes("Preview")) {
-              const value = formData[key];
-              if (value !== null && value !== undefined) {
-                if (key === "contacts" && Array.isArray(value)) {
-                  propertyFormData.append(key, JSON.stringify(value));
-                } else if (
-                  (key === "mainImage" && value instanceof File) ||
-                  (key === "secondaryImages" && Array.isArray(value))
-                ) {
-                  if (key === "mainImage") {
-                    propertyFormData.append(key, value);
-                  } else {
-                    value.forEach((file) => {
-                      if (file instanceof File) {
-                        propertyFormData.append(key, file);
-                      }
-                    });
-                  }
-                } else {
-                  propertyFormData.append(key, value);
-                }
-              }
+          // Lista de campos que se deben incluir en la petición
+          const propertyFields = [
+            "prototypeName",
+            "developmentId",
+            "condominium",
+            "price",
+            "bedroom",
+            "bathroom",
+            "halfBathroom",
+            "parking",
+            "size",
+            "mapLocation",
+          ];
+
+          // Filtrar campos que no son de preview y que están en la lista de permitidos
+          propertyFields.forEach((key) => {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              propertyFormData.append(key, value);
             }
           });
 
+          // Manejar imágenes
+          if (formData.mainImage instanceof File) {
+            propertyFormData.append("mainImage", formData.mainImage);
+          }
+
+          if (
+            formData.secondaryImages &&
+            Array.isArray(formData.secondaryImages)
+          ) {
+            formData.secondaryImages.forEach((file) => {
+              if (file instanceof File) {
+                propertyFormData.append("secondaryImages", file);
+              }
+            });
+          }
+
           success = await saveProperty(
             propertyFormData,
+            currentItem?.prototypeId
+          );
+          break;
+        case TAB_INDICES.PROPERTY_PUBLISHED:
+          const publishedPropertyFormData = new FormData();
+
+          // Lista de campos que se deben incluir en la petición
+          const publishedPropertyFields = [
+            "prototypeName",
+            "developmentId",
+            "condominium",
+            "price",
+            "bedroom",
+            "bathroom",
+            "halfBathroom",
+            "parking",
+            "size",
+            "mapLocation",
+          ];
+
+          // Filtrar campos que no son de preview y que están en la lista de permitidos
+          publishedPropertyFields.forEach((key) => {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              publishedPropertyFormData.append(key, value);
+            }
+          });
+
+          // Manejar imágenes
+          if (formData.mainImage instanceof File) {
+            publishedPropertyFormData.append("mainImage", formData.mainImage);
+          }
+
+          if (
+            formData.secondaryImages &&
+            Array.isArray(formData.secondaryImages)
+          ) {
+            formData.secondaryImages.forEach((file) => {
+              if (file instanceof File) {
+                publishedPropertyFormData.append("secondaryImages", file);
+              }
+            });
+          }
+
+          // Llamar a la función para guardar propiedades publicadas
+          success = await savePublishedProperty(
+            publishedPropertyFormData,
             currentItem?.prototypeId
           );
           break;
@@ -375,6 +447,48 @@ export default function PropertiesPage() {
       setFormError(
         "Error al guardar los datos. Por favor, inténtalo de nuevo."
       );
+    }
+  };
+
+  // Función para despublicar una propiedad
+  const handleUnpublishProperty = async (propertyId) => {
+    if (unpublishing) return false;
+
+    try {
+      setUnpublishing(true);
+      const success = await api.unpublishProperty(axiosInstance, propertyId);
+
+      if (success) {
+        // Refrescar las listas de propiedades
+        await fetchPublishedProperties();
+        await fetchProperties();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error al despublicar propiedad:", error);
+      return false;
+    } finally {
+      setUnpublishing(false);
+    }
+  };
+
+  // Función para publicar una propiedad
+  const handlePublishProperty = async (propertyId) => {
+    try {
+      // Llamar a la API para publicar la propiedad
+      const success = await api.publishProperty(axiosInstance, propertyId);
+
+      if (success) {
+        // Refrescar las listas de propiedades
+        await fetchPublishedProperties();
+        await fetchProperties();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error al publicar propiedad:", error);
+      return false;
     }
   };
 
@@ -478,6 +592,8 @@ export default function PropertiesPage() {
             onAdd={() => handleOpenDialog()}
             onEdit={(item) => handleOpenEditDialog(item)}
             onDelete={handleOpenDeleteDialog}
+            onUnpublish={handleUnpublishProperty}
+            onPublish={handlePublishProperty}
             currentTab={tabValue}
             allDevelopers={developers}
             pagination={pagination}

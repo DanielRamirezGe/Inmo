@@ -208,6 +208,26 @@ export const api = {
     }
   },
 
+  updatePublishedProperty: async (axiosInstance, id, formData) => {
+    try {
+      await axiosInstance.put(`/prototype/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  createPublishedProperty: async (axiosInstance, formData) => {
+    try {
+      await axiosInstance.post("/prototype", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
   deleteProperty: async (axiosInstance, id) => {
     try {
       await axiosInstance.delete(`/prototype/${id}`);
@@ -216,21 +236,66 @@ export const api = {
     }
   },
 
+  // Función para despublicar una propiedad
+  unpublishProperty: async (axiosInstance, id) => {
+    try {
+      const formData = new FormData();
+      formData.append("published", false);
+
+      await axiosInstance.put(`/prototype/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error al despublicar propiedad:", error);
+      handleApiError(error);
+      return false;
+    }
+  },
+
+  // Función para publicar una propiedad
+  publishProperty: async (axiosInstance, id) => {
+    try {
+      const formData = new FormData();
+      formData.append("published", true);
+
+      await axiosInstance.put(`/prototype/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error al publicar propiedad:", error);
+      handleApiError(error);
+      return false;
+    }
+  },
+
   // Image handling
   getImage: async (axiosInstance, path, isFullPath = false) => {
     try {
-      const endpoint = isFullPath
-        ? `/image?path=${encodeURIComponent(path)}`
-        : `/image/${path}`;
+      let imagePath = path;
+      if (!isFullPath && !path.startsWith("uploads/")) {
+        imagePath = `uploads/${path}`;
+      }
 
-      const response = await axiosInstance.get(endpoint, {
-        responseType: "blob",
-      });
+      console.log(
+        `Loading image from: /image?path=${encodeURIComponent(imagePath)}`
+      );
+
+      const response = await axiosInstance.get(
+        `/image?path=${encodeURIComponent(imagePath)}`,
+        {
+          responseType: "blob",
+        }
+      );
+
       return new Blob([response.data], {
         type: response.headers["content-type"],
       });
     } catch (error) {
+      console.error("Error loading image:", error);
       handleApiError(error);
+      throw error;
     }
   },
 
@@ -239,6 +304,46 @@ export const api = {
       const response = await axiosInstance.get(endpoint);
       return response.data;
     } catch (error) {
+      handleApiError(error);
+      throw error;
+    }
+  },
+
+  // Método genérico para obtener un elemento por su ID
+  getItemById: async (axiosInstance, endpoint, id) => {
+    try {
+      // Asegurar que el endpoint comience con /
+      const normalizedEndpoint = endpoint.startsWith("/")
+        ? endpoint
+        : `/${endpoint}`;
+
+      console.log(`API call: Fetching item from ${normalizedEndpoint}/${id}`);
+      const response = await axiosInstance.get(`${normalizedEndpoint}/${id}`);
+
+      if (!response.data) {
+        console.error(
+          `API error: No data received from ${normalizedEndpoint}/${id}`
+        );
+        throw new Error(
+          `No se recibieron datos de la API: ${normalizedEndpoint}/${id}`
+        );
+      }
+
+      // Algunos endpoints devuelven la respuesta dentro de data, otros directamente
+      const result = response.data.data || response.data;
+
+      if (!result) {
+        console.error(
+          `API error: Empty data received from ${normalizedEndpoint}/${id}`
+        );
+        throw new Error(
+          `Datos vacíos recibidos de la API: ${normalizedEndpoint}/${id}`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`API error in getItemById(${endpoint}, ${id}):`, error);
       handleApiError(error);
       throw error;
     }

@@ -14,6 +14,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PublishIcon from "@mui/icons-material/Publish";
+import UnpublishedIcon from "@mui/icons-material/Unpublished";
 import apiConfig from "../../../../config/apiConfig";
 import PropertyCard from "@/components/PropertyCard";
 import axios from "axios";
@@ -25,11 +26,14 @@ const ItemCard = ({
   onEdit,
   onDelete,
   onPublish,
+  onUnpublish,
   currentTab,
   allDevelopers,
 }) => {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false);
+  const [unpublishing, setUnpublishing] = useState(false);
 
   const handlePublish = async () => {
     setPublishing(true);
@@ -42,6 +46,20 @@ const ItemCard = ({
       console.error("Error publishing prototype:", error);
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    setUnpublishing(true);
+    try {
+      const success = await onUnpublish(item.prototypeId);
+      if (success) {
+        setUnpublishDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error unpublishing property:", error);
+    } finally {
+      setUnpublishing(false);
     }
   };
 
@@ -115,13 +133,7 @@ const ItemCard = ({
           <Button
             size="small"
             startIcon={<EditIcon />}
-            onClick={() =>
-              onEdit(
-                TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED
-                  ? "property"
-                  : item
-              )
-            }
+            onClick={() => onEdit(item)}
           >
             Editar
           </Button>
@@ -135,6 +147,17 @@ const ItemCard = ({
               disabled={publishing}
             >
               {publishing ? "Publicando..." : "Publicar"}
+            </Button>
+          )}
+          {TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED && (
+            <Button
+              size="small"
+              startIcon={<UnpublishedIcon />}
+              onClick={() => setUnpublishDialogOpen(true)}
+              color="warning"
+              disabled={unpublishing}
+            >
+              {unpublishing ? "Procesando..." : "Dejar de publicar"}
             </Button>
           )}
         </CardActions>
@@ -166,6 +189,36 @@ const ItemCard = ({
             disabled={publishing}
           >
             {publishing ? "Publicando..." : "Publicar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de confirmación para dejar de publicar */}
+      <Dialog
+        open={unpublishDialogOpen}
+        onClose={() => !unpublishing && setUnpublishDialogOpen(false)}
+      >
+        <DialogTitle>Confirmar despublicación</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas dejar de publicar esta propiedad? Una
+            vez despublicada, no será visible para los usuarios.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setUnpublishDialogOpen(false)}
+            disabled={unpublishing}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleUnpublish}
+            color="warning"
+            variant="contained"
+            disabled={unpublishing}
+          >
+            {unpublishing ? "Procesando..." : "Dejar de publicar"}
           </Button>
         </DialogActions>
       </Dialog>
