@@ -309,43 +309,127 @@ export const api = {
     }
   },
 
-  // Método genérico para obtener un elemento por su ID
+  // Función genérica para obtener un elemento por su ID
   getItemById: async (axiosInstance, endpoint, id) => {
     try {
-      // Asegurar que el endpoint comience con /
-      const normalizedEndpoint = endpoint.startsWith("/")
-        ? endpoint
-        : `/${endpoint}`;
-
-      console.log(`API call: Fetching item from ${normalizedEndpoint}/${id}`);
-      const response = await axiosInstance.get(`${normalizedEndpoint}/${id}`);
-
-      if (!response.data) {
-        console.error(
-          `API error: No data received from ${normalizedEndpoint}/${id}`
-        );
-        throw new Error(
-          `No se recibieron datos de la API: ${normalizedEndpoint}/${id}`
-        );
-      }
-
-      // Algunos endpoints devuelven la respuesta dentro de data, otros directamente
-      const result = response.data.data || response.data;
-
-      if (!result) {
-        console.error(
-          `API error: Empty data received from ${normalizedEndpoint}/${id}`
-        );
-        throw new Error(
-          `Datos vacíos recibidos de la API: ${normalizedEndpoint}/${id}`
-        );
-      }
-
-      return result;
+      const response = await axiosInstance.get(`${endpoint}/${id}`);
+      return response.data.data;
     } catch (error) {
-      console.error(`API error in getItemById(${endpoint}, ${id}):`, error);
       handleApiError(error);
-      throw error;
+    }
+  },
+
+  // Minkaasa Property endpoints
+  getMinkaasaUnpublishedProperties: async (
+    axiosInstance,
+    page = 1,
+    pageSize = 10
+  ) => {
+    try {
+      const response = await axiosInstance.get(
+        "/prototype/minkaasa-not-published",
+        {
+          params: { page, pageSize },
+        }
+      );
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getMinkaasaPublishedProperties: async (
+    axiosInstance,
+    page = 1,
+    pageSize = 10
+  ) => {
+    try {
+      const response = await axiosInstance.get(
+        "/prototype/minkaasa-published",
+        {
+          params: { page, pageSize },
+        }
+      );
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getMinkaasaProperty: async (axiosInstance, id) => {
+    try {
+      const response = await axiosInstance.get(`/prototype/minkaasa/${id}`);
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  createMinkaasaProperty: async (axiosInstance, formData) => {
+    try {
+      await axiosInstance.post("/prototype/minkaasa", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  updateMinkaasaProperty: async (axiosInstance, id, formData) => {
+    try {
+      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  deleteMinkaasaProperty: async (axiosInstance, id) => {
+    try {
+      await axiosInstance.delete(`/prototype/minkaasa/${id}`);
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  publishMinkaasaProperty: async (axiosInstance, id) => {
+    try {
+      const formData = new FormData();
+      formData.append("published", true);
+
+      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error al publicar propiedad Minkaasa:", error);
+      return false;
+    }
+  },
+
+  unpublishMinkaasaProperty: async (axiosInstance, id) => {
+    try {
+      const formData = new FormData();
+      formData.append("published", false);
+
+      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return true;
+    } catch (error) {
+      console.error("Error al despublicar propiedad Minkaasa:", error);
+      return false;
     }
   },
 };

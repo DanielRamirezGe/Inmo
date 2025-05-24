@@ -45,6 +45,20 @@ export const useEntityData = (entityType) => {
               pageSize
             );
             break;
+          case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+            response = await api.getMinkaasaUnpublishedProperties(
+              axiosInstance,
+              page,
+              pageSize
+            );
+            break;
+          case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
+            response = await api.getMinkaasaPublishedProperties(
+              axiosInstance,
+              page,
+              pageSize
+            );
+            break;
           default:
             throw new Error("Tipo de entidad no válido");
         }
@@ -105,6 +119,14 @@ export const useEntityData = (entityType) => {
       },
       [FORM_TYPES.PROPERTY_PUBLISHED]: {
         path: "/prototype",
+        idField: "prototypeId",
+      },
+      [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
+        path: "/prototype/minkaasa",
+        idField: "prototypeId",
+      },
+      [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
+        path: "/prototype/minkaasa",
         idField: "prototypeId",
       },
       [FORM_TYPES.DEVELOPMENT]: {
@@ -251,6 +273,34 @@ export const useEntityData = (entityType) => {
               );
             }
             break;
+          case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+            if (isEditing) {
+              response = await api.updateMinkaasaProperty(
+                axiosInstance,
+                itemId,
+                formData
+              );
+            } else {
+              response = await api.createMinkaasaProperty(
+                axiosInstance,
+                formData
+              );
+            }
+            break;
+          case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
+            if (isEditing) {
+              response = await api.updateMinkaasaProperty(
+                axiosInstance,
+                itemId,
+                formData
+              );
+            } else {
+              response = await api.createMinkaasaProperty(
+                axiosInstance,
+                formData
+              );
+            }
+            break;
           default:
             throw new Error("Tipo de entidad no válido");
         }
@@ -288,6 +338,13 @@ export const useEntityData = (entityType) => {
             break;
           case FORM_TYPES.PROPERTY_PUBLISHED:
             throw new Error("No se permite eliminar propiedades publicadas");
+          case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+            await api.deleteMinkaasaProperty(axiosInstance, itemId);
+            break;
+          case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
+            throw new Error(
+              "No se permite eliminar propiedades Minkaasa publicadas"
+            );
           default:
             throw new Error("Tipo de entidad no válido");
         }

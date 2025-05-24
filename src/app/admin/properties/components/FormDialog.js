@@ -27,6 +27,7 @@ import { useImageHandling } from "../../../../hooks/useImageHandling";
 import { useFieldOptions } from "../../../../hooks/useFieldOptions";
 import { api } from "../../../../services/api";
 import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
+import { ESTADOS_MEXICO } from "./fieldsConfig";
 
 // Componente de formulario genérico
 const FormDialog = ({
@@ -127,13 +128,61 @@ const FormDialog = ({
           prototypeName: "",
           developmentId: "",
           price: "",
-          description: "",
-          bedrooms: "",
-          bathrooms: "",
-          halfBathrooms: "",
-          parkingSpots: "",
-          constructionSize: "",
-          lotSize: "",
+          bedroom: "",
+          bathroom: "",
+          halfBathroom: "",
+          parking: "",
+          size: "",
+          url: "",
+          // Datos de descripción
+          descriptions: [],
+          // Campos para Minkaasa
+          street: "",
+          exteriorNumber: "",
+          interiorNumber: "",
+          suburb: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          name: "",
+          lastNameP: "",
+          lastNameM: "",
+          mainEmail: "",
+          mainPhone: "",
+          agent: "",
+          commission: "",
+          mainImage: null,
+          mainImagePreview: null,
+          secondaryImages: [],
+          secondaryImagesPreview: [],
+        };
+        break;
+      case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
+        initialData = {
+          prototypeName: "",
+          price: "",
+          bedroom: "",
+          bathroom: "",
+          halfBathroom: "",
+          parking: "",
+          size: "",
+          // Datos de descripción
+          descriptions: [],
+          street: "",
+          exteriorNumber: "",
+          interiorNumber: "",
+          suburb: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          name: "",
+          lastNameP: "",
+          lastNameM: "",
+          mainEmail: "",
+          mainPhone: "",
+          agent: "",
+          commission: "",
           mainImage: null,
           mainImagePreview: null,
           secondaryImages: [],
@@ -236,6 +285,8 @@ const FormDialog = ({
               break;
             case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
             case FORM_TYPES.PROPERTY_PUBLISHED:
+            case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+            case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
               // Las propiedades pueden tener diferentes nombres de ID
               itemId =
                 currentItem.prototypeId ||
@@ -300,15 +351,53 @@ const FormDialog = ({
 
           // Verificar que details no sea null antes de actualizar formData
           if (details) {
-            setFormData((prev) => ({
-              ...prev,
-              ...details,
-            }));
+            // Si es una propiedad Minkaasa, extraer los datos del externalAgreement
+            if (
+              (formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
+              details.externalAgreement
+            ) {
+              // Extraer los datos del externalAgreement para ponerlos en el nivel principal
+              const externalAgreementData = details.externalAgreement;
+
+              // Asegurarse de que descriptions sea un array
+              const descriptionsData = details.descriptions || [];
+
+              // Crear un nuevo objeto con los datos aplanados
+              const flattenedData = {
+                ...details,
+                name: externalAgreementData.name || "",
+                lastNameP: externalAgreementData.lastNameP || "",
+                lastNameM: externalAgreementData.lastNameM || "",
+                mainEmail: externalAgreementData.mainEmail || "",
+                mainPhone: externalAgreementData.mainPhone || "",
+                agent: externalAgreementData.agent || "",
+                commission: externalAgreementData.commission || 0,
+                descriptions: descriptionsData,
+              };
+
+              setFormData((prev) => ({
+                ...prev,
+                ...flattenedData,
+              }));
+            } else {
+              // Para otros tipos de propiedades, usar los datos tal como vienen
+              // pero asegurándonos de inicializar el array descriptions si no existe
+              const propertyDescriptionsData = details.descriptions || [];
+
+              setFormData((prev) => ({
+                ...prev,
+                ...details,
+                descriptions: propertyDescriptionsData,
+              }));
+            }
 
             // Cargar imágenes si es necesario
             if (
               formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_PUBLISHED
+              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
             ) {
               console.log("FormDialog - Loading property images");
               console.log(
@@ -523,6 +612,14 @@ const FormDialog = ({
   useEffect(() => {
     if (!formData) {
       setFormData({});
+    }
+
+    // Asegurarse de que formData.descriptions siempre sea un array
+    if (formData && !formData.descriptions) {
+      setFormData((prev) => ({
+        ...prev,
+        descriptions: [],
+      }));
     }
   }, [formData, setFormData]);
 
@@ -853,7 +950,7 @@ const FormDialog = ({
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Box component="form" sx={{ mt: 2 }}>
+        <Box component="div" sx={{ mt: 2 }}>
           {error && (
             <Alert
               severity="error"
@@ -1187,7 +1284,9 @@ const FormDialog = ({
           )}
 
           {(formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_PUBLISHED) && (
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
             <>
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
                 Datos de la Propiedad
@@ -1211,65 +1310,76 @@ const FormDialog = ({
                 </Grid>
 
                 {/* Campo de desarrollo */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl
-                    fullWidth
-                    margin="normal"
-                    variant="outlined"
-                    disabled={isLoadingInitialData || loadingFieldOptions}
-                    error={Boolean(
-                      fieldErrors?.find((err) => err.field === "developmentId")
-                    )}
-                    sx={{ minWidth: 240 }}
-                  >
-                    <InputLabel id="development-select-label">
-                      Desarrollo
-                    </InputLabel>
-                    <Select
-                      labelId="development-select-label"
-                      id="developmentId"
-                      name="developmentId"
-                      value={formData?.developmentId || ""}
-                      onChange={(e) =>
-                        handleFieldChange("developmentId", e.target.value)
-                      }
-                      label="Desarrollo"
-                      sx={{ height: 56 }}
-                    >
-                      <MenuItem value="">
-                        <em>Ninguno</em>
-                      </MenuItem>
-                      {console.log(
-                        "Development options rendering:",
-                        selectOptions?.developmentId
-                      )}
-                      {Array.isArray(selectOptions?.developmentId) &&
-                        selectOptions.developmentId.map((option) => {
-                          console.log("Development option:", option);
-                          return (
-                            <MenuItem
-                              key={option.id || option.developmentId}
-                              value={option.id || option.developmentId}
-                            >
-                              {option.name || option.developmentName}
-                            </MenuItem>
-                          );
-                        })}
-                    </Select>
-                    {Boolean(
-                      fieldErrors?.find((err) => err.field === "developmentId")
-                    ) && (
-                      <FormHelperText error>
-                        {
+                <>
+                  {!(
+                    formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                    formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+                  ) && (
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl
+                        fullWidth
+                        margin="normal"
+                        variant="outlined"
+                        disabled={isLoadingInitialData || loadingFieldOptions}
+                        error={Boolean(
                           fieldErrors?.find(
                             (err) => err.field === "developmentId"
-                          )?.message
-                        }
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                </Grid>
-
+                          )
+                        )}
+                        sx={{ minWidth: 240 }}
+                      >
+                        <InputLabel id="development-select-label">
+                          Desarrollo
+                        </InputLabel>
+                        <Select
+                          labelId="development-select-label"
+                          id="developmentId"
+                          name="developmentId"
+                          value={formData?.developmentId || ""}
+                          onChange={(e) =>
+                            handleFieldChange("developmentId", e.target.value)
+                          }
+                          label="Desarrollo"
+                          sx={{ height: 56 }}
+                        >
+                          <MenuItem value="">
+                            <em>Ninguno</em>
+                          </MenuItem>
+                          {console.log(
+                            "Development options rendering:",
+                            selectOptions?.developmentId
+                          )}
+                          {Array.isArray(selectOptions?.developmentId) &&
+                            selectOptions.developmentId.map((option) => {
+                              console.log("Development option:", option);
+                              return (
+                                <MenuItem
+                                  key={option.id || option.developmentId}
+                                  value={option.id || option.developmentId}
+                                >
+                                  {option.name || option.developmentName} -{" "}
+                                  {option.realEstateDevelopmentName}
+                                </MenuItem>
+                              );
+                            })}
+                        </Select>
+                        {Boolean(
+                          fieldErrors?.find(
+                            (err) => err.field === "developmentId"
+                          )
+                        ) && (
+                          <FormHelperText error>
+                            {
+                              fieldErrors?.find(
+                                (err) => err.field === "developmentId"
+                              )?.message
+                            }
+                          </FormHelperText>
+                        )}
+                      </FormControl>
+                    </Grid>
+                  )}
+                </>
                 <Grid item xs={12} sm={6} md={4}>
                   <TextField
                     fullWidth
@@ -1400,6 +1510,21 @@ const FormDialog = ({
                   <TextField
                     fullWidth
                     margin="normal"
+                    label="URL"
+                    name="url"
+                    value={formData?.url || ""}
+                    onChange={(e) => handleFieldChange("url", e.target.value)}
+                    sx={{ minWidth: 240 }}
+                    InputProps={{ sx: { height: 56 } }}
+                    placeholder="https://ejemplo.com/propiedad"
+                    helperText="URL opcional para la página web de la propiedad"
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} md={4}>
+                  <TextField
+                    fullWidth
+                    margin="normal"
                     label="Ubicación en Mapa"
                     name="mapLocation"
                     value={formData?.mapLocation || ""}
@@ -1410,6 +1535,450 @@ const FormDialog = ({
                     InputProps={{ sx: { height: 56 } }}
                   />
                 </Grid>
+
+                {/* Sección de Descripción para todas las propiedades */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                    Descripciones de la Propiedad
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12}>
+                  {/* Mostrar el listado de descripciones existentes */}
+                  {formData.descriptions &&
+                  Array.isArray(formData.descriptions) &&
+                  formData.descriptions.length > 0 ? (
+                    <Box sx={{ mb: 3 }}>
+                      {formData.descriptions.map((desc, index) => (
+                        <Box
+                          key={desc.descriptionId || index}
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                            borderRadius: 1,
+                            p: 2,
+                            mb: 2,
+                            position: "relative",
+                          }}
+                        >
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {desc.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              mt: 1,
+                              whiteSpace: "pre-wrap", // Preservar espacios y saltos de línea
+                              overflowWrap: "break-word", // Romper palabras largas
+                            }}
+                          >
+                            {desc.description}
+                          </Typography>
+                          <IconButton
+                            onClick={() => {
+                              const newDescriptions = [
+                                ...formData.descriptions,
+                              ];
+                              newDescriptions.splice(index, 1);
+                              setFormData({
+                                ...formData,
+                                descriptions: newDescriptions,
+                              });
+                            }}
+                            sx={{
+                              position: "absolute",
+                              top: 8,
+                              right: 8,
+                              color: "error.main",
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      No hay descripciones. Agregue al menos una descripción
+                      para la propiedad.
+                    </Typography>
+                  )}
+
+                  {/* Formulario para agregar una nueva descripción */}
+                  <Box
+                    component="div"
+                    sx={{
+                      border: "1px dashed #ccc",
+                      borderRadius: 1,
+                      p: 2,
+                    }}
+                  >
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                      Agregar nueva descripción
+                      <Button
+                        size="small"
+                        sx={{ ml: 2 }}
+                        onClick={() => {
+                          // Verificar el estado actual de descripciones
+                          console.log(
+                            "Estado actual de descripciones:",
+                            formData.descriptions
+                          );
+                          // Forzar reseteo del array si es necesario
+                          if (!Array.isArray(formData.descriptions)) {
+                            setFormData({
+                              ...formData,
+                              descriptions: [],
+                            });
+                          }
+                        }}
+                      >
+                        Reiniciar
+                      </Button>
+                    </Typography>
+
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mb: 2, display: "block" }}
+                    >
+                      El formato del texto (espacios, saltos de línea,
+                      tabulaciones) se preservará exactamente como lo ingreses.
+                    </Typography>
+
+                    <TextField
+                      fullWidth
+                      margin="normal"
+                      label="Título"
+                      id="description-title-field"
+                      sx={{ mb: 2 }}
+                      InputProps={{ sx: { height: 56 } }}
+                    />
+
+                    <TextField
+                      fullWidth
+                      margin="normal"
+                      label="Descripción"
+                      id="description-text-field"
+                      multiline
+                      rows={5}
+                      sx={{ mb: 2 }}
+                      placeholder="Escribe aquí la descripción completa. Puedes usar saltos de línea y espacios para formatear el texto como desees. Este formato se preservará exactamente como lo escribas."
+                      InputProps={{
+                        sx: {
+                          fontFamily: "monospace", // Fuente monoespaciada para mejor visualización
+                        },
+                      }}
+                    />
+
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        const titleField = document.getElementById(
+                          "description-title-field"
+                        );
+                        const descriptionField = document.getElementById(
+                          "description-text-field"
+                        );
+
+                        if (
+                          titleField &&
+                          descriptionField &&
+                          titleField.value &&
+                          descriptionField.value
+                        ) {
+                          const title = titleField.value;
+                          const description = descriptionField.value;
+
+                          // Crear una copia del array de descripciones actual
+                          const newDescriptions = [
+                            ...(formData.descriptions || []),
+                          ];
+
+                          // Agregar la nueva descripción
+                          newDescriptions.push({ title, description });
+
+                          // Actualizar el estado con las nuevas descripciones
+                          setFormData({
+                            ...formData,
+                            descriptions: newDescriptions,
+                          });
+
+                          console.log("Nueva descripción agregada:", {
+                            title,
+                            description,
+                          });
+                          console.log(
+                            "Total de descripciones:",
+                            newDescriptions.length
+                          );
+
+                          // Limpiar los campos
+                          titleField.value = "";
+                          descriptionField.value = "";
+                        } else {
+                          // Informar al usuario que debe completar ambos campos
+                          alert(
+                            "Por favor, complete tanto el título como la descripción."
+                          );
+                        }
+                      }}
+                    >
+                      Agregar descripción
+                    </Button>
+                  </Box>
+                </Grid>
+
+                {/* Campos de dirección para propiedades Minkaasa */}
+                {(formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                  formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+                  <>
+                    <Grid item xs={12}>
+                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                        Datos de Ubicación
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Calle"
+                        name="street"
+                        value={formData?.street || ""}
+                        onChange={(e) =>
+                          handleFieldChange("street", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Número Exterior"
+                        name="exteriorNumber"
+                        value={formData?.exteriorNumber || ""}
+                        onChange={(e) =>
+                          handleFieldChange("exteriorNumber", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Número Interior"
+                        name="interiorNumber"
+                        value={formData?.interiorNumber || ""}
+                        onChange={(e) =>
+                          handleFieldChange("interiorNumber", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Colonia"
+                        name="suburb"
+                        value={formData?.suburb || ""}
+                        onChange={(e) =>
+                          handleFieldChange("suburb", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Ciudad"
+                        name="city"
+                        value={formData?.city || ""}
+                        onChange={(e) =>
+                          handleFieldChange("city", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <FormControl
+                        fullWidth
+                        margin="normal"
+                        sx={{ minWidth: 240 }}
+                      >
+                        <InputLabel>Estado</InputLabel>
+                        <Select
+                          value={formData?.state || ""}
+                          onChange={(e) =>
+                            handleFieldChange("state", e.target.value)
+                          }
+                          label="Estado"
+                          sx={{ height: 56 }}
+                        >
+                          <MenuItem value="">
+                            <em>Seleccionar</em>
+                          </MenuItem>
+                          {ESTADOS_MEXICO.map((estado) => (
+                            <MenuItem key={estado.id} value={estado.id}>
+                              {estado.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Código Postal"
+                        name="zipCode"
+                        value={formData?.zipCode || ""}
+                        onChange={(e) =>
+                          handleFieldChange("zipCode", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    {/* Datos de Contacto para propiedades Minkaasa */}
+                    <Grid item xs={12}>
+                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                        Datos de Contacto
+                      </Typography>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Nombre"
+                        name="name"
+                        value={formData?.name || ""}
+                        onChange={(e) =>
+                          handleFieldChange("name", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Apellido Paterno"
+                        name="lastNameP"
+                        value={formData?.lastNameP || ""}
+                        onChange={(e) =>
+                          handleFieldChange("lastNameP", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Apellido Materno"
+                        name="lastNameM"
+                        value={formData?.lastNameM || ""}
+                        onChange={(e) =>
+                          handleFieldChange("lastNameM", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Email Principal"
+                        name="mainEmail"
+                        type="email"
+                        value={formData?.mainEmail || ""}
+                        onChange={(e) =>
+                          handleFieldChange("mainEmail", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Teléfono Principal"
+                        name="mainPhone"
+                        value={formData?.mainPhone || ""}
+                        onChange={(e) =>
+                          handleFieldChange("mainPhone", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Agente"
+                        name="agent"
+                        value={formData?.agent || ""}
+                        onChange={(e) =>
+                          handleFieldChange("agent", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{ sx: { height: 56 } }}
+                      />
+                    </Grid>
+
+                    <Grid item xs={12} sm={6} md={4}>
+                      <TextField
+                        fullWidth
+                        margin="normal"
+                        label="Comisión %"
+                        name="commission"
+                        type="number"
+                        value={formData?.commission || ""}
+                        onChange={(e) =>
+                          handleFieldChange("commission", e.target.value)
+                        }
+                        sx={{ minWidth: 240 }}
+                        InputProps={{
+                          sx: { height: 56 },
+                          inputProps: { min: 0, max: 100 },
+                        }}
+                      />
+                    </Grid>
+                  </>
+                )}
               </Grid>
 
               {/* Sección de Imágenes para Propiedades */}
@@ -1488,7 +2057,9 @@ const FormDialog = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={onClose} color="primary">
+          Cancelar
+        </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"

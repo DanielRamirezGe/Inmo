@@ -30,11 +30,13 @@ const PropertyCard = ({ property, onWhatsAppClick, onDetailClick }) => {
     size,
     bedroom,
     bathroom,
+    halfBathroom,
     parking,
     mainImage,
     secondaryImages,
     images = [],
     developmentName,
+    condominium,
   } = property;
 
   // Asegurarse de que mainImage esté primero en el array de imágenes
@@ -108,7 +110,7 @@ const PropertyCard = ({ property, onWhatsAppClick, onDetailClick }) => {
               width: "100%",
             }}
           >
-            {prototypeName} - {developmentName}
+            {prototypeName} - {developmentName || condominium}
           </Typography>
         </Box>
 
@@ -125,18 +127,30 @@ const PropertyCard = ({ property, onWhatsAppClick, onDetailClick }) => {
             }}
             onClick={handleImageClick}
           >
-            <CardMedia
-              component="img"
-              sx={{ height: "100%", objectFit: "cover" }}
-              image={
-                mainImage
-                  ? `${
-                      apiConfig.baseURL
-                    }/api/v1/image?path=${encodeURIComponent(mainImage)}`
-                  : "/placeholder-house.jpg"
-              }
-              alt={prototypeName}
-            />
+            {mainImage ? (
+              <CardMedia
+                component="img"
+                sx={{ height: "100%", objectFit: "cover" }}
+                image={`${
+                  apiConfig.baseURL
+                }/api/v1/image?path=${encodeURIComponent(mainImage)}`}
+                alt={prototypeName}
+              />
+            ) : (
+              <Box
+                sx={{
+                  height: "100%",
+                  backgroundColor: "#e0e0e0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Sin imagen
+                </Typography>
+              </Box>
+            )}
           </Box>
 
           {/* Columna derecha - Información */}
@@ -206,7 +220,8 @@ const PropertyCard = ({ property, onWhatsAppClick, onDetailClick }) => {
                   >
                     <BathtubIcon color="primary" sx={{ fontSize: "1rem" }} />
                     <Typography variant="caption">
-                      <strong>Baños:</strong> {bathroom}
+                      <strong>Baños:</strong> {bathroom}{" "}
+                      {halfBathroom === "1" ? "½" : ""}
                     </Typography>
                   </Box>
                 </Grid>

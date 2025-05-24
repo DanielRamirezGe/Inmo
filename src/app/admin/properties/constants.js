@@ -3,6 +3,8 @@ export const FORM_TYPES = {
   DEVELOPMENT: "development",
   PROPERTY_NOT_PUBLISHED: "propertyNotPublished",
   PROPERTY_PUBLISHED: "propertyPublished",
+  PROPERTY_MINKAASA_UNPUBLISHED: "propertyMinkaasaUnpublished",
+  PROPERTY_MINKAASA_PUBLISHED: "propertyMinkaasaPublished",
   AGENCY: "agency",
 };
 
@@ -11,6 +13,8 @@ export const TAB_INDICES = {
   DEVELOPMENT: 1,
   PROPERTY_NOT_PUBLISHED: 2,
   PROPERTY_PUBLISHED: 3,
+  PROPERTY_MINKAASA_UNPUBLISHED: 4,
+  PROPERTY_MINKAASA_PUBLISHED: 5,
 };
 
 export const TAB_FORM_TYPE_MAP = {
@@ -18,6 +22,10 @@ export const TAB_FORM_TYPE_MAP = {
   [TAB_INDICES.DEVELOPMENT]: FORM_TYPES.DEVELOPMENT,
   [TAB_INDICES.PROPERTY_NOT_PUBLISHED]: FORM_TYPES.PROPERTY_NOT_PUBLISHED,
   [TAB_INDICES.PROPERTY_PUBLISHED]: FORM_TYPES.PROPERTY_PUBLISHED,
+  [TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED]:
+    FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED,
+  [TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED]:
+    FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED,
 };
 
 export const ENTITY_LABELS = {
@@ -36,6 +44,14 @@ export const ENTITY_LABELS = {
   [FORM_TYPES.PROPERTY_PUBLISHED]: {
     singular: "Propiedad Publicada",
     plural: "Propiedades Publicadas",
+  },
+  [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
+    singular: "Propiedad Minkaasa No Publicada",
+    plural: "Propiedades Minkaasa No Publicadas",
+  },
+  [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
+    singular: "Propiedad Minkaasa Publicada",
+    plural: "Propiedades Minkaasa Publicadas",
   },
 };
 

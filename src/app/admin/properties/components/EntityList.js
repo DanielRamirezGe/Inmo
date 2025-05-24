@@ -45,7 +45,9 @@ const EntityList = ({
   }
 
   const currentFormType = TAB_FORM_TYPE_MAP[currentTab];
-  const isPublishedTab = currentFormType === FORM_TYPES.PROPERTY_PUBLISHED;
+  const isPublishedTab =
+    currentFormType === FORM_TYPES.PROPERTY_PUBLISHED ||
+    currentFormType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
 
   const getItemKey = (item) => {
     switch (currentTab) {
@@ -55,6 +57,8 @@ const EntityList = ({
         return item.developmentId;
       case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
       case TAB_INDICES.PROPERTY_PUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
         return item.prototypeId;
       default:
         return null;
@@ -69,6 +73,8 @@ const EntityList = ({
         return item.developmentName;
       case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
       case TAB_INDICES.PROPERTY_PUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
         return item.propertyName;
       default:
         return "";
@@ -88,6 +94,8 @@ const EntityList = ({
           : "Sin desarrolladora";
       case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
       case TAB_INDICES.PROPERTY_PUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
         return `${item.propertyType} - ${item.state}, ${item.city}`;
       default:
         return "";

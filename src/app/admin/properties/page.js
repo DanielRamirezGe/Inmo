@@ -36,6 +36,8 @@ const ENTITY_TYPES = {
   DEVELOPMENT: FORM_TYPES.DEVELOPMENT,
   PROPERTY_NOT_PUBLISHED: FORM_TYPES.PROPERTY_NOT_PUBLISHED,
   PROPERTY_PUBLISHED: FORM_TYPES.PROPERTY_PUBLISHED,
+  PROPERTY_MINKAASA_UNPUBLISHED: FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED,
+  PROPERTY_MINKAASA_PUBLISHED: FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED,
 };
 
 export default function PropertiesPage() {
@@ -97,6 +99,28 @@ export default function PropertiesPage() {
     saveItem: savePublishedProperty,
     pagination: publishedPropertiesPagination,
   } = useEntityData(ENTITY_TYPES.PROPERTY_PUBLISHED);
+
+  const {
+    items: minkaasaUnpublishedProperties,
+    loading: minkaasaUnpublishedPropertiesLoading,
+    error: minkaasaUnpublishedPropertiesError,
+    fetchItems: fetchMinkaasaUnpublishedProperties,
+    getItemDetails: getMinkaasaUnpublishedPropertyDetails,
+    deleteItem: deleteMinkaasaUnpublishedProperty,
+    saveItem: saveMinkaasaUnpublishedProperty,
+    pagination: minkaasaUnpublishedPropertiesPagination,
+  } = useEntityData(ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED);
+
+  const {
+    items: minkaasaPublishedProperties,
+    loading: minkaasaPublishedPropertiesLoading,
+    error: minkaasaPublishedPropertiesError,
+    fetchItems: fetchMinkaasaPublishedProperties,
+    getItemDetails: getMinkaasaPublishedPropertyDetails,
+    deleteItem: deleteMinkaasaPublishedProperty,
+    saveItem: saveMinkaasaPublishedProperty,
+    pagination: minkaasaPublishedPropertiesPagination,
+  } = useEntityData(ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED);
 
   const {
     loading: imageLoading,
@@ -165,6 +189,34 @@ export default function PropertiesPage() {
     [fetchPublishedProperties]
   );
 
+  const handleMinkaasaUnpublishedPropertyPageChange = useCallback(
+    (newPage) => {
+      fetchMinkaasaUnpublishedProperties(newPage);
+    },
+    [fetchMinkaasaUnpublishedProperties]
+  );
+
+  const handleMinkaasaUnpublishedPropertyPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchMinkaasaUnpublishedProperties(1, newPageSize);
+    },
+    [fetchMinkaasaUnpublishedProperties]
+  );
+
+  const handleMinkaasaPublishedPropertyPageChange = useCallback(
+    (newPage) => {
+      fetchMinkaasaPublishedProperties(newPage);
+    },
+    [fetchMinkaasaPublishedProperties]
+  );
+
+  const handleMinkaasaPublishedPropertyPageSizeChange = useCallback(
+    (newPageSize) => {
+      fetchMinkaasaPublishedProperties(1, newPageSize);
+    },
+    [fetchMinkaasaPublishedProperties]
+  );
+
   // Cargar desarrolladoras solo una vez al montar el componente
   useEffect(() => {
     const loadInitialData = async () => {
@@ -188,6 +240,12 @@ export default function PropertiesPage() {
           break;
         case TAB_INDICES.PROPERTY_PUBLISHED:
           await fetchPublishedProperties();
+          break;
+        case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+          await fetchMinkaasaUnpublishedProperties();
+          break;
+        case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
+          await fetchMinkaasaPublishedProperties();
           break;
         // TAB_INDICES.DEVELOPER ya está manejado en el primer useEffect
       }
@@ -245,6 +303,8 @@ export default function PropertiesPage() {
         return developmentFields;
       case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
       case FORM_TYPES.PROPERTY_PUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
         return propertyFields;
       default:
         return [];
@@ -272,6 +332,12 @@ export default function PropertiesPage() {
           break;
         case TAB_INDICES.PROPERTY_PUBLISHED:
           await deletePublishedProperty(itemToDelete.prototypeId);
+          break;
+        case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+          await deleteMinkaasaUnpublishedProperty(itemToDelete.prototypeId);
+          break;
+        case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
+          await deleteMinkaasaPublishedProperty(itemToDelete.prototypeId);
           break;
       }
       setDeleteDialogOpen(false);
@@ -357,6 +423,7 @@ export default function PropertiesPage() {
             "parking",
             "size",
             "mapLocation",
+            "url",
           ];
 
           // Filtrar campos que no son de preview y que están en la lista de permitidos
@@ -366,6 +433,45 @@ export default function PropertiesPage() {
               propertyFormData.append(key, value);
             }
           });
+
+          // Agregar el arreglo descriptions como JSON
+          if (formData.descriptions && Array.isArray(formData.descriptions)) {
+            // Verificar si el array está vacío
+            if (formData.descriptions.length === 0) {
+              // Si el array está vacío, enviar un array vacío como string JSON
+              propertyFormData.append("descriptions", JSON.stringify([]));
+            } else {
+              formData.descriptions.forEach((desc, index) => {
+                // Enviar el título y la descripción sin modificar para preservar formato
+                propertyFormData.append(
+                  `descriptions[${index}][title]`,
+                  desc.title || ""
+                );
+
+                // Preservar el texto exactamente como se ingresó, incluyendo espacios y saltos de línea
+                const descriptionText = desc.description || "";
+                propertyFormData.append(
+                  `descriptions[${index}][description]`,
+                  descriptionText
+                );
+
+                // Si existe un descriptionId, incluirlo para que la API pueda actualizar en lugar de crear
+                if (desc.descriptionId) {
+                  propertyFormData.append(
+                    `descriptions[${index}][descriptionId]`,
+                    desc.descriptionId
+                  );
+                }
+              });
+            }
+          } else {
+            // Si descriptions es null o undefined, enviar un array vacío
+            propertyFormData.append("descriptions", JSON.stringify([]));
+            console.log(
+              "No hay descripciones o el formato es inválido:",
+              formData.descriptions
+            );
+          }
 
           // Manejar imágenes
           if (formData.mainImage instanceof File) {
@@ -403,6 +509,7 @@ export default function PropertiesPage() {
             "parking",
             "size",
             "mapLocation",
+            "url",
           ];
 
           // Filtrar campos que no son de preview y que están en la lista de permitidos
@@ -412,6 +519,51 @@ export default function PropertiesPage() {
               publishedPropertyFormData.append(key, value);
             }
           });
+
+          // Agregar el arreglo descriptions como JSON
+          if (formData.descriptions && Array.isArray(formData.descriptions)) {
+            // Verificar si el array está vacío
+            if (formData.descriptions.length === 0) {
+              // Si el array está vacío, enviar un array vacío como string JSON
+              publishedPropertyFormData.append(
+                "descriptions",
+                JSON.stringify([])
+              );
+            } else {
+              formData.descriptions.forEach((desc, index) => {
+                // Enviar el título y la descripción sin modificar para preservar formato
+                publishedPropertyFormData.append(
+                  `descriptions[${index}][title]`,
+                  desc.title || ""
+                );
+
+                // Preservar el texto exactamente como se ingresó, incluyendo espacios y saltos de línea
+                const descriptionText = desc.description || "";
+                publishedPropertyFormData.append(
+                  `descriptions[${index}][description]`,
+                  descriptionText
+                );
+
+                // Si existe un descriptionId, incluirlo para que la API pueda actualizar en lugar de crear
+                if (desc.descriptionId) {
+                  publishedPropertyFormData.append(
+                    `descriptions[${index}][descriptionId]`,
+                    desc.descriptionId
+                  );
+                }
+              });
+            }
+          } else {
+            // Si descriptions es null o undefined, enviar un array vacío
+            publishedPropertyFormData.append(
+              "descriptions",
+              JSON.stringify([])
+            );
+            console.log(
+              "No hay descripciones o el formato es inválido:",
+              formData.descriptions
+            );
+          }
 
           // Manejar imágenes
           if (formData.mainImage instanceof File) {
@@ -432,6 +584,269 @@ export default function PropertiesPage() {
           // Llamar a la función para guardar propiedades publicadas
           success = await savePublishedProperty(
             publishedPropertyFormData,
+            currentItem?.prototypeId
+          );
+          break;
+        case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+          const minkaasaUnpublishedPropertyFormData = new FormData();
+
+          // Lista de campos que se deben incluir en la petición
+          const minkaasaUnpublishedPropertyFields = [
+            "prototypeName",
+            "condominium",
+            "price",
+            "bedroom",
+            "bathroom",
+            "halfBathroom",
+            "parking",
+            "size",
+            "mapLocation",
+            "url",
+            "street",
+            "exteriorNumber",
+            "interiorNumber",
+            "suburb",
+            "city",
+            "state",
+            "zipCode",
+          ];
+
+          // Filtrar campos que no son de preview y que están en la lista de permitidos
+          minkaasaUnpublishedPropertyFields.forEach((key) => {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              minkaasaUnpublishedPropertyFormData.append(key, value);
+            }
+          });
+
+          // Agregar el arreglo descriptions como JSON
+          if (formData.descriptions && Array.isArray(formData.descriptions)) {
+            // Verificar si el array está vacío
+            if (formData.descriptions.length === 0) {
+              // Si el array está vacío, enviar un array vacío como string JSON
+              minkaasaUnpublishedPropertyFormData.append(
+                "descriptions",
+                JSON.stringify([])
+              );
+            } else {
+              formData.descriptions.forEach((desc, index) => {
+                // Enviar el título y la descripción sin modificar para preservar formato
+                minkaasaUnpublishedPropertyFormData.append(
+                  `descriptions[${index}][title]`,
+                  desc.title || ""
+                );
+
+                // Preservar el texto exactamente como se ingresó, incluyendo espacios y saltos de línea
+                const descriptionText = desc.description || "";
+                minkaasaUnpublishedPropertyFormData.append(
+                  `descriptions[${index}][description]`,
+                  descriptionText
+                );
+
+                // Si existe un descriptionId, incluirlo para que la API pueda actualizar en lugar de crear
+                if (desc.descriptionId) {
+                  minkaasaUnpublishedPropertyFormData.append(
+                    `descriptions[${index}][descriptionId]`,
+                    desc.descriptionId
+                  );
+                }
+              });
+            }
+          } else {
+            // Si descriptions es null o undefined, enviar un array vacío
+            minkaasaUnpublishedPropertyFormData.append(
+              "descriptions",
+              JSON.stringify([])
+            );
+            console.log(
+              "No hay descripciones o el formato es inválido:",
+              formData.descriptions
+            );
+          }
+
+          // Crear objeto externalAgreement con los datos de contacto
+          const externalAgreement = {
+            name: formData.name || "",
+            lastNameP: formData.lastNameP || "",
+            lastNameM: formData.lastNameM || "",
+            mainEmail: formData.mainEmail || "",
+            mainPhone: formData.mainPhone || "",
+            agent: formData.agent || "",
+            commission: formData.commission || 0,
+          };
+
+          // Si estamos editando y existe el ID del acuerdo externo, incluirlo
+          if (currentItem?.externalAgreementId) {
+            externalAgreement.externalAgreementId =
+              currentItem.externalAgreementId;
+            minkaasaUnpublishedPropertyFormData.append(
+              "externalAgreementId",
+              currentItem.externalAgreementId
+            );
+          }
+
+          // Agregar externalAgreement como JSON
+          minkaasaUnpublishedPropertyFormData.append(
+            "externalAgreement",
+            JSON.stringify(externalAgreement)
+          );
+
+          // Manejar imágenes
+          if (formData.mainImage instanceof File) {
+            minkaasaUnpublishedPropertyFormData.append(
+              "mainImage",
+              formData.mainImage
+            );
+          }
+
+          if (
+            formData.secondaryImages &&
+            Array.isArray(formData.secondaryImages)
+          ) {
+            formData.secondaryImages.forEach((file) => {
+              if (file instanceof File) {
+                minkaasaUnpublishedPropertyFormData.append(
+                  "secondaryImages",
+                  file
+                );
+              }
+            });
+          }
+
+          success = await saveMinkaasaUnpublishedProperty(
+            minkaasaUnpublishedPropertyFormData,
+            currentItem?.prototypeId
+          );
+          break;
+
+        case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
+          const minkaasaPublishedPropertyFormData = new FormData();
+
+          // Lista de campos que se deben incluir en la petición
+          const minkaasaPublishedPropertyFields = [
+            "prototypeName",
+            "condominium",
+            "price",
+            "bedroom",
+            "bathroom",
+            "halfBathroom",
+            "parking",
+            "size",
+            "mapLocation",
+            "url",
+            "street",
+            "exteriorNumber",
+            "interiorNumber",
+            "suburb",
+            "city",
+            "state",
+            "zipCode",
+          ];
+
+          // Filtrar campos que no son de preview y que están en la lista de permitidos
+          minkaasaPublishedPropertyFields.forEach((key) => {
+            const value = formData[key];
+            if (value !== null && value !== undefined) {
+              minkaasaPublishedPropertyFormData.append(key, value);
+            }
+          });
+
+          // Agregar el arreglo descriptions como JSON
+          if (formData.descriptions && Array.isArray(formData.descriptions)) {
+            // Verificar si el array está vacío
+            if (formData.descriptions.length === 0) {
+              // Si el array está vacío, enviar un array vacío como string JSON
+              minkaasaPublishedPropertyFormData.append(
+                "descriptions",
+                JSON.stringify([])
+              );
+            } else {
+              formData.descriptions.forEach((desc, index) => {
+                // Enviar el título y la descripción sin modificar para preservar formato
+                minkaasaPublishedPropertyFormData.append(
+                  `descriptions[${index}][title]`,
+                  desc.title || ""
+                );
+
+                // Preservar el texto exactamente como se ingresó, incluyendo espacios y saltos de línea
+                const descriptionText = desc.description || "";
+                minkaasaPublishedPropertyFormData.append(
+                  `descriptions[${index}][description]`,
+                  descriptionText
+                );
+
+                // Si existe un descriptionId, incluirlo para que la API pueda actualizar en lugar de crear
+                if (desc.descriptionId) {
+                  minkaasaPublishedPropertyFormData.append(
+                    `descriptions[${index}][descriptionId]`,
+                    desc.descriptionId
+                  );
+                }
+              });
+            }
+          } else {
+            // Si descriptions es null o undefined, enviar un array vacío
+            minkaasaPublishedPropertyFormData.append(
+              "descriptions",
+              JSON.stringify([])
+            );
+            console.log(
+              "No hay descripciones o el formato es inválido:",
+              formData.descriptions
+            );
+          }
+
+          // Crear objeto externalAgreement con los datos de contacto
+          const externalAgreementPublished = {
+            name: formData.name || "",
+            lastNameP: formData.lastNameP || "",
+            lastNameM: formData.lastNameM || "",
+            mainEmail: formData.mainEmail || "",
+            mainPhone: formData.mainPhone || "",
+            agent: formData.agent || "",
+            commission: formData.commission || 0,
+          };
+
+          // Si estamos editando y existe el ID del acuerdo externo, incluirlo
+          if (currentItem?.externalAgreementId) {
+            externalAgreementPublished.externalAgreementId =
+              currentItem.externalAgreementId;
+            minkaasaPublishedPropertyFormData.append(
+              "externalAgreementId",
+              currentItem.externalAgreementId
+            );
+          }
+
+          // Agregar externalAgreement como JSON
+          minkaasaPublishedPropertyFormData.append(
+            "externalAgreement",
+            JSON.stringify(externalAgreementPublished)
+          );
+
+          // Manejar imágenes
+          if (formData.mainImage instanceof File) {
+            minkaasaPublishedPropertyFormData.append(
+              "mainImage",
+              formData.mainImage
+            );
+          }
+
+          if (
+            formData.secondaryImages &&
+            Array.isArray(formData.secondaryImages)
+          ) {
+            formData.secondaryImages.forEach((file) => {
+              if (file instanceof File) {
+                minkaasaPublishedPropertyFormData.append(
+                  "secondaryImages",
+                  file
+                );
+              }
+            });
+          }
+
+          success = await saveMinkaasaPublishedProperty(
+            minkaasaPublishedPropertyFormData,
             currentItem?.prototypeId
           );
           break;
@@ -456,15 +871,31 @@ export default function PropertiesPage() {
 
     try {
       setUnpublishing(true);
-      const success = await api.unpublishProperty(axiosInstance, propertyId);
+      let success;
 
-      if (success) {
-        // Refrescar las listas de propiedades
-        await fetchPublishedProperties();
-        await fetchProperties();
-        return true;
+      // Determinar si estamos en una pestaña de Minkaasa
+      if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED) {
+        success = await api.unpublishMinkaasaProperty(
+          axiosInstance,
+          propertyId
+        );
+
+        if (success) {
+          // Refrescar las listas de propiedades Minkaasa
+          await fetchMinkaasaPublishedProperties();
+          await fetchMinkaasaUnpublishedProperties();
+        }
+      } else {
+        success = await api.unpublishProperty(axiosInstance, propertyId);
+
+        if (success) {
+          // Refrescar las listas de propiedades regulares
+          await fetchPublishedProperties();
+          await fetchProperties();
+        }
       }
-      return false;
+
+      return success;
     } catch (error) {
       console.error("Error al despublicar propiedad:", error);
       return false;
@@ -476,16 +907,28 @@ export default function PropertiesPage() {
   // Función para publicar una propiedad
   const handlePublishProperty = async (propertyId) => {
     try {
-      // Llamar a la API para publicar la propiedad
-      const success = await api.publishProperty(axiosInstance, propertyId);
+      let success;
 
-      if (success) {
-        // Refrescar las listas de propiedades
-        await fetchPublishedProperties();
-        await fetchProperties();
-        return true;
+      // Determinar si estamos en una pestaña de Minkaasa
+      if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED) {
+        success = await api.publishMinkaasaProperty(axiosInstance, propertyId);
+
+        if (success) {
+          // Refrescar las listas de propiedades Minkaasa
+          await fetchMinkaasaPublishedProperties();
+          await fetchMinkaasaUnpublishedProperties();
+        }
+      } else {
+        success = await api.publishProperty(axiosInstance, propertyId);
+
+        if (success) {
+          // Refrescar las listas de propiedades regulares
+          await fetchPublishedProperties();
+          await fetchProperties();
+        }
       }
-      return false;
+
+      return success;
     } catch (error) {
       console.error("Error al publicar propiedad:", error);
       return false;
@@ -523,6 +966,7 @@ export default function PropertiesPage() {
           pagination: propertiesPagination,
           onPageChange: handlePropertyPageChange,
           onPageSizeChange: handlePropertyPageSizeChange,
+          onPublish: handlePublishProperty,
         };
       case TAB_INDICES.PROPERTY_PUBLISHED:
         return {
@@ -533,6 +977,31 @@ export default function PropertiesPage() {
           pagination: publishedPropertiesPagination,
           onPageChange: handlePublishedPropertyPageChange,
           onPageSizeChange: handlePublishedPropertyPageSizeChange,
+          onUnpublish: handleUnpublishProperty,
+        };
+      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+        return {
+          items: minkaasaUnpublishedProperties,
+          loading: minkaasaUnpublishedPropertiesLoading || imageLoading,
+          error: minkaasaUnpublishedPropertiesError,
+          type: ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED,
+          pagination: minkaasaUnpublishedPropertiesPagination,
+          onPageChange: handleMinkaasaUnpublishedPropertyPageChange,
+          onPageSizeChange: handleMinkaasaUnpublishedPropertyPageSizeChange,
+          onUnpublish: handleUnpublishProperty,
+          onPublish: handlePublishProperty,
+        };
+      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
+        return {
+          items: minkaasaPublishedProperties,
+          loading: minkaasaPublishedPropertiesLoading || imageLoading,
+          error: minkaasaPublishedPropertiesError,
+          type: ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED,
+          pagination: minkaasaPublishedPropertiesPagination,
+          onPageChange: handleMinkaasaPublishedPropertyPageChange,
+          onPageSizeChange: handleMinkaasaPublishedPropertyPageSizeChange,
+          onUnpublish: handleUnpublishProperty,
+          onPublish: handlePublishProperty,
         };
       default:
         return {

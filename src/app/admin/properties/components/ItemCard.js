@@ -102,6 +102,8 @@ const ItemCard = ({
         );
       case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
       case FORM_TYPES.PROPERTY_PUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
         return (
           <PropertyCard
             property={item}
@@ -137,8 +139,10 @@ const ItemCard = ({
           >
             Editar
           </Button>
-          {TAB_FORM_TYPE_MAP[currentTab] ===
-            FORM_TYPES.PROPERTY_NOT_PUBLISHED && (
+          {(TAB_FORM_TYPE_MAP[currentTab] ===
+            FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            TAB_FORM_TYPE_MAP[currentTab] ===
+              FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED) && (
             <Button
               size="small"
               startIcon={<PublishIcon />}
@@ -149,7 +153,9 @@ const ItemCard = ({
               {publishing ? "Publicando..." : "Publicar"}
             </Button>
           )}
-          {TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED && (
+          {(TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED ||
+            TAB_FORM_TYPE_MAP[currentTab] ===
+              FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
             <Button
               size="small"
               startIcon={<UnpublishedIcon />}
