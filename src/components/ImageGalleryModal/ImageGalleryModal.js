@@ -130,9 +130,7 @@ const ImageGalleryModal = ({
                 >
                   <Box
                     component="img"
-                    src={`${
-                      apiConfig.baseURL
-                    }/api/v1/image?path=${encodeURIComponent(image)}`}
+                    src={`/api/image?path=${encodeURIComponent(image)}`}
                     alt={`Imagen ${index + 1}`}
                     sx={{
                       width: "100%",
@@ -207,7 +205,7 @@ const ImageGalleryModal = ({
         >
           <Box
             component="img"
-            src={`${apiConfig.baseURL}/api/v1/image?path=${encodeURIComponent(
+            src={`/api/image?path=${encodeURIComponent(
               allImages[selectedIndex]
             )}`}
             alt={`Imagen ${selectedIndex + 1}`}
@@ -295,9 +293,7 @@ const ImageGalleryModal = ({
               >
                 <Box
                   component="img"
-                  src={`${
-                    apiConfig.baseURL
-                  }/api/v1/image?path=${encodeURIComponent(image)}`}
+                  src={`/api/image?path=${encodeURIComponent(image)}`}
                   alt={`Miniatura ${index + 1}`}
                   sx={{
                     width: "100%",

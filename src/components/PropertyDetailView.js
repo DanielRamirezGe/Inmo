@@ -607,9 +607,7 @@ export default function PropertyDetailView({
               >
                 <Box
                   component="img"
-                  src={`${
-                    apiConfig.baseURL
-                  }/api/v1/image?path=${encodeURIComponent(allImages[0])}`}
+                  src={`/api/image?path=${encodeURIComponent(allImages[0])}`}
                   alt={`Imagen principal de ${displayProperty.prototypeName}`}
                   sx={{
                     width: "100%",
@@ -685,9 +683,7 @@ export default function PropertyDetailView({
                     >
                       <Box
                         component="img"
-                        src={`${
-                          apiConfig.baseURL
-                        }/api/v1/image?path=${encodeURIComponent(
+                        src={`/api/image?path=${encodeURIComponent(
                           allImages[1]
                         )}`}
                         alt={`Imagen 2 de ${displayProperty.prototypeName}`}
@@ -765,9 +761,7 @@ export default function PropertyDetailView({
                         <>
                           <Box
                             component="img"
-                            src={`${
-                              apiConfig.baseURL
-                            }/api/v1/image?path=${encodeURIComponent(
+                            src={`/api/image?path=${encodeURIComponent(
                               allImages[2]
                             )}`}
                             alt={`Imagen 3 de ${displayProperty.prototypeName}`}
@@ -821,9 +815,7 @@ export default function PropertyDetailView({
                         <>
                           <Box
                             component="img"
-                            src={`${
-                              apiConfig.baseURL
-                            }/api/v1/image?path=${encodeURIComponent(
+                            src={`/api/image?path=${encodeURIComponent(
                               allImages[2]
                             )}`}
                             alt={`Imagen 3 de ${displayProperty.prototypeName}`}

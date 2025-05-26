@@ -161,9 +161,7 @@ const PropertyCard = ({ property, onDetailClick }) => {
               <CardMedia
                 component="img"
                 sx={{ height: "100%", objectFit: "cover" }}
-                image={`${
-                  apiConfig.baseURL
-                }/api/v1/image?path=${encodeURIComponent(mainImage)}`}
+                image={`/api/image?path=${encodeURIComponent(mainImage)}`}
                 alt={prototypeName}
               />
             ) : (
