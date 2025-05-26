@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Container,
@@ -21,7 +21,8 @@ import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";
 import { usePublicAxios } from "@/utils/axiosMiddleware";
 
-const PrototypeResultsPage = () => {
+// Componente interno que usa useSearchParams
+const PrototypeResultsContent = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -299,6 +300,33 @@ const PrototypeResultsPage = () => {
         </Grid>
       )}
     </Container>
+  );
+};
+
+// Componente principal con Suspense
+const PrototypeResultsPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <Container
+          maxWidth="lg"
+          sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 4, md: 8 } }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "60vh",
+            }}
+          >
+            <CircularProgress size={60} />
+          </Box>
+        </Container>
+      }
+    >
+      <PrototypeResultsContent />
+    </Suspense>
   );
 };
 
