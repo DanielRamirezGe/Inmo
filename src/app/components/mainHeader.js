@@ -11,7 +11,6 @@ export default function MainHeader() {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("xs"));
   const imagen = [
-    "/mainBanner/logoDos.png",
     "/mainBanner/logo.png",
     // Add more image paths as needed
   ];

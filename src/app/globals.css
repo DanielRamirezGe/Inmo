@@ -1,6 +1,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-primary: #FFCF40;
+  --color-primary-dark: #FDB913;
+  --color-primary-light: #FFECB3;
+  --color-secondary: #37474F;
+  --color-secondary-light: #607D8B;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,4 +44,20 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+/* Estilos para los círculos de iconos */
+.icon-circle-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(255, 207, 64, 0.3);
+}
+
+/* Asegurar que los iconos dentro de los círculos sean blancos */
+.icon-circle-primary svg {
+  color: white;
 }

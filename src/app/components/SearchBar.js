@@ -2,6 +2,7 @@
 import * as React from "react";
 import InputBase from "@mui/material/InputBase";
 import IconButton from "@mui/material/IconButton";
+import SearchIcon from "@mui/icons-material/Search";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useRouter } from "next/navigation";
@@ -11,43 +12,69 @@ export default function SearchBar() {
   const isXs = useMediaQuery(theme.breakpoints.down("xs"));
   const router = useRouter();
 
-  const [searchResults, setSearchResults] = React.useState([]);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
-  const handleSearch = (input) => {
-    router.push(`/results/${searchResults}`);
+  const handleSearch = () => {
+    const trimmedSearch = searchTerm.trim();
+    if (trimmedSearch) {
+      // Navegar a la página de resultados con el término de búsqueda como parámetro
+      router.push(`/prototypeResults?q=${encodeURIComponent(trimmedSearch)}`);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
   };
 
   return (
     <div
       style={{
-        // border: "1px solid #ccc",
         borderRadius: "4px",
         display: "flex",
         alignItems: "center",
         padding: "2px 8px",
         boxShadow: "0 1px 6px rgba(32,33,36,0.28)",
+        backgroundColor: "white",
       }}
     >
-      <InputBase
-        sx={{ ml: 1, flex: 1 }}
-        placeholder="Desarrollo, Municipio, Precios, etc."
-        inputProps={{
-          style: {
-            fontSize: isXs ? "12px" : "inherit", // Aplica el tamaño de fuente solo en pantallas xs
-          },
+      <SearchIcon
+        sx={{
+          color: "text.secondary",
+          mr: 1,
+          fontSize: { xs: "1.2rem", md: "1.5rem" },
         }}
-        onChange={(e) => setSearchResults(e.target.value)} // Actualizar searchResults en cada cambio de input
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSearch(e.target.value); // Llamar a handleSearch al presionar Enter
-          }
+      />
+      <InputBase
+        sx={{
+          ml: 1,
+          flex: 1,
+          fontSize: { xs: "0.875rem", md: "1rem" },
+        }}
+        placeholder="Desarrollo, Municipio, Precios, etc."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={handleKeyDown}
+        inputProps={{
+          "aria-label": "buscar propiedades",
         }}
       />
       <IconButton
         type="button"
-        sx={{ p: "10px", fontSize: "14px", marginLeft: "8px" }} // Reducir el tamaño del texto del botón y agregar margen izquierdo
+        sx={{
+          p: "8px",
+          fontSize: { xs: "0.8rem", md: "0.9rem" },
+          color: "primary.main",
+          "&:hover": {
+            backgroundColor: "primary.light",
+            color: "primary.dark",
+          },
+          transition: "all 0.2s ease",
+        }}
         aria-label="buscar"
-        onClick={() => handleSearch(searchResults)}
+        onClick={handleSearch}
+        disabled={!searchTerm.trim()}
       >
         Buscar
       </IconButton>

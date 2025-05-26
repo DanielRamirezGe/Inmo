@@ -71,6 +71,13 @@ const ItemCard = ({
     return developer ? developer.realEstateDevelopmentName : "No especificado";
   };
 
+  // Función para manejar la navegación a la página de preview
+  const handlePreviewClick = () => {
+    if (item.prototypeId) {
+      window.open(`/admin/preview/${item.prototypeId}`, "_blank");
+    }
+  };
+
   const renderContent = () => {
     const currentFormType = TAB_FORM_TYPE_MAP[currentTab];
 
@@ -107,12 +114,10 @@ const ItemCard = ({
         return (
           <PropertyCard
             property={item}
-            onWhatsAppClick={() => {
-              /* Implementar lógica de WhatsApp */
-            }}
             onAgendaClick={() => {
               /* Implementar lógica de Agenda */
             }}
+            onDetailClick={handlePreviewClick}
           />
         );
       default:
