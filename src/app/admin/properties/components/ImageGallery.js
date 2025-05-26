@@ -68,9 +68,7 @@ const ImageGallery = ({ mainImage, secondaryImages }) => {
     }
 
     // Otherwise, construct the full API URL with query parameter
-    const apiUrl = `${apiConfig.baseURL}/api/v1/image?path=${encodeURIComponent(
-      imagePath
-    )}`;
+    const apiUrl = `/api/image?path=${encodeURIComponent(imagePath)}`;
     console.log("ImageGallery - Constructed image URL:", apiUrl);
 
     return apiUrl;
