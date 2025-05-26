@@ -10,6 +10,8 @@ import {
   TablePagination,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Link from "next/link";
 import ItemCard from "./ItemCard";
 import { FORM_TYPES, TAB_INDICES, TAB_FORM_TYPE_MAP } from "../constants";
 
@@ -36,14 +38,6 @@ const EntityList = ({
     onPageSizeChange(parseInt(event.target.value, 10));
   };
 
-  if (loading && items.length === 0) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   const currentFormType = TAB_FORM_TYPE_MAP[currentTab];
   const isPublishedTab =
     currentFormType === FORM_TYPES.PROPERTY_PUBLISHED ||
@@ -61,44 +55,7 @@ const EntityList = ({
       case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
         return item.prototypeId;
       default:
-        return null;
-    }
-  };
-
-  const getItemTitle = (item) => {
-    switch (currentTab) {
-      case TAB_INDICES.DEVELOPER:
-        return item.realEstateDevelopmentName;
-      case TAB_INDICES.DEVELOPMENT:
-        return item.developmentName;
-      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
-      case TAB_INDICES.PROPERTY_PUBLISHED:
-      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
-      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
-        return item.propertyName;
-      default:
-        return "";
-    }
-  };
-
-  const getItemSubtitle = (item) => {
-    switch (currentTab) {
-      case TAB_INDICES.DEVELOPER:
-        return item.url || "Sin URL";
-      case TAB_INDICES.DEVELOPMENT:
-        const developer = allDevelopers.find(
-          (dev) => dev.realEstateDevelopmentId === item.realEstateDevelopmentId
-        );
-        return developer
-          ? developer.realEstateDevelopmentName
-          : "Sin desarrolladora";
-      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
-      case TAB_INDICES.PROPERTY_PUBLISHED:
-      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
-      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
-        return `${item.propertyType} - ${item.state}, ${item.city}`;
-      default:
-        return "";
+        return Math.random();
     }
   };
 
@@ -113,19 +70,33 @@ const EntityList = ({
         }}
       >
         <Typography variant="h5">{title}</Typography>
-        {!isPublishedTab && (
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onAdd}
-            sx={{
-              bgcolor: "#25D366",
-              "&:hover": { bgcolor: "#128C7E" },
-            }}
-          >
-            Agregar
-          </Button>
-        )}
+        <Box sx={{ display: "flex", gap: 2 }}>
+          {(currentTab === TAB_INDICES.PROPERTY_PUBLISHED ||
+            currentTab === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED) && (
+            <Button
+              variant="outlined"
+              color="primary"
+              component={Link}
+              href="/admin/preview"
+              startIcon={<VisibilityIcon />}
+            >
+              Vista previa
+            </Button>
+          )}
+          {!isPublishedTab && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAdd}
+              sx={{
+                bgcolor: "#25D366",
+                "&:hover": { bgcolor: "#128C7E" },
+              }}
+            >
+              Agregar
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {loading ? (
@@ -134,15 +105,21 @@ const EntityList = ({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            minHeight: 200,
+            height: "200px",
           }}
         >
           <CircularProgress />
         </Box>
       ) : items.length === 0 ? (
-        <Typography variant="body1" sx={{ textAlign: "center", my: 4 }}>
-          No hay elementos para mostrar
-        </Typography>
+        <Alert severity="info">
+          No hay{" "}
+          {currentFormType === FORM_TYPES.DEVELOPER
+            ? "desarrolladoras"
+            : currentFormType === FORM_TYPES.DEVELOPMENT
+            ? "desarrollos"
+            : "propiedades"}{" "}
+          disponibles.
+        </Alert>
       ) : (
         <>
           <Grid container spacing={3}>
@@ -156,7 +133,6 @@ const EntityList = ({
                   onUnpublish={onUnpublish}
                   currentTab={currentTab}
                   allDevelopers={allDevelopers}
-                  onRefresh={onPageChange}
                 />
               </Grid>
             ))}

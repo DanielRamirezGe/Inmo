@@ -143,6 +143,38 @@ export const api = {
     }
   },
 
+  getPublicProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+    try {
+      const response = await axiosInstance.get("/public/prototype", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getPublicSearchProperties: async (axiosInstance, q) => {
+    try {
+      const response = await axiosInstance.get("/public/prototype/search", {
+        params: { q },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
   getNotPublishedProperties: async (axiosInstance, page = 1, pageSize = 10) => {
     try {
       const response = await axiosInstance.get("/prototype/not-published", {
@@ -162,6 +194,24 @@ export const api = {
   getProperty: async (axiosInstance, id) => {
     try {
       const response = await axiosInstance.get(`/prototype/${id}`);
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getPropertyPreview: async (axiosInstance, id) => {
+    try {
+      const response = await axiosInstance.get(`/prototype/preview/${id}`);
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getPublicPropertyView: async (axiosInstance, id) => {
+    try {
+      const response = await axiosInstance.get(`/public/prototype/${id}`);
       return response.data.data;
     } catch (error) {
       handleApiError(error);
@@ -430,6 +480,20 @@ export const api = {
     } catch (error) {
       console.error("Error al despublicar propiedad Minkaasa:", error);
       return false;
+    }
+  },
+
+  // Agregar una nueva función para enviar información de usuario desde el formulario público
+  submitUserInformation: async (axios, userData) => {
+    try {
+      const response = await axios.post(
+        "/public/user/userInformation",
+        userData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error submitting user information:", error);
+      throw error;
     }
   },
 };
