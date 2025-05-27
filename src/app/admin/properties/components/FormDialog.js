@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Dialog,
@@ -24,10 +24,12 @@ import ImageGallery from "./ImageGallery";
 import { FORM_TYPES } from "../constants";
 import { useEntityData } from "../../../../hooks/useEntityData";
 import { useImageHandling } from "../../../../hooks/useImageHandling";
-import { useFieldOptions } from "../../../../hooks/useFieldOptions";
 import { api } from "../../../../services/api";
-import { useAxiosMiddleware } from "../../../../utils/axiosMiddleware";
-import { ESTADOS_MEXICO } from "./fieldsConfig";
+import {
+  getInitialDataForFormType,
+  getFieldsForFormType,
+  getFieldSectionsForFormType,
+} from "./fieldsConfig";
 
 // Componente de formulario genérico
 const FormDialog = ({
@@ -46,26 +48,34 @@ const FormDialog = ({
   currentItem,
 }) => {
   // Estados locales
-  // Eliminado: estado de contactos
-
-  // Estado local para manejar la carga
   const [localLoading, setLocalLoading] = useState(false);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(false);
   const [fieldErrors, setFieldErrors] = useState([]);
+  const [selectOptions, setSelectOptions] = useState({});
+  const [loadingOptions, setLoadingOptions] = useState({});
 
-  // Obtener axiosInstance
-  const axiosInstance = useAxiosMiddleware();
+  // Memoizar el ID del item actual para evitar bucles infinitos
+  const currentItemId = useMemo(() => {
+    if (!currentItem) return null;
+
+    switch (formType) {
+      case FORM_TYPES.DEVELOPER:
+        return currentItem.realEstateDevelopmentId || currentItem.id;
+      case FORM_TYPES.DEVELOPMENT:
+        return currentItem.developmentId || currentItem.id;
+      case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
+      case FORM_TYPES.PROPERTY_PUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
+      case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
+        return (
+          currentItem.prototypeId || currentItem.propertyId || currentItem.id
+        );
+      default:
+        return currentItem.id;
+    }
+  }, [currentItem, formType]);
 
   // Hooks personalizados
-  const {
-    selectOptions,
-    loadingOptions,
-    isLoading: loadingFieldOptions,
-    error: fieldOptionsError,
-    loadFieldOptions,
-    setSelectOptions,
-  } = useFieldOptions(fields);
-
   const {
     loading: loadingImages,
     error: imageError,
@@ -89,482 +99,155 @@ const FormDialog = ({
     localLoading ||
     loadingImages ||
     loadingDevelopers ||
-    loadingFieldOptions;
+    Object.values(loadingOptions).some((loading) => loading === true);
+
+  // Obtener secciones de campos directamente desde la configuración - memoizada
+  const fieldSections = useMemo(() => {
+    return getFieldSectionsForFormType(formType);
+  }, [formType]);
+
+  // Función para cargar opciones de un campo específico
+  const loadOptionsForField = async (field) => {
+    if (!field.endpoint || field.type !== "select") return;
+
+    try {
+      setLoadingOptions((prev) => ({ ...prev, [field.name]: true }));
+
+      let options = [];
+
+      // Manejar endpoints específicos
+      if (field.endpoint === "/nameType") {
+        options = await api.getNameTypeProperty();
+      } else if (field.endpoint === "/development/basic") {
+        const response = await api.getDevelopmentsBasic();
+        options = response?.data || [];
+      } else if (field.endpoint === "/realEstateDevelopment") {
+        const response = await api.getDevelopers(1, 1000);
+        options = response?.data || [];
+      } else {
+        // Para otros endpoints, usar el método genérico
+        options = await api.getFieldOptions(field.endpoint);
+      }
+
+      setSelectOptions((prev) => ({ ...prev, [field.name]: options }));
+    } catch (error) {
+      console.error(`Error al cargar opciones para ${field.name}:`, error);
+      setError(`Error al cargar opciones para ${field.label}`);
+    } finally {
+      setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
+    }
+  };
 
   // Inicializar formData según el tipo de formulario
   useEffect(() => {
     if (!open) return;
 
-    let initialData = {};
-    switch (formType) {
-      case FORM_TYPES.DEVELOPER:
-        initialData = {
-          realEstateDevelopmentName: "",
-          url: "",
-        };
-        break;
-      case FORM_TYPES.DEVELOPMENT:
-        initialData = {
-          developmentName: "",
-          realEstateDevelopmentId: "",
-          commission: "",
-          url: "",
-          state: "",
-          city: "",
-          zipCode: "",
-          street: "",
-          extNum: "",
-          intNum: "",
-          mapLocation: "",
-          mainImage: null,
-          mainImagePreview: null,
-          secondaryImages: [],
-          secondaryImagesPreview: [],
-        };
-        break;
-      case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-      case FORM_TYPES.PROPERTY_PUBLISHED:
-        initialData = {
-          prototypeName: "",
-          developmentId: "",
-          price: "",
-          bedroom: "",
-          bathroom: "",
-          halfBathroom: "",
-          parking: "",
-          size: "",
-          url: "",
-          // Datos de descripción
-          descriptions: [],
-          // Campos para Minkaasa
-          street: "",
-          exteriorNumber: "",
-          interiorNumber: "",
-          suburb: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          name: "",
-          lastNameP: "",
-          lastNameM: "",
-          mainEmail: "",
-          mainPhone: "",
-          agent: "",
-          commission: "",
-          mainImage: null,
-          mainImagePreview: null,
-          secondaryImages: [],
-          secondaryImagesPreview: [],
-        };
-        break;
-      case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
-      case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
-        initialData = {
-          prototypeName: "",
-          price: "",
-          bedroom: "",
-          bathroom: "",
-          halfBathroom: "",
-          parking: "",
-          size: "",
-          // Datos de descripción
-          descriptions: [],
-          street: "",
-          exteriorNumber: "",
-          interiorNumber: "",
-          suburb: "",
-          city: "",
-          state: "",
-          zipCode: "",
-          name: "",
-          lastNameP: "",
-          lastNameM: "",
-          mainEmail: "",
-          mainPhone: "",
-          agent: "",
-          commission: "",
-          mainImage: null,
-          mainImagePreview: null,
-          secondaryImages: [],
-          secondaryImagesPreview: [],
-        };
-        break;
-      default:
-        break;
-    }
+    // Usar la función helper para obtener los datos iniciales
+    const initialData = getInitialDataForFormType(formType);
 
     // Si no hay currentItem, usar los datos iniciales
     if (!currentItem) {
       setFormData(initialData);
     }
-  }, [open, formType, currentItem]);
+  }, [open, formType, currentItem, setFormData]);
 
-  // Cargar datos iniciales cuando se abre el diálogo
+  // Cargar opciones de campos cuando se abre el diálogo
   useEffect(() => {
     if (!open) return;
 
-    console.log("FormDialog - Form Type:", formType);
-    console.log("FormDialog - Fields received:", fields);
+    const loadFieldOptions = async () => {
+      // Obtener todos los campos de todas las secciones
+      const sections = getFieldSectionsForFormType(formType);
+      const allFields = sections.flatMap((section) => section.fields);
+      const selectFields = allFields.filter(
+        (field) => field.type === "select" && field.endpoint
+      );
 
-    // Función de utilidad para inspeccionar el objeto currentItem
-    const inspectCurrentItem = (item) => {
-      console.log("FormDialog - Current Item Type:", typeof item);
-
-      if (typeof item === "string") {
-        console.log("FormDialog - Current Item is a string:", item);
-        return;
-      }
-
-      if (typeof item === "object" && item !== null) {
-        console.log("FormDialog - Current Item Keys:", Object.keys(item));
-
-        // Buscar posibles IDs
-        const idKeys = Object.keys(item).filter(
-          (key) =>
-            key.toLowerCase().includes("id") ||
-            (typeof item[key] === "number" && item[key] > 0)
+      if (selectFields.length > 0) {
+        await Promise.all(
+          selectFields.map((field) => loadOptionsForField(field))
         );
-
-        if (idKeys.length > 0) {
-          console.log(
-            "FormDialog - Possible ID fields:",
-            idKeys.map((k) => `${k}: ${item[k]}`)
-          );
-        }
-
-        // Verificar el tipo de entidad
-        if (item.prototypeId)
-          console.log("FormDialog - Item appears to be a Property");
-        if (item.developmentId)
-          console.log("FormDialog - Item appears to be a Development");
-        if (item.realEstateDevelopmentId)
-          console.log("FormDialog - Item appears to be a Developer");
       }
     };
 
-    inspectCurrentItem(currentItem);
-    console.log("FormDialog - Current Item:", currentItem);
+    loadFieldOptions();
+  }, [open, formType]); // Solo depende de open y formType
+
+  // Cargar datos iniciales cuando se abre el diálogo
+  useEffect(() => {
+    if (!open || !currentItemId) return;
 
     const loadInitialData = async () => {
       try {
         setIsLoadingInitialData(true);
 
-        // Cargar opciones de campos select solo si hay campos que lo necesiten
-        const selectFields = fields?.filter(
-          (field) => field.type === "select" && field.endpoint
-        );
-        console.log("FormDialog - Select fields with endpoints:", selectFields);
+        const details = await getItemDetails(currentItemId);
 
-        if (selectFields?.length > 0) {
-          await loadFieldOptions();
-          console.log("FormDialog - Field options loaded:", selectOptions);
-        }
-
-        // Si estamos editando, cargar detalles del item
-        if (currentItem) {
-          // Verificar si currentItem es la cadena "property" (caso específico del botón de editar en propiedades publicadas)
-          if (currentItem === "property") {
-            console.error(
-              "FormDialog - currentItem is 'property' string, not a valid object"
-            );
-            setError(
-              "Error: No se proporcionó un objeto de propiedad válido para editar"
-            );
-            setIsLoadingInitialData(false);
-            return;
-          }
-
-          // Determinar la propiedad de ID adecuada según el tipo de entidad
-          let itemId;
-          switch (formType) {
-            case FORM_TYPES.DEVELOPER:
-              itemId = currentItem.realEstateDevelopmentId || currentItem.id;
-              break;
-            case FORM_TYPES.DEVELOPMENT:
-              itemId = currentItem.developmentId || currentItem.id;
-              break;
-            case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-            case FORM_TYPES.PROPERTY_PUBLISHED:
-            case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
-            case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
-              // Las propiedades pueden tener diferentes nombres de ID
-              itemId =
-                currentItem.prototypeId ||
-                currentItem.propertyId ||
-                currentItem.id ||
-                (typeof currentItem === "object" &&
-                  Object.keys(currentItem).find((key) =>
-                    key.toLowerCase().includes("id")
-                  ));
-              break;
-            default:
-              itemId = currentItem.id;
-          }
-
-          console.log("FormDialog - Getting details for item type:", formType);
-          console.log("FormDialog - Full currentItem:", currentItem);
-          console.log("FormDialog - Identified ID:", itemId);
-
-          if (!itemId) {
-            console.error(
-              "FormDialog - No valid ID found in currentItem:",
-              currentItem
-            );
-            // Imprimir todas las propiedades del objeto para depuración
-            if (typeof currentItem === "object") {
-              console.log(
-                "FormDialog - All properties of currentItem:",
-                Object.keys(currentItem)
-              );
-
-              // Intentar encontrar cualquier propiedad que pueda ser un ID
-              const possibleIdKeys = Object.keys(currentItem).filter(
-                (key) =>
-                  key.toLowerCase().includes("id") ||
-                  (typeof currentItem[key] === "number" && currentItem[key] > 0)
-              );
-
-              if (possibleIdKeys.length > 0) {
-                console.log(
-                  "FormDialog - Possible ID properties:",
-                  possibleIdKeys
-                );
-                itemId = currentItem[possibleIdKeys[0]];
-                console.log(
-                  "FormDialog - Using alternative ID:",
-                  itemId,
-                  "from property:",
-                  possibleIdKeys[0]
-                );
-              }
-            }
-
-            if (!itemId) {
-              setError("No se pudo identificar el ID del elemento a editar");
-              setIsLoadingInitialData(false);
-              return;
+        if (details) {
+          // Mapear nameTypeId a propertyTypeId para propiedades
+          if (
+            formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+          ) {
+            if (details.nameTypeId) {
+              details.propertyTypeId = details.nameTypeId;
             }
           }
 
-          const details = await getItemDetails(itemId);
-          console.log("FormDialog - Item details loaded:", details);
+          // Si es una propiedad Minkaasa, extraer los datos del externalAgreement
+          if (
+            (formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
+            details.externalAgreement
+          ) {
+            const externalAgreementData = details.externalAgreement;
+            const descriptionsData = details.descriptions || [];
 
-          // Verificar que details no sea null antes de actualizar formData
-          if (details) {
-            // Si es una propiedad Minkaasa, extraer los datos del externalAgreement
-            if (
-              (formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-                formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
-              details.externalAgreement
-            ) {
-              // Extraer los datos del externalAgreement para ponerlos en el nivel principal
-              const externalAgreementData = details.externalAgreement;
+            const flattenedData = {
+              ...details,
+              name: externalAgreementData.name || "",
+              lastNameP: externalAgreementData.lastNameP || "",
+              lastNameM: externalAgreementData.lastNameM || "",
+              mainEmail: externalAgreementData.mainEmail || "",
+              mainPhone: externalAgreementData.mainPhone || "",
+              agent: externalAgreementData.agent || "",
+              commission: externalAgreementData.commission || 0,
+              descriptions: descriptionsData,
+            };
 
-              // Asegurarse de que descriptions sea un array
-              const descriptionsData = details.descriptions || [];
-
-              // Crear un nuevo objeto con los datos aplanados
-              const flattenedData = {
-                ...details,
-                name: externalAgreementData.name || "",
-                lastNameP: externalAgreementData.lastNameP || "",
-                lastNameM: externalAgreementData.lastNameM || "",
-                mainEmail: externalAgreementData.mainEmail || "",
-                mainPhone: externalAgreementData.mainPhone || "",
-                agent: externalAgreementData.agent || "",
-                commission: externalAgreementData.commission || 0,
-                descriptions: descriptionsData,
-              };
-
-              setFormData((prev) => ({
-                ...prev,
-                ...flattenedData,
-              }));
-            } else {
-              // Para otros tipos de propiedades, usar los datos tal como vienen
-              // pero asegurándonos de inicializar el array descriptions si no existe
-              const propertyDescriptionsData = details.descriptions || [];
-
-              setFormData((prev) => ({
-                ...prev,
-                ...details,
-                descriptions: propertyDescriptionsData,
-              }));
-            }
-
-            // Cargar imágenes si es necesario
-            if (
-              formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
-            ) {
-              console.log("FormDialog - Loading property images");
-              console.log(
-                "FormDialog - Property details before loading images:",
-                details
-              );
-
-              // Verificar formato de imágenes secundarias
-              if (
-                details.secondaryImages &&
-                Array.isArray(details.secondaryImages)
-              ) {
-                console.log(
-                  "FormDialog - Property secondary images format:",
-                  details.secondaryImages.map((img) => {
-                    if (typeof img === "string") return `String: ${img}`;
-                    if (typeof img === "object") {
-                      const keys = Object.keys(img).join(", ");
-                      return `Object with keys: ${keys}`;
-                    }
-                    return `Unknown type: ${typeof img}`;
-                  })
-                );
-              }
-
-              const updatedDetails = await loadPropertyImages(details);
-              console.log(
-                "FormDialog - Property details after loading images:",
-                updatedDetails
-              );
-
-              // Actualizar formData con las previsualizaciones
-              setFormData((prev) => ({
-                ...prev,
-                ...updatedDetails,
-              }));
-            } else if (formType === FORM_TYPES.DEVELOPMENT) {
-              console.log("FormDialog - Loading development images");
-              await loadDevelopmentImages(details);
-
-              // Asegurar que se carguen correctamente las previsualizaciones
-              if (details.mainImage) {
-                console.log(
-                  "FormDialog - Development has main image:",
-                  details.mainImage
-                );
-              }
-
-              if (
-                details.secondaryImages &&
-                details.secondaryImages.length > 0
-              ) {
-                console.log(
-                  "FormDialog - Development has secondary images:",
-                  details.secondaryImages.length
-                );
-              }
-            }
+            setFormData((prev) => ({
+              ...prev,
+              ...flattenedData,
+            }));
           } else {
-            console.error(
-              "FormDialog - Failed to load item details, received null"
-            );
-            setError("No se pudieron cargar los detalles del elemento");
+            const propertyDescriptionsData = details.descriptions || [];
+
+            setFormData((prev) => ({
+              ...prev,
+              ...details,
+              descriptions: propertyDescriptionsData,
+            }));
           }
-        }
 
-        // Si es un desarrollo, cargar explícitamente las desarrolladoras
-        if (formType === FORM_TYPES.DEVELOPMENT) {
-          console.log(
-            "FormDialog - Development form detected, loading developers..."
-          );
-
-          // Cargar las desarrolladoras directamente desde la API
-          try {
-            // Usar axiosInstance para mantener consistencia con el resto de la aplicación
-            const response = await axiosInstance.get("/realEstateDevelopment");
-            const developersData = response.data;
-
-            console.log("FormDialog - Developers loaded:", developersData);
-
-            // El formato de respuesta es {"message":"...", "data":[{"realEstateDevelopmentId":1,"realEstateDevelopmentName":"Nombre",...}]}
-            if (
-              developersData &&
-              developersData.data &&
-              Array.isArray(developersData.data)
-            ) {
-              // Mapear los datos al formato que espera el componente Select
-              const formattedOptions = developersData.data.map((dev) => ({
-                id: dev.realEstateDevelopmentId,
-                name: dev.realEstateDevelopmentName,
-                // Incluir datos originales también
-                ...dev,
-              }));
-
-              console.log(
-                "FormDialog - Formatted developer options:",
-                formattedOptions
-              );
-
-              // Actualizar las opciones para el campo realEstateDevelopmentId
-              setSelectOptions({
-                ...selectOptions,
-                realEstateDevelopmentId: formattedOptions,
-              });
-            } else {
-              console.error(
-                "Invalid developers response format:",
-                developersData
-              );
-            }
-          } catch (error) {
-            console.error("Error cargando desarrolladoras:", error);
-            setError("Error al cargar las desarrolladoras disponibles");
+          // Cargar imágenes si es necesario
+          if (
+            formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+          ) {
+            const updatedDetails = await loadPropertyImages(details);
+            setFormData((prev) => ({
+              ...prev,
+              ...updatedDetails,
+            }));
+          } else if (formType === FORM_TYPES.DEVELOPMENT) {
+            await loadDevelopmentImages(details);
           }
-        }
-
-        // Si es una propiedad, cargar explícitamente los desarrollos
-        if (
-          formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-          formType === FORM_TYPES.PROPERTY_PUBLISHED
-        ) {
-          console.log(
-            "FormDialog - Property form detected, loading developments..."
-          );
-
-          // Cargar los desarrollos directamente desde la API
-          try {
-            // Usar axiosInstance para mantener consistencia con el resto de la aplicación
-            const response = await axiosInstance.get("/development/basic");
-            const developmentsData = response.data;
-
-            console.log("FormDialog - Developments loaded:", developmentsData);
-
-            // El formato de respuesta es {"message":"...", "data":[{"developmentId":1,"developmentName":"Citara",...}]}
-            if (
-              developmentsData &&
-              developmentsData.data &&
-              Array.isArray(developmentsData.data)
-            ) {
-              // Mapear los datos al formato que espera el componente Select
-              const formattedOptions = developmentsData.data.map((dev) => ({
-                id: dev.developmentId,
-                name: dev.developmentName,
-                // Incluir datos originales también
-                ...dev,
-              }));
-
-              console.log(
-                "FormDialog - Formatted development options:",
-                formattedOptions
-              );
-
-              // Actualizar las opciones para el campo developmentId
-              setSelectOptions({
-                ...selectOptions,
-                developmentId: formattedOptions,
-              });
-            } else {
-              console.error(
-                "Invalid developments response format:",
-                developmentsData
-              );
-            }
-          } catch (error) {
-            console.error("Error cargando desarrollos:", error);
-            setError("Error al cargar los desarrollos disponibles");
-          }
+        } else {
+          setError("No se pudieron cargar los detalles del elemento");
         }
       } catch (error) {
         console.error("Error al cargar datos iniciales:", error);
@@ -575,35 +258,41 @@ const FormDialog = ({
     };
 
     loadInitialData();
-  }, [open, currentItem?.id, formType, fields]);
+  }, [open, currentItemId, formType]); // Solo dependencias estables
 
   // Manejar errores de los hooks
   useEffect(() => {
-    const currentError = fieldOptionsError || imageError || developersError;
+    const currentError = imageError || developersError;
     if (currentError) {
       setError(currentError);
     }
-  }, [fieldOptionsError, imageError, developersError]);
+  }, [imageError, developersError, setError]);
 
   // Actualizar fieldErrors cuando hay errores en los campos
   useEffect(() => {
     if (error) {
-      // Si hay un error general, verificar si contiene información sobre campos específicos
       try {
-        const errorObj = typeof error === "string" ? JSON.parse(error) : error;
-        if (
-          errorObj &&
-          errorObj.fieldErrors &&
-          Array.isArray(errorObj.fieldErrors)
-        ) {
-          setFieldErrors(errorObj.fieldErrors);
+        if (typeof error === "string" && error.trim().startsWith("{")) {
+          const errorObj = JSON.parse(error);
+          if (
+            errorObj &&
+            errorObj.fieldErrors &&
+            Array.isArray(errorObj.fieldErrors)
+          ) {
+            setFieldErrors(errorObj.fieldErrors);
+          }
+        } else if (typeof error === "object" && error.fieldErrors) {
+          setFieldErrors(error.fieldErrors);
         }
       } catch (e) {
-        // Si no se puede parsear, no es un error de campo específico
-        console.log("No se pudo extraer errores de campo:", e);
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "Error no es JSON válido, ignorando parsing de campos:",
+            error
+          );
+        }
       }
     } else {
-      // Limpiar errores de campo cuando se resuelve el error general
       setFieldErrors([]);
     }
   }, [error]);
@@ -614,7 +303,6 @@ const FormDialog = ({
       setFormData({});
     }
 
-    // Asegurarse de que formData.descriptions siempre sea un array
     if (formData && !formData.descriptions) {
       setFormData((prev) => ({
         ...prev,
@@ -622,15 +310,6 @@ const FormDialog = ({
       }));
     }
   }, [formData, setFormData]);
-
-  // Manejar el cambio de la desarrolladora seleccionada
-  const handleDeveloperChange = (event) => {
-    const selectedDeveloperId = event.target.value;
-    setFormData({
-      ...formData,
-      realEstateDevelopmentId: selectedDeveloperId,
-    });
-  };
 
   // Manejadores de cambios en los campos
   const handleFieldChange = (fieldName, value) => {
@@ -673,16 +352,19 @@ const FormDialog = ({
   // Función para renderizar cada campo según su tipo
   const renderField = (field) => {
     const fieldValue = formData[field.name] || "";
+    const hasError = Boolean(
+      fieldErrors?.find((err) => err.field === field.name)
+    );
+    const errorMessage = fieldErrors?.find(
+      (err) => err.field === field.name
+    )?.message;
 
     switch (field.type) {
       case "select":
-        // Obtener opciones, ya sea de opciones estáticas o de API
         let fieldOptions = [];
         if (field.options) {
-          // Si el campo tiene opciones estáticas predefinidas
           fieldOptions = field.options;
         } else if (selectOptions[field.name]) {
-          // Si las opciones vienen de la API
           fieldOptions = selectOptions[field.name];
         }
 
@@ -691,6 +373,9 @@ const FormDialog = ({
             fullWidth
             key={field.name}
             margin="normal"
+            variant="outlined"
+            disabled={isLoadingInitialData}
+            error={hasError}
             sx={{ minWidth: 240 }}
           >
             <InputLabel>{field.label}</InputLabel>
@@ -726,21 +411,25 @@ const FormDialog = ({
                   </MenuItem>
                 ))}
             </Select>
+            {hasError && <FormHelperText error>{errorMessage}</FormHelperText>}
           </FormControl>
         );
 
-      case "text":
       case "email":
       case "tel":
+      case "text":
         return (
           <TextField
             key={field.name}
             fullWidth
             label={field.label}
-            type={field.type}
+            type={field.type || "text"}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             margin="normal"
+            required={field.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : ""}
             sx={{ minWidth: 240 }}
             InputProps={{ sx: { height: 56 } }}
           />
@@ -757,6 +446,9 @@ const FormDialog = ({
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             margin="normal"
+            required={field.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : ""}
             sx={{ minWidth: 240 }}
           />
         );
@@ -771,101 +463,34 @@ const FormDialog = ({
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.name, e.target.value)}
             margin="normal"
+            required={field.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : ""}
             sx={{ minWidth: 240 }}
             InputProps={{
               sx: { height: 56 },
-              inputProps: {
-                min: field.min,
-                max: field.max,
-                step: field.step,
-              },
+              inputProps: field.inputProps || {},
             }}
           />
         );
 
-      case "image":
-        return (
-          <Box key={field.name} sx={{ mt: 2, mb: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              {field.label}
-            </Typography>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleImageChange(field.name, e.target.files[0])}
-              style={{ display: "none" }}
-              id={`image-input-${field.name}`}
-            />
-            <label htmlFor={`image-input-${field.name}`}>
-              <Button
-                variant="contained"
-                component="span"
-                startIcon={<AddIcon />}
-              >
-                Seleccionar Imagen
-              </Button>
-            </label>
-            {formData[field.name] && (
-              <Box sx={{ mt: 2, position: "relative" }}>
-                <img
-                  src={createImagePreview(formData[field.name])}
-                  alt={field.label}
-                  style={{ maxWidth: "200px", maxHeight: "200px" }}
-                />
-                <IconButton
-                  onClick={() => handleImageDelete(field.name)}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    bgcolor: "background.paper",
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
-        );
-
-      case "images":
-        return (
-          <Box key={field.name} sx={{ mt: 2, mb: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              {field.label}
-            </Typography>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) =>
-                handleImagesChange(field.name, Array.from(e.target.files))
-              }
-              style={{ display: "none" }}
-              id={`images-input-${field.name}`}
-            />
-            <label htmlFor={`images-input-${field.name}`}>
-              <Button
-                variant="contained"
-                component="span"
-                startIcon={<AddIcon />}
-              >
-                Seleccionar Imágenes
-              </Button>
-            </label>
-            {formData[field.name] && Array.isArray(formData[field.name]) && (
-              <ImageGallery
-                images={formData[field.name].map(createImagePreview)}
-                onDelete={(index) =>
-                  handleImageDeleteFromGallery(field.name, index)
-                }
-              />
-            )}
-          </Box>
-        );
-
       default:
-        return null;
+        // Para campos sin tipo específico, usar text por defecto
+        return (
+          <TextField
+            key={field.name}
+            fullWidth
+            label={field.label}
+            value={fieldValue}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            margin="normal"
+            required={field.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : ""}
+            sx={{ minWidth: 240 }}
+            InputProps={{ sx: { height: 56 } }}
+          />
+        );
     }
   };
 
@@ -899,13 +524,12 @@ const FormDialog = ({
       } else {
         setLocalLoading(true);
       }
-      // Limpiar errores previos
       setFieldErrors([]);
+
       await onSubmit();
     } catch (error) {
       console.error("Error al guardar:", error);
 
-      // Verificar si el error contiene información sobre campos específicos
       if (error.response && error.response.data) {
         const errorData = error.response.data;
         if (errorData.fieldErrors && Array.isArray(errorData.fieldErrors)) {
@@ -928,6 +552,8 @@ const FormDialog = ({
     if (!open) {
       setLocalLoading(false);
       setFieldErrors([]);
+      setSelectOptions({});
+      setLoadingOptions({});
       if (setExternalLoading) {
         setExternalLoading(false);
       }
@@ -961,268 +587,195 @@ const FormDialog = ({
             </Alert>
           )}
 
-          {/* Renderizar campos según el tipo de formulario */}
-          {formType === FORM_TYPES.DEVELOPER && (
-            // Formulario para desarrolladoras
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={4}>
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Nombre de la Desarrolladora"
-                  name="realEstateDevelopmentName"
-                  value={formData?.realEstateDevelopmentName || ""}
-                  onChange={(e) =>
-                    handleFieldChange(
-                      "realEstateDevelopmentName",
-                      e.target.value
-                    )
-                  }
-                  required
-                  sx={{ minWidth: 240 }}
-                  InputProps={{ sx: { height: 56 } }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="URL"
-                  name="url"
-                  value={formData?.url || ""}
-                  onChange={(e) => handleFieldChange("url", e.target.value)}
-                  sx={{ minWidth: 240 }}
-                  InputProps={{ sx: { height: 56 } }}
-                />
-              </Grid>
-            </Grid>
-          )}
-
-          {formType === FORM_TYPES.DEVELOPMENT && (
-            // Formulario para desarrollos
-            <>
+          {/* Renderizar secciones de campos */}
+          {fieldSections.map((section, sectionIndex) => (
+            <Box key={sectionIndex}>
               <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Datos del Desarrollo
+                {section.title}
               </Typography>
               <Grid container spacing={2}>
-                {/* Mostramos todos los campos necesarios explícitamente */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Nombre del Desarrollo"
-                    name="developmentName"
-                    value={formData?.developmentName || ""}
-                    onChange={(e) =>
-                      handleFieldChange("developmentName", e.target.value)
-                    }
-                    required
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                {/* Campo select para desarrolladora */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl
-                    fullWidth
-                    margin="normal"
-                    variant="outlined"
-                    disabled={isLoadingInitialData || loadingFieldOptions}
-                    error={Boolean(
-                      fieldErrors?.find(
-                        (err) => err.field === "realEstateDevelopmentId"
-                      )
-                    )}
-                    sx={{ minWidth: 240 }}
-                  >
-                    <InputLabel id="developer-select-label">
-                      Desarrolladora
-                    </InputLabel>
-                    <Select
-                      labelId="developer-select-label"
-                      id="realEstateDevelopmentId"
-                      name="realEstateDevelopmentId"
-                      value={formData?.realEstateDevelopmentId || ""}
-                      onChange={(e) =>
-                        handleFieldChange(
-                          "realEstateDevelopmentId",
-                          e.target.value
-                        )
-                      }
-                      label="Desarrolladora"
-                      sx={{ height: 56 }}
-                    >
-                      <MenuItem value="">
-                        <em>Ninguna</em>
-                      </MenuItem>
-                      {console.log(
-                        "Developer options rendering:",
-                        selectOptions?.realEstateDevelopmentId
-                      )}
-                      {Array.isArray(selectOptions?.realEstateDevelopmentId) &&
-                        selectOptions.realEstateDevelopmentId.map((option) => {
-                          console.log("Developer option:", option);
-                          return (
-                            <MenuItem
-                              key={option.id || option.realEstateDevelopmentId}
-                              value={
-                                option.id || option.realEstateDevelopmentId
-                              }
-                            >
-                              {option.name || option.realEstateDevelopmentName}
-                            </MenuItem>
-                          );
-                        })}
-                    </Select>
-                    {Boolean(
-                      fieldErrors?.find(
-                        (err) => err.field === "realEstateDevelopmentId"
-                      )
-                    ) && (
-                      <FormHelperText error>
-                        {
-                          fieldErrors?.find(
-                            (err) => err.field === "realEstateDevelopmentId"
-                          )?.message
-                        }
-                      </FormHelperText>
-                    )}
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Comisión %"
-                    name="commission"
-                    type="number"
-                    value={formData?.commission || ""}
-                    onChange={(e) =>
-                      handleFieldChange("commission", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, max: 100, step: 1 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="URL"
-                    name="url"
-                    value={formData?.url || ""}
-                    onChange={(e) => handleFieldChange("url", e.target.value)}
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                {/* Campo select para estado */}
-                <Grid item xs={12} sm={6} md={4}>
-                  {fields?.find((f) => f.name === "state") &&
-                    renderField(fields.find((f) => f.name === "state"))}
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Ciudad o Municipio"
-                    name="city"
-                    value={formData?.city || ""}
-                    onChange={(e) => handleFieldChange("city", e.target.value)}
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Código Postal"
-                    name="zipCode"
-                    type="number"
-                    value={formData?.zipCode || ""}
-                    onChange={(e) =>
-                      handleFieldChange("zipCode", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Calle"
-                    name="street"
-                    value={formData?.street || ""}
-                    onChange={(e) =>
-                      handleFieldChange("street", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Número Exterior"
-                    name="extNum"
-                    value={formData?.extNum || ""}
-                    onChange={(e) =>
-                      handleFieldChange("extNum", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Número Interior"
-                    name="intNum"
-                    value={formData?.intNum || ""}
-                    onChange={(e) =>
-                      handleFieldChange("intNum", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Ubicación en Mapa"
-                    name="mapLocation"
-                    value={formData?.mapLocation || ""}
-                    onChange={(e) =>
-                      handleFieldChange("mapLocation", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
+                {section.fields.map((field) => (
+                  <Grid item xs={12} sm={6} md={4} key={field.name}>
+                    {renderField(field)}
+                  </Grid>
+                ))}
               </Grid>
+            </Box>
+          ))}
 
-              {/* Sección de Imágenes */}
+          {/* Sección de Descripción para propiedades */}
+          {(formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+            <>
+              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                Descripciones de la Propiedad
+              </Typography>
+
+              {/* Mostrar el listado de descripciones existentes */}
+              {formData.descriptions &&
+              Array.isArray(formData.descriptions) &&
+              formData.descriptions.length > 0 ? (
+                <Box sx={{ mb: 3 }}>
+                  {formData.descriptions.map((desc, index) => (
+                    <Box
+                      key={desc.descriptionId || index}
+                      sx={{
+                        border: "1px solid #e0e0e0",
+                        borderRadius: 1,
+                        p: 2,
+                        mb: 2,
+                        position: "relative",
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {desc.title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          mt: 1,
+                          whiteSpace: "pre-wrap",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {desc.description}
+                      </Typography>
+                      <IconButton
+                        onClick={() => {
+                          const newDescriptions = [...formData.descriptions];
+                          newDescriptions.splice(index, 1);
+                          setFormData({
+                            ...formData,
+                            descriptions: newDescriptions,
+                          });
+                        }}
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          color: "error.main",
+                        }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  No hay descripciones. Agregue al menos una descripción para la
+                  propiedad.
+                </Typography>
+              )}
+
+              {/* Formulario para agregar una nueva descripción */}
+              <Box
+                component="div"
+                sx={{
+                  border: "1px dashed #ccc",
+                  borderRadius: 1,
+                  p: 2,
+                  mb: 3,
+                }}
+              >
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  Agregar nueva descripción
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mb: 2, display: "block" }}
+                >
+                  El formato del texto (espacios, saltos de línea, tabulaciones)
+                  se preservará exactamente como lo ingreses.
+                </Typography>
+
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Título"
+                  id="description-title-field"
+                  sx={{ mb: 2 }}
+                  InputProps={{ sx: { height: 56 } }}
+                />
+
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  label="Descripción"
+                  id="description-text-field"
+                  multiline
+                  rows={5}
+                  sx={{ mb: 2 }}
+                  placeholder="Escribe aquí la descripción completa. Puedes usar saltos de línea y espacios para formatear el texto como desees. Este formato se preservará exactamente como lo escribas."
+                  InputProps={{
+                    sx: {
+                      fontFamily: "monospace",
+                    },
+                  }}
+                />
+
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    const titleField = document.getElementById(
+                      "description-title-field"
+                    );
+                    const descriptionField = document.getElementById(
+                      "description-text-field"
+                    );
+
+                    if (
+                      titleField &&
+                      descriptionField &&
+                      titleField.value &&
+                      descriptionField.value
+                    ) {
+                      const title = titleField.value;
+                      const description = descriptionField.value;
+
+                      const newDescriptions = [
+                        ...(formData.descriptions || []),
+                      ];
+
+                      newDescriptions.push({ title, description });
+
+                      setFormData({
+                        ...formData,
+                        descriptions: newDescriptions,
+                      });
+
+                      titleField.value = "";
+                      descriptionField.value = "";
+                    } else {
+                      alert(
+                        "Por favor, complete tanto el título como la descripción."
+                      );
+                    }
+                  }}
+                >
+                  Agregar descripción
+                </Button>
+              </Box>
+            </>
+          )}
+
+          {/* Sección de Imágenes para desarrollos y propiedades */}
+          {(formType === FORM_TYPES.DEVELOPMENT ||
+            formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+            <>
               <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
                 Imágenes
               </Typography>
@@ -1234,15 +787,7 @@ const FormDialog = ({
                   []
                 }
               />
-              {console.log("FormDialog - Rendering Development Images:", {
-                mainImage: formData?.mainImagePreview || formData?.mainImage,
-                secondaryImages:
-                  formData?.secondaryImagesPreview ||
-                  formData?.secondaryImages ||
-                  [],
-              })}
               <Grid container spacing={2} sx={{ mt: 2 }}>
-                {/* Imagen principal */}
                 <Grid item xs={12} sm={6} md={4}>
                   <Button
                     variant="outlined"
@@ -1259,7 +804,6 @@ const FormDialog = ({
                     />
                   </Button>
                 </Grid>
-                {/* Imágenes secundarias */}
                 <Grid item xs={12} sm={6} md={8}>
                   <Button
                     variant="outlined"
@@ -1282,778 +826,6 @@ const FormDialog = ({
               </Grid>
             </>
           )}
-
-          {(formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <>
-              <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                Datos de la Propiedad
-              </Typography>
-              <Grid container spacing={2}>
-                {/* Mostramos todos los campos necesarios explícitamente */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Nombre del Prototipo"
-                    name="prototypeName"
-                    value={formData?.prototypeName || ""}
-                    onChange={(e) =>
-                      handleFieldChange("prototypeName", e.target.value)
-                    }
-                    required
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                {/* Campo de desarrollo */}
-                <>
-                  {!(
-                    formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-                    formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
-                  ) && (
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl
-                        fullWidth
-                        margin="normal"
-                        variant="outlined"
-                        disabled={isLoadingInitialData || loadingFieldOptions}
-                        error={Boolean(
-                          fieldErrors?.find(
-                            (err) => err.field === "developmentId"
-                          )
-                        )}
-                        sx={{ minWidth: 240 }}
-                      >
-                        <InputLabel id="development-select-label">
-                          Desarrollo
-                        </InputLabel>
-                        <Select
-                          labelId="development-select-label"
-                          id="developmentId"
-                          name="developmentId"
-                          value={formData?.developmentId || ""}
-                          onChange={(e) =>
-                            handleFieldChange("developmentId", e.target.value)
-                          }
-                          label="Desarrollo"
-                          sx={{ height: 56 }}
-                        >
-                          <MenuItem value="">
-                            <em>Ninguno</em>
-                          </MenuItem>
-                          {console.log(
-                            "Development options rendering:",
-                            selectOptions?.developmentId
-                          )}
-                          {Array.isArray(selectOptions?.developmentId) &&
-                            selectOptions.developmentId.map((option) => {
-                              console.log("Development option:", option);
-                              return (
-                                <MenuItem
-                                  key={option.id || option.developmentId}
-                                  value={option.id || option.developmentId}
-                                >
-                                  {option.name || option.developmentName} -{" "}
-                                  {option.realEstateDevelopmentName}
-                                </MenuItem>
-                              );
-                            })}
-                        </Select>
-                        {Boolean(
-                          fieldErrors?.find(
-                            (err) => err.field === "developmentId"
-                          )
-                        ) && (
-                          <FormHelperText error>
-                            {
-                              fieldErrors?.find(
-                                (err) => err.field === "developmentId"
-                              )?.message
-                            }
-                          </FormHelperText>
-                        )}
-                      </FormControl>
-                    </Grid>
-                  )}
-                </>
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Condominio"
-                    name="condominium"
-                    value={formData?.condominium || ""}
-                    onChange={(e) =>
-                      handleFieldChange("condominium", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Precio"
-                    name="price"
-                    type="number"
-                    value={formData?.price || ""}
-                    onChange={(e) => handleFieldChange("price", e.target.value)}
-                    required
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: "0.01" },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Recámaras"
-                    name="bedroom"
-                    type="number"
-                    value={formData?.bedroom || ""}
-                    onChange={(e) =>
-                      handleFieldChange("bedroom", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: 1 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Baños"
-                    name="bathroom"
-                    type="number"
-                    value={formData?.bathroom || ""}
-                    onChange={(e) =>
-                      handleFieldChange("bathroom", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: 1 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Medios Baños"
-                    name="halfBathroom"
-                    type="number"
-                    value={formData?.halfBathroom || ""}
-                    onChange={(e) =>
-                      handleFieldChange("halfBathroom", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: 1 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Estacionamiento"
-                    name="parking"
-                    type="number"
-                    value={formData?.parking || ""}
-                    onChange={(e) =>
-                      handleFieldChange("parking", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: 1 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Tamaño m2"
-                    name="size"
-                    type="number"
-                    value={formData?.size || ""}
-                    onChange={(e) => handleFieldChange("size", e.target.value)}
-                    sx={{ minWidth: 240 }}
-                    InputProps={{
-                      sx: { height: 56 },
-                      inputProps: { min: 0, step: "0.01" },
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="URL"
-                    name="url"
-                    value={formData?.url || ""}
-                    onChange={(e) => handleFieldChange("url", e.target.value)}
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                    placeholder="https://ejemplo.com/propiedad"
-                    helperText="URL opcional para la página web de la propiedad"
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6} md={4}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Ubicación en Mapa"
-                    name="mapLocation"
-                    value={formData?.mapLocation || ""}
-                    onChange={(e) =>
-                      handleFieldChange("mapLocation", e.target.value)
-                    }
-                    sx={{ minWidth: 240 }}
-                    InputProps={{ sx: { height: 56 } }}
-                  />
-                </Grid>
-
-                {/* Sección de Descripción para todas las propiedades */}
-                <Grid item xs={12}>
-                  <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-                    Descripciones de la Propiedad
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12}>
-                  {/* Mostrar el listado de descripciones existentes */}
-                  {formData.descriptions &&
-                  Array.isArray(formData.descriptions) &&
-                  formData.descriptions.length > 0 ? (
-                    <Box sx={{ mb: 3 }}>
-                      {formData.descriptions.map((desc, index) => (
-                        <Box
-                          key={desc.descriptionId || index}
-                          sx={{
-                            border: "1px solid #e0e0e0",
-                            borderRadius: 1,
-                            p: 2,
-                            mb: 2,
-                            position: "relative",
-                          }}
-                        >
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {desc.title}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              mt: 1,
-                              whiteSpace: "pre-wrap", // Preservar espacios y saltos de línea
-                              overflowWrap: "break-word", // Romper palabras largas
-                            }}
-                          >
-                            {desc.description}
-                          </Typography>
-                          <IconButton
-                            onClick={() => {
-                              const newDescriptions = [
-                                ...formData.descriptions,
-                              ];
-                              newDescriptions.splice(index, 1);
-                              setFormData({
-                                ...formData,
-                                descriptions: newDescriptions,
-                              });
-                            }}
-                            sx={{
-                              position: "absolute",
-                              top: 8,
-                              right: 8,
-                              color: "error.main",
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Box>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2 }}
-                    >
-                      No hay descripciones. Agregue al menos una descripción
-                      para la propiedad.
-                    </Typography>
-                  )}
-
-                  {/* Formulario para agregar una nueva descripción */}
-                  <Box
-                    component="div"
-                    sx={{
-                      border: "1px dashed #ccc",
-                      borderRadius: 1,
-                      p: 2,
-                    }}
-                  >
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                      Agregar nueva descripción
-                      <Button
-                        size="small"
-                        sx={{ ml: 2 }}
-                        onClick={() => {
-                          // Verificar el estado actual de descripciones
-                          console.log(
-                            "Estado actual de descripciones:",
-                            formData.descriptions
-                          );
-                          // Forzar reseteo del array si es necesario
-                          if (!Array.isArray(formData.descriptions)) {
-                            setFormData({
-                              ...formData,
-                              descriptions: [],
-                            });
-                          }
-                        }}
-                      >
-                        Reiniciar
-                      </Button>
-                    </Typography>
-
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mb: 2, display: "block" }}
-                    >
-                      El formato del texto (espacios, saltos de línea,
-                      tabulaciones) se preservará exactamente como lo ingreses.
-                    </Typography>
-
-                    <TextField
-                      fullWidth
-                      margin="normal"
-                      label="Título"
-                      id="description-title-field"
-                      sx={{ mb: 2 }}
-                      InputProps={{ sx: { height: 56 } }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      margin="normal"
-                      label="Descripción"
-                      id="description-text-field"
-                      multiline
-                      rows={5}
-                      sx={{ mb: 2 }}
-                      placeholder="Escribe aquí la descripción completa. Puedes usar saltos de línea y espacios para formatear el texto como desees. Este formato se preservará exactamente como lo escribas."
-                      InputProps={{
-                        sx: {
-                          fontFamily: "monospace", // Fuente monoespaciada para mejor visualización
-                        },
-                      }}
-                    />
-
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<AddIcon />}
-                      onClick={() => {
-                        const titleField = document.getElementById(
-                          "description-title-field"
-                        );
-                        const descriptionField = document.getElementById(
-                          "description-text-field"
-                        );
-
-                        if (
-                          titleField &&
-                          descriptionField &&
-                          titleField.value &&
-                          descriptionField.value
-                        ) {
-                          const title = titleField.value;
-                          const description = descriptionField.value;
-
-                          // Crear una copia del array de descripciones actual
-                          const newDescriptions = [
-                            ...(formData.descriptions || []),
-                          ];
-
-                          // Agregar la nueva descripción
-                          newDescriptions.push({ title, description });
-
-                          // Actualizar el estado con las nuevas descripciones
-                          setFormData({
-                            ...formData,
-                            descriptions: newDescriptions,
-                          });
-
-                          console.log("Nueva descripción agregada:", {
-                            title,
-                            description,
-                          });
-                          console.log(
-                            "Total de descripciones:",
-                            newDescriptions.length
-                          );
-
-                          // Limpiar los campos
-                          titleField.value = "";
-                          descriptionField.value = "";
-                        } else {
-                          // Informar al usuario que debe completar ambos campos
-                          alert(
-                            "Por favor, complete tanto el título como la descripción."
-                          );
-                        }
-                      }}
-                    >
-                      Agregar descripción
-                    </Button>
-                  </Box>
-                </Grid>
-
-                {/* Campos de dirección para propiedades Minkaasa */}
-                {(formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-                  formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-                  <>
-                    <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-                        Datos de Ubicación
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Calle"
-                        name="street"
-                        value={formData?.street || ""}
-                        onChange={(e) =>
-                          handleFieldChange("street", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Número Exterior"
-                        name="exteriorNumber"
-                        value={formData?.exteriorNumber || ""}
-                        onChange={(e) =>
-                          handleFieldChange("exteriorNumber", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Número Interior"
-                        name="interiorNumber"
-                        value={formData?.interiorNumber || ""}
-                        onChange={(e) =>
-                          handleFieldChange("interiorNumber", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Colonia"
-                        name="suburb"
-                        value={formData?.suburb || ""}
-                        onChange={(e) =>
-                          handleFieldChange("suburb", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Ciudad"
-                        name="city"
-                        value={formData?.city || ""}
-                        onChange={(e) =>
-                          handleFieldChange("city", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl
-                        fullWidth
-                        margin="normal"
-                        sx={{ minWidth: 240 }}
-                      >
-                        <InputLabel>Estado</InputLabel>
-                        <Select
-                          value={formData?.state || ""}
-                          onChange={(e) =>
-                            handleFieldChange("state", e.target.value)
-                          }
-                          label="Estado"
-                          sx={{ height: 56 }}
-                        >
-                          <MenuItem value="">
-                            <em>Seleccionar</em>
-                          </MenuItem>
-                          {ESTADOS_MEXICO.map((estado) => (
-                            <MenuItem key={estado.id} value={estado.id}>
-                              {estado.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Código Postal"
-                        name="zipCode"
-                        value={formData?.zipCode || ""}
-                        onChange={(e) =>
-                          handleFieldChange("zipCode", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    {/* Datos de Contacto para propiedades Minkaasa */}
-                    <Grid item xs={12}>
-                      <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-                        Datos de Contacto
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Nombre"
-                        name="name"
-                        value={formData?.name || ""}
-                        onChange={(e) =>
-                          handleFieldChange("name", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Apellido Paterno"
-                        name="lastNameP"
-                        value={formData?.lastNameP || ""}
-                        onChange={(e) =>
-                          handleFieldChange("lastNameP", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Apellido Materno"
-                        name="lastNameM"
-                        value={formData?.lastNameM || ""}
-                        onChange={(e) =>
-                          handleFieldChange("lastNameM", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Email Principal"
-                        name="mainEmail"
-                        type="email"
-                        value={formData?.mainEmail || ""}
-                        onChange={(e) =>
-                          handleFieldChange("mainEmail", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Teléfono Principal"
-                        name="mainPhone"
-                        value={formData?.mainPhone || ""}
-                        onChange={(e) =>
-                          handleFieldChange("mainPhone", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Agente"
-                        name="agent"
-                        value={formData?.agent || ""}
-                        onChange={(e) =>
-                          handleFieldChange("agent", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{ sx: { height: 56 } }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={4}>
-                      <TextField
-                        fullWidth
-                        margin="normal"
-                        label="Comisión %"
-                        name="commission"
-                        type="number"
-                        value={formData?.commission || ""}
-                        onChange={(e) =>
-                          handleFieldChange("commission", e.target.value)
-                        }
-                        sx={{ minWidth: 240 }}
-                        InputProps={{
-                          sx: { height: 56 },
-                          inputProps: { min: 0, max: 100 },
-                        }}
-                      />
-                    </Grid>
-                  </>
-                )}
-              </Grid>
-
-              {/* Sección de Imágenes para Propiedades */}
-              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                Imágenes
-              </Typography>
-              {console.log("FormDialog - Rendering Property Images:", {
-                mainImage: formData?.mainImagePreview || formData?.mainImage,
-                secondaryImages:
-                  formData?.secondaryImagesPreview ||
-                  formData?.secondaryImages ||
-                  [],
-                secondaryImagesFormat: (
-                  formData?.secondaryImagesPreview ||
-                  formData?.secondaryImages ||
-                  []
-                ).map((img) => typeof img),
-              })}
-              <ImageGallery
-                mainImage={formData?.mainImagePreview || formData?.mainImage}
-                secondaryImages={
-                  formData?.secondaryImagesPreview ||
-                  formData?.secondaryImages ||
-                  []
-                }
-              />
-              {/* Botones para cambiar imágenes */}
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                {/* Imagen principal */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    sx={{ height: 56, justifyContent: "flex-start" }}
-                  >
-                    Cambiar imagen principal
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => handleMainImageChange(e.target.files[0])}
-                    />
-                  </Button>
-                </Grid>
-                {/* Imágenes secundarias */}
-                <Grid item xs={12} sm={6} md={4}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    sx={{ height: 56, justifyContent: "flex-start" }}
-                  >
-                    Agregar imágenes secundarias
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      hidden
-                      onChange={(e) =>
-                        handleSecondaryImagesChange(e.target.files)
-                      }
-                    />
-                  </Button>
-                </Grid>
-              </Grid>
-            </>
-          )}
-
-          {!formType &&
-            fields?.map((field) => (
-              <Grid item xs={12} sm={6} md={4} key={field.name}>
-                {renderField(field)}
-              </Grid>
-            ))}
         </Box>
       </DialogContent>
       <DialogActions>

@@ -1,3 +1,31 @@
+import {
+  createAxiosInstance,
+  createPublicAxiosInstance,
+} from "../utils/axiosMiddleware";
+
+/**
+ * API Service Layer
+ *
+ * Este archivo maneja todas las llamadas a la API de forma centralizada.
+ * Todas las funciones manejan internamente la instancia de axios,
+ * por lo que no es necesario pasarla como parámetro.
+ *
+ * Uso:
+ *    api.getDevelopers(1, 10)
+ *    api.getNameTypeProperty()
+ *    api.createDeveloper(data)
+ */
+
+// Crear una instancia de axios para uso interno (con autenticación)
+const getAxiosInstance = () => {
+  return createAxiosInstance();
+};
+
+// Crear una instancia de axios para endpoints públicos (sin autenticación)
+const getPublicAxiosInstance = () => {
+  return createPublicAxiosInstance();
+};
+
 const handleApiError = (error) => {
   if (error.response?.data?.message) {
     throw new Error(error.response.data.message);
@@ -7,8 +35,9 @@ const handleApiError = (error) => {
 
 export const api = {
   // Developer endpoints
-  getDevelopers: async (axiosInstance, page = 1, pageSize = 10) => {
+  getDevelopers: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/realEstateDevelopment", {
         params: { page, pageSize },
       });
@@ -23,8 +52,9 @@ export const api = {
     }
   },
 
-  getDeveloper: async (axiosInstance, id) => {
+  getDeveloper: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`/realEstateDevelopment/${id}`);
       return response.data.data;
     } catch (error) {
@@ -32,24 +62,37 @@ export const api = {
     }
   },
 
-  createDeveloper: async (axiosInstance, data) => {
+  getNameTypeProperty: async () => {
     try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.get(`/nameType`);
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  createDeveloper: async (data) => {
+    try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/realEstateDevelopment", data);
     } catch (error) {
       handleApiError(error);
     }
   },
 
-  updateDeveloper: async (axiosInstance, id, data) => {
+  updateDeveloper: async (id, data) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/realEstateDevelopment/${id}`, data);
     } catch (error) {
       handleApiError(error);
     }
   },
 
-  deleteDeveloper: async (axiosInstance, id) => {
+  deleteDeveloper: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.delete(`/realEstateDevelopment/${id}`);
     } catch (error) {
       handleApiError(error);
@@ -57,8 +100,9 @@ export const api = {
   },
 
   // Development endpoints
-  getDevelopments: async (axiosInstance, page = 1, pageSize = 10) => {
+  getDevelopments: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/development", {
         params: { page, pageSize },
       });
@@ -73,8 +117,9 @@ export const api = {
     }
   },
 
-  getDevelopment: async (axiosInstance, id) => {
+  getDevelopment: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`/development/${id}`);
       return response.data.data;
     } catch (error) {
@@ -82,8 +127,9 @@ export const api = {
     }
   },
 
-  createDevelopment: async (axiosInstance, formData) => {
+  createDevelopment: async (formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/development", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -92,8 +138,9 @@ export const api = {
     }
   },
 
-  updateDevelopment: async (axiosInstance, id, formData) => {
+  updateDevelopment: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/development/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -102,17 +149,36 @@ export const api = {
     }
   },
 
-  deleteDevelopment: async (axiosInstance, id) => {
+  deleteDevelopment: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.delete(`/development/${id}`);
     } catch (error) {
       handleApiError(error);
     }
   },
 
-  // Property endpoints
-  getProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+  getDevelopmentsBasic: async (page = 1, pageSize = 1000) => {
     try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.get("/development/basic", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Property endpoints
+  getProperties: async (page = 1, pageSize = 10) => {
+    try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype", {
         params: { page, pageSize },
       });
@@ -127,8 +193,9 @@ export const api = {
     }
   },
 
-  getPublishedProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+  getPublishedProperties: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype/published", {
         params: { page, pageSize },
       });
@@ -143,8 +210,9 @@ export const api = {
     }
   },
 
-  getPublicProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+  getPublicProperties: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getPublicAxiosInstance();
       const response = await axiosInstance.get("/public/prototype", {
         params: { page, pageSize },
       });
@@ -159,15 +227,16 @@ export const api = {
     }
   },
 
-  getPublicSearchProperties: async (axiosInstance, q) => {
+  getPublicSearchProperties: async (q) => {
     try {
+      const axiosInstance = getPublicAxiosInstance();
       const response = await axiosInstance.get("/public/prototype/search", {
         params: { q },
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || 1,
+        pageSize: response.data.pageSize || 10,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -175,8 +244,9 @@ export const api = {
     }
   },
 
-  getNotPublishedProperties: async (axiosInstance, page = 1, pageSize = 10) => {
+  getNotPublishedProperties: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype/not-published", {
         params: { page, pageSize },
       });
@@ -191,8 +261,9 @@ export const api = {
     }
   },
 
-  getProperty: async (axiosInstance, id) => {
+  getProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`/prototype/${id}`);
       return response.data.data;
     } catch (error) {
@@ -200,8 +271,9 @@ export const api = {
     }
   },
 
-  getPropertyPreview: async (axiosInstance, id) => {
+  getPropertyPreview: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`/prototype/preview/${id}`);
       return response.data.data;
     } catch (error) {
@@ -209,8 +281,9 @@ export const api = {
     }
   },
 
-  getPublicPropertyView: async (axiosInstance, id) => {
+  getPublicPropertyView: async (id) => {
     try {
+      const axiosInstance = getPublicAxiosInstance();
       const response = await axiosInstance.get(`/public/prototype/${id}`);
       return response.data.data;
     } catch (error) {
@@ -218,8 +291,9 @@ export const api = {
     }
   },
 
-  createProperty: async (axiosInstance, formData) => {
+  createProperty: async (formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -228,8 +302,9 @@ export const api = {
     }
   },
 
-  updateProperty: async (axiosInstance, id, formData) => {
+  updateProperty: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/prototype/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -238,8 +313,9 @@ export const api = {
     }
   },
 
-  updateNotPublishedProperties: async (axiosInstance, id, formData) => {
+  updateNotPublishedProperties: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/prototype/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -248,8 +324,9 @@ export const api = {
     }
   },
 
-  updatePublishedProperties: async (axiosInstance, id, formData) => {
+  updatePublishedProperties: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/prototype/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -258,8 +335,9 @@ export const api = {
     }
   },
 
-  updatePublishedProperty: async (axiosInstance, id, formData) => {
+  updatePublishedProperty: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/prototype/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -268,8 +346,9 @@ export const api = {
     }
   },
 
-  createPublishedProperty: async (axiosInstance, formData) => {
+  createPublishedProperty: async (formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -278,8 +357,9 @@ export const api = {
     }
   },
 
-  deleteProperty: async (axiosInstance, id) => {
+  deleteProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.delete(`/prototype/${id}`);
     } catch (error) {
       handleApiError(error);
@@ -287,8 +367,9 @@ export const api = {
   },
 
   // Función para despublicar una propiedad
-  unpublishProperty: async (axiosInstance, id) => {
+  unpublishProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const formData = new FormData();
       formData.append("published", false);
 
@@ -304,8 +385,9 @@ export const api = {
   },
 
   // Función para publicar una propiedad
-  publishProperty: async (axiosInstance, id) => {
+  publishProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const formData = new FormData();
       formData.append("published", true);
 
@@ -321,8 +403,9 @@ export const api = {
   },
 
   // Image handling
-  getImage: async (axiosInstance, path, isFullPath = false) => {
+  getImage: async (path, isFullPath = false) => {
     try {
+      const axiosInstance = getAxiosInstance();
       let imagePath = path;
       if (!isFullPath && !path.startsWith("uploads/")) {
         imagePath = `uploads/${path}`;
@@ -349,8 +432,9 @@ export const api = {
     }
   },
 
-  getFieldOptions: async (axiosInstance, endpoint) => {
+  getFieldOptions: async (endpoint) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(endpoint);
       return response.data;
     } catch (error) {
@@ -360,8 +444,9 @@ export const api = {
   },
 
   // Función genérica para obtener un elemento por su ID
-  getItemById: async (axiosInstance, endpoint, id) => {
+  getItemById: async (endpoint, id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`${endpoint}/${id}`);
       return response.data.data;
     } catch (error) {
@@ -370,12 +455,9 @@ export const api = {
   },
 
   // Minkaasa Property endpoints
-  getMinkaasaUnpublishedProperties: async (
-    axiosInstance,
-    page = 1,
-    pageSize = 10
-  ) => {
+  getMinkaasaUnpublishedProperties: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(
         "/prototype/minkaasa-not-published",
         {
@@ -393,12 +475,9 @@ export const api = {
     }
   },
 
-  getMinkaasaPublishedProperties: async (
-    axiosInstance,
-    page = 1,
-    pageSize = 10
-  ) => {
+  getMinkaasaPublishedProperties: async (page = 1, pageSize = 10) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(
         "/prototype/minkaasa-published",
         {
@@ -416,8 +495,9 @@ export const api = {
     }
   },
 
-  getMinkaasaProperty: async (axiosInstance, id) => {
+  getMinkaasaProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(`/prototype/minkaasa/${id}`);
       return response.data.data;
     } catch (error) {
@@ -425,8 +505,9 @@ export const api = {
     }
   },
 
-  createMinkaasaProperty: async (axiosInstance, formData) => {
+  createMinkaasaProperty: async (formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype/minkaasa", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -435,8 +516,9 @@ export const api = {
     }
   },
 
-  updateMinkaasaProperty: async (axiosInstance, id, formData) => {
+  updateMinkaasaProperty: async (id, formData) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -445,16 +527,18 @@ export const api = {
     }
   },
 
-  deleteMinkaasaProperty: async (axiosInstance, id) => {
+  deleteMinkaasaProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       await axiosInstance.delete(`/prototype/minkaasa/${id}`);
     } catch (error) {
       handleApiError(error);
     }
   },
 
-  publishMinkaasaProperty: async (axiosInstance, id) => {
+  publishMinkaasaProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const formData = new FormData();
       formData.append("published", true);
 
@@ -468,8 +552,9 @@ export const api = {
     }
   },
 
-  unpublishMinkaasaProperty: async (axiosInstance, id) => {
+  unpublishMinkaasaProperty: async (id) => {
     try {
+      const axiosInstance = getAxiosInstance();
       const formData = new FormData();
       formData.append("published", false);
 
@@ -484,9 +569,10 @@ export const api = {
   },
 
   // Agregar una nueva función para enviar información de usuario desde el formulario público
-  submitUserInformation: async (axios, userData) => {
+  submitUserInformation: async (userData) => {
     try {
-      const response = await axios.post(
+      const axiosInstance = getPublicAxiosInstance();
+      const response = await axiosInstance.post(
         "/public/user/userInformation",
         userData
       );
