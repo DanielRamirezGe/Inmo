@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
 import { api } from "../services/api";
-import { useAxiosMiddleware } from "../utils/axiosMiddleware";
 
 export const useFieldOptions = (fields = []) => {
   const [selectOptions, setSelectOptions] = useState({});
@@ -12,34 +11,25 @@ export const useFieldOptions = (fields = []) => {
     return Object.values(loadingOptions).some((loading) => loading === true);
   }, [loadingOptions]);
 
-  // Obtener axiosInstance
-  const axiosInstance = useAxiosMiddleware();
-
   // Función para cargar las opciones de un campo específico
-  const loadOptionsForField = useCallback(
-    async (field) => {
-      if (!field.endpoint || field.type !== "select") return;
+  const loadOptionsForField = useCallback(async (field) => {
+    if (!field.endpoint || field.type !== "select") return;
 
-      console.log(
-        `Loading options for field ${field.name} from endpoint ${field.endpoint}`
-      );
-      try {
-        setLoadingOptions((prev) => ({ ...prev, [field.name]: true }));
-        const options = await api.getFieldOptions(
-          axiosInstance,
-          field.endpoint
-        );
-        console.log(`Options loaded for field ${field.name}:`, options);
-        setSelectOptions((prev) => ({ ...prev, [field.name]: options }));
-      } catch (error) {
-        console.error(`Error al cargar opciones para ${field.name}:`, error);
-        setError(`Error al cargar opciones para ${field.label}`);
-      } finally {
-        setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
-      }
-    },
-    [axiosInstance]
-  );
+    console.log(
+      `Loading options for field ${field.name} from endpoint ${field.endpoint}`
+    );
+    try {
+      setLoadingOptions((prev) => ({ ...prev, [field.name]: true }));
+      const options = await api.getFieldOptions(field.endpoint);
+      console.log(`Options loaded for field ${field.name}:`, options);
+      setSelectOptions((prev) => ({ ...prev, [field.name]: options }));
+    } catch (error) {
+      console.error(`Error al cargar opciones para ${field.name}:`, error);
+      setError(`Error al cargar opciones para ${field.label}`);
+    } finally {
+      setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
+    }
+  }, []);
 
   // Función para cargar todas las opciones de campos
   const loadFieldOptions = useCallback(async () => {

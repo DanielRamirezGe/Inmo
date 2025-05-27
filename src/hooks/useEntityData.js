@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
 import { api } from "../services/api";
-import { useAxiosMiddleware } from "../utils/axiosMiddleware";
 import { FORM_TYPES } from "../app/admin/properties/constants";
 
 export const useEntityData = (entityType) => {
@@ -13,9 +12,6 @@ export const useEntityData = (entityType) => {
     total: 0,
   });
 
-  // Obtener axiosInstance
-  const axiosInstance = useAxiosMiddleware();
-
   const fetchItems = useCallback(
     async (page = 1, pageSize = 15) => {
       if (!entityType) return;
@@ -26,38 +22,25 @@ export const useEntityData = (entityType) => {
         let response;
         switch (entityType) {
           case FORM_TYPES.DEVELOPER:
-            response = await api.getDevelopers(axiosInstance, page, pageSize);
+            response = await api.getDevelopers(page, pageSize);
             break;
           case FORM_TYPES.DEVELOPMENT:
-            response = await api.getDevelopments(axiosInstance, page, pageSize);
+            response = await api.getDevelopments(page, pageSize);
             break;
           case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-            response = await api.getNotPublishedProperties(
-              axiosInstance,
-              page,
-              pageSize
-            );
+            response = await api.getNotPublishedProperties(page, pageSize);
             break;
           case FORM_TYPES.PROPERTY_PUBLISHED:
-            response = await api.getPublishedProperties(
-              axiosInstance,
-              page,
-              pageSize
-            );
+            response = await api.getPublishedProperties(page, pageSize);
             break;
           case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
             response = await api.getMinkaasaUnpublishedProperties(
-              axiosInstance,
               page,
               pageSize
             );
             break;
           case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
-            response = await api.getMinkaasaPublishedProperties(
-              axiosInstance,
-              page,
-              pageSize
-            );
+            response = await api.getMinkaasaPublishedProperties(page, pageSize);
             break;
           default:
             throw new Error("Tipo de entidad no válido");
@@ -76,7 +59,7 @@ export const useEntityData = (entityType) => {
         setLoading(false);
       }
     },
-    [entityType, axiosInstance]
+    [entityType]
   );
 
   const getItemDetails = async (itemId) => {
@@ -158,11 +141,7 @@ export const useEntityData = (entityType) => {
       const apiUrl = `${endpoint}/${normalizedId}`;
       console.log(`API URL: ${apiUrl}`);
 
-      const response = await api.getItemById(
-        axiosInstance,
-        endpoint,
-        normalizedId
-      );
+      const response = await api.getItemById(endpoint, normalizedId);
 
       if (!response) {
         console.error(`No data received from ${endpoint}/${normalizedId}`);
@@ -228,77 +207,44 @@ export const useEntityData = (entityType) => {
         switch (entityType) {
           case FORM_TYPES.DEVELOPER:
             if (isEditing) {
-              response = await api.updateDeveloper(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updateDeveloper(itemId, formData);
             } else {
-              response = await api.createDeveloper(axiosInstance, formData);
+              response = await api.createDeveloper(formData);
             }
             break;
           case FORM_TYPES.DEVELOPMENT:
             if (isEditing) {
-              response = await api.updateDevelopment(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updateDevelopment(itemId, formData);
             } else {
-              response = await api.createDevelopment(axiosInstance, formData);
+              response = await api.createDevelopment(formData);
             }
             break;
           case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
             if (isEditing) {
-              response = await api.updateProperty(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updateProperty(itemId, formData);
             } else {
-              response = await api.createProperty(axiosInstance, formData);
+              response = await api.createProperty(formData);
             }
             break;
           case FORM_TYPES.PROPERTY_PUBLISHED:
             if (isEditing) {
-              response = await api.updatePublishedProperty(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updatePublishedProperty(itemId, formData);
             } else {
-              response = await api.createPublishedProperty(
-                axiosInstance,
-                formData
-              );
+              response = await api.createPublishedProperty(formData);
             }
             break;
           case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
             if (isEditing) {
-              response = await api.updateMinkaasaProperty(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updateMinkaasaProperty(itemId, formData);
             } else {
-              response = await api.createMinkaasaProperty(
-                axiosInstance,
-                formData
-              );
+              response = await api.createMinkaasaProperty(formData);
             }
             break;
           case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
             if (isEditing) {
-              response = await api.updateMinkaasaProperty(
-                axiosInstance,
-                itemId,
-                formData
-              );
+              response = await api.updateMinkaasaProperty(itemId, formData);
             } else {
-              response = await api.createMinkaasaProperty(
-                axiosInstance,
-                formData
-              );
+              response = await api.createMinkaasaProperty(formData);
             }
             break;
           default:
@@ -316,7 +262,7 @@ export const useEntityData = (entityType) => {
         setLoading(false);
       }
     },
-    [entityType, axiosInstance, fetchItems]
+    [entityType, fetchItems]
   );
 
   const deleteItem = useCallback(
@@ -328,18 +274,18 @@ export const useEntityData = (entityType) => {
       try {
         switch (entityType) {
           case FORM_TYPES.DEVELOPER:
-            await api.deleteDeveloper(axiosInstance, itemId);
+            await api.deleteDeveloper(itemId);
             break;
           case FORM_TYPES.DEVELOPMENT:
-            await api.deleteDevelopment(axiosInstance, itemId);
+            await api.deleteDevelopment(itemId);
             break;
           case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-            await api.deleteProperty(axiosInstance, itemId);
+            await api.deleteProperty(itemId);
             break;
           case FORM_TYPES.PROPERTY_PUBLISHED:
             throw new Error("No se permite eliminar propiedades publicadas");
           case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
-            await api.deleteMinkaasaProperty(axiosInstance, itemId);
+            await api.deleteMinkaasaProperty(itemId);
             break;
           case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
             throw new Error(
@@ -360,7 +306,7 @@ export const useEntityData = (entityType) => {
         setLoading(false);
       }
     },
-    [entityType, axiosInstance, fetchItems]
+    [entityType, fetchItems]
   );
 
   return {

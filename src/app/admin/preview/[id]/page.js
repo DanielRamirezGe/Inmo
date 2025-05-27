@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import PropertyDetailView from "@/components/PropertyDetailView";
 import { propertyService } from "@/services/propertyService";
-import { useAxiosMiddleware } from "@/utils/axiosMiddleware";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 
 export default function PropertyPreviewPage() {
@@ -12,9 +11,6 @@ export default function PropertyPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedProperties, setRelatedProperties] = useState([]);
-
-  // Get axiosInstance
-  const axiosInstance = useAxiosMiddleware();
 
   // Initialize reCaptcha
   const { executeRecaptcha, isDevelopmentMode } = useRecaptcha();
@@ -39,7 +35,7 @@ export default function PropertyPreviewPage() {
           property: propertyData,
           relatedProperties: related,
           error: fetchError,
-        } = await propertyService.fetchPropertyDetails(axiosInstance, id, true); // true = admin view
+        } = await propertyService.fetchPropertyDetails(id, true); // true = admin view
 
         // Only set state if the component is still mounted
         setProperty(propertyData);
@@ -70,7 +66,7 @@ export default function PropertyPreviewPage() {
   // Function to handle contact form submission
   const handleSubmitContactForm = async (userData) => {
     // Submit user information to the API using shared service
-    return await propertyService.submitContactForm(axiosInstance, userData);
+    return await propertyService.submitContactForm(userData);
   };
 
   return (

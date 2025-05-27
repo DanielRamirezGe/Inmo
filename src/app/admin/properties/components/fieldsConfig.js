@@ -91,6 +91,15 @@ export const developmentFields = [
 export const propertyFields = [
   { name: "prototypeName", label: "Nombre del Prototipo", required: true },
   {
+    name: "propertyTypeId",
+    label: "Tipo de Propiedad",
+    type: "select",
+    required: true,
+    endpoint: "/nameType",
+    optionValue: "nameTypeId",
+    optionLabel: (option) => option.nameType,
+  },
+  {
     name: "developmentId",
     label: "Desarrollo",
     required: true,
@@ -99,8 +108,9 @@ export const propertyFields = [
     optionLabel: (option) =>
       `${option.developmentName} - ${option.realEstateDevelopmentName}`,
     optionValue: "developmentId",
+    // Solo para propiedades normales, no Minkaasa
+    showFor: ["propertyNotPublished", "propertyPublished"],
   },
-  { name: "condominium", label: "Condominio" },
   {
     name: "price",
     label: "Precio",
@@ -111,23 +121,6 @@ export const propertyFields = [
       step: "0.01",
     },
   },
-  // { name: "street", label: "Calle" },
-  // { name: "exteriorNumber", label: "Número Exterior", type: "text" },
-  // { name: "interiorNumber", label: "Número Interior", type: "text" },
-  // { name: "suburb", label: "Colonia" },
-  // { name: "city", label: "Ciudad" },
-  // {
-  //   name: "state",
-  //   label: "Estado",
-  //   type: "select",
-  //   options: ESTADOS_MEXICO,
-  // },
-  // {
-  //   name: "zipCode",
-  //   label: "Código Postal",
-  //   type: "number",
-  //   inputProps: { min: 0 },
-  // },
   {
     name: "bedroom",
     label: "Recámaras",
@@ -173,5 +166,190 @@ export const propertyFields = [
       step: "0.01",
     },
   },
+  { name: "url", label: "URL" },
   { name: "mapLocation", label: "Ubicación en Mapa" },
 ];
+
+// Campos específicos para propiedades Minkaasa
+export const minkaasaLocationFields = [
+  { name: "condominium", label: "Condominio" },
+  { name: "street", label: "Calle" },
+  { name: "exteriorNumber", label: "Número Exterior" },
+  { name: "interiorNumber", label: "Número Interior" },
+  { name: "suburb", label: "Colonia" },
+  { name: "city", label: "Ciudad" },
+  {
+    name: "state",
+    label: "Estado",
+    type: "select",
+    options: ESTADOS_MEXICO,
+  },
+  { name: "zipCode", label: "Código Postal" },
+];
+
+export const minkaasaContactFields = [
+  { name: "name", label: "Nombre" },
+  { name: "lastNameP", label: "Apellido Paterno" },
+  { name: "lastNameM", label: "Apellido Materno" },
+  { name: "mainEmail", label: "Email Principal", type: "email" },
+  { name: "mainPhone", label: "Teléfono Principal" },
+  { name: "agent", label: "Agente" },
+  {
+    name: "commission",
+    label: "Comisión %",
+    type: "number",
+    inputProps: { min: 0, max: 100 },
+  },
+];
+
+// Función helper para obtener los campos organizados por secciones según el tipo de formulario
+export const getFieldSectionsForFormType = (formType) => {
+  switch (formType) {
+    case "developer":
+      return [
+        {
+          title: "Datos de la Desarrolladora",
+          fields: developerFields,
+        },
+      ];
+
+    case "development":
+      return [
+        {
+          title: "Datos del Desarrollo",
+          fields: developmentFields,
+        },
+      ];
+
+    case "propertyNotPublished":
+    case "propertyPublished":
+      return [
+        {
+          title: "Datos de la Propiedad",
+          fields: propertyFields.filter(
+            (field) => !field.showFor || field.showFor.includes(formType)
+          ),
+        },
+      ];
+
+    case "propertyMinkaasaUnpublished":
+    case "propertyMinkaasaPublished":
+      return [
+        {
+          title: "Datos de la Propiedad",
+          fields: propertyFields.filter(
+            (field) =>
+              field.name !== "developmentId" && // Excluir desarrollo para Minkaasa
+              (!field.showFor || field.showFor.includes(formType))
+          ),
+        },
+        {
+          title: "Datos de Ubicación",
+          fields: minkaasaLocationFields,
+        },
+        {
+          title: "Datos de Contacto",
+          fields: minkaasaContactFields,
+        },
+      ];
+
+    default:
+      return [];
+  }
+};
+
+// Función helper para obtener los campos según el tipo de formulario (mantener para compatibilidad)
+export const getFieldsForFormType = (formType) => {
+  const sections = getFieldSectionsForFormType(formType);
+  return sections.flatMap((section) => section.fields);
+};
+
+// Función helper para obtener los valores iniciales
+export const getInitialDataForFormType = (formType) => {
+  const basePropertyData = {
+    prototypeName: "",
+    propertyTypeId: "",
+    price: "",
+    bedroom: "",
+    bathroom: "",
+    halfBathroom: "",
+    parking: "",
+    size: "",
+    url: "",
+    mapLocation: "",
+    descriptions: [],
+    mainImage: null,
+    mainImagePreview: null,
+    secondaryImages: [],
+    secondaryImagesPreview: [],
+  };
+
+  switch (formType) {
+    case "developer":
+      return {
+        realEstateDevelopmentName: "",
+        url: "",
+      };
+    case "development":
+      return {
+        developmentName: "",
+        realEstateDevelopmentId: "",
+        commission: "",
+        url: "",
+        state: "",
+        city: "",
+        zipCode: "",
+        street: "",
+        extNum: "",
+        intNum: "",
+        mapLocation: "",
+        mainImage: null,
+        mainImagePreview: null,
+        secondaryImages: [],
+        secondaryImagesPreview: [],
+      };
+    case "propertyNotPublished":
+    case "propertyPublished":
+      return {
+        ...basePropertyData,
+        developmentId: "",
+        // Campos adicionales para compatibilidad con Minkaasa si es necesario
+        street: "",
+        exteriorNumber: "",
+        interiorNumber: "",
+        suburb: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        name: "",
+        lastNameP: "",
+        lastNameM: "",
+        mainEmail: "",
+        mainPhone: "",
+        agent: "",
+        commission: "",
+      };
+    case "propertyMinkaasaUnpublished":
+    case "propertyMinkaasaPublished":
+      return {
+        ...basePropertyData,
+        condominium: "",
+        street: "",
+        exteriorNumber: "",
+        interiorNumber: "",
+        suburb: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        name: "",
+        lastNameP: "",
+        lastNameM: "",
+        mainEmail: "",
+        mainPhone: "",
+        agent: "",
+        commission: "",
+      };
+    default:
+      return {};
+  }
+};

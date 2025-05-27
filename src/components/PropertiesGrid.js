@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";
-import { usePublicAxios } from "@/utils/axiosMiddleware";
 
 const PropertiesGrid = () => {
   const [properties, setProperties] = useState([]);
@@ -23,7 +22,6 @@ const PropertiesGrid = () => {
   const [totalProperties, setTotalProperties] = useState(0);
 
   const router = useRouter();
-  const axiosInstance = usePublicAxios();
 
   // Usar refs para controlar la carga
   const mountedRef = useRef(true);
@@ -40,19 +38,11 @@ const PropertiesGrid = () => {
 
   // Función para cargar propiedades
   const loadProperties = async (currentPage = 1) => {
-    if (!axiosInstance) {
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await api.getPublicProperties(
-        axiosInstance,
-        currentPage,
-        pageSize
-      );
+      const response = await api.getPublicProperties(currentPage, pageSize);
 
       // Siempre actualizar las propiedades si tenemos datos válidos
       if (response?.data) {
@@ -72,10 +62,8 @@ const PropertiesGrid = () => {
 
   // Effect para carga inicial y cambios de página
   useEffect(() => {
-    if (axiosInstance) {
-      loadProperties(page);
-    }
-  }, [axiosInstance, page]);
+    loadProperties(page);
+  }, [page]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);

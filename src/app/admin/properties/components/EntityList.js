@@ -71,18 +71,6 @@ const EntityList = ({
       >
         <Typography variant="h5">{title}</Typography>
         <Box sx={{ display: "flex", gap: 2 }}>
-          {(currentTab === TAB_INDICES.PROPERTY_PUBLISHED ||
-            currentTab === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <Button
-              variant="outlined"
-              color="primary"
-              component={Link}
-              href="/admin/preview"
-              startIcon={<VisibilityIcon />}
-            >
-              Vista previa
-            </Button>
-          )}
           {!isPublishedTab && (
             <Button
               variant="contained"

@@ -1,13 +1,9 @@
 import { useState, useCallback } from "react";
 import { api } from "../services/api";
-import { useAxiosMiddleware } from "../utils/axiosMiddleware";
 
 export const useImageHandling = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // Manejar axiosInstance internamente
-  const axiosInstance = useAxiosMiddleware();
 
   const loadImage = useCallback(async (path, isFullPath = false) => {
     if (!path) return null;
@@ -15,7 +11,7 @@ export const useImageHandling = () => {
     setLoading(true);
     setError(null);
     try {
-      const blob = await api.getImage(axiosInstance, path, isFullPath);
+      const blob = await api.getImage(path, isFullPath);
       return URL.createObjectURL(blob);
     } catch (error) {
       setError("Error al cargar la imagen");

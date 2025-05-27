@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import PropertyDetailView from "@/components/PropertyDetailView";
 import { propertyService } from "@/services/propertyService";
-import { usePublicAxios } from "@/utils/axiosMiddleware";
 import { useRecaptcha } from "@/hooks/useRecaptcha";
 import DrawerAppBar from "../../components/navBarGen";
 
@@ -13,9 +12,6 @@ export default function PublicPropertyViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedProperties, setRelatedProperties] = useState([]);
-
-  // Get axiosInstance
-  const axiosInstance = usePublicAxios();
 
   // Initialize reCaptcha
   const { executeRecaptcha, isDevelopmentMode } = useRecaptcha();
@@ -40,11 +36,7 @@ export default function PublicPropertyViewPage() {
           property: propertyData,
           relatedProperties: related,
           error: fetchError,
-        } = await propertyService.fetchPropertyDetails(
-          axiosInstance,
-          id,
-          false
-        ); // false = public view
+        } = await propertyService.fetchPropertyDetails(id, false); // false = public view
 
         // Only set state if the component is still mounted
         setProperty(propertyData);
@@ -75,7 +67,7 @@ export default function PublicPropertyViewPage() {
   // Function to handle contact form submission
   const handleSubmitContactForm = async (userData) => {
     // Submit user information to the API using shared service
-    return await propertyService.submitContactForm(axiosInstance, userData);
+    return await propertyService.submitContactForm(userData);
   };
 
   return (
