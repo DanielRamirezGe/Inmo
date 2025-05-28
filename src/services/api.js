@@ -582,4 +582,126 @@ export const api = {
       throw error;
     }
   },
+
+  // Filters endpoint (private)
+  getPropertyFilters: async (type = "all") => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.get("/prototype/filters", {
+        params: { type },
+      });
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Search properties with filters (private)
+  searchProperties: async (filters = {}, page = 1, pageSize = 10) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+
+      // Preparar parámetros de búsqueda
+      const params = {
+        page,
+        pageSize,
+        ...filters,
+      };
+
+      // Limpiar parámetros vacíos
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] === "" ||
+          params[key] === null ||
+          params[key] === undefined
+        ) {
+          delete params[key];
+        }
+      });
+
+      const response = await axiosInstance.get("/prototype/search", {
+        params,
+      });
+
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+        filters: response.data.filters || {},
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Public Filters endpoint
+  getPublicPropertyFilters: async (type = "all") => {
+    try {
+      const axiosInstance = getPublicAxiosInstance();
+      const response = await axiosInstance.get("/public/prototype/filters", {
+        params: { type },
+      });
+      return response.data.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Public Search properties with filters
+  searchPublicProperties: async (filters = {}, page = 1, pageSize = 10) => {
+    try {
+      const axiosInstance = getPublicAxiosInstance();
+
+      // Preparar parámetros de búsqueda
+      const params = {
+        page,
+        pageSize,
+        ...filters,
+      };
+
+      // Limpiar parámetros vacíos
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] === "" ||
+          params[key] === null ||
+          params[key] === undefined
+        ) {
+          delete params[key];
+        }
+      });
+
+      const response = await axiosInstance.get("/public/prototype/search", {
+        params,
+      });
+
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+        filters: response.data.filters || {},
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Get public properties (for homepage)
+  getPublicProperties: async (page = 1, pageSize = 12) => {
+    try {
+      const axiosInstance = getPublicAxiosInstance();
+      const response = await axiosInstance.get("/public/prototype", {
+        params: { page, pageSize },
+      });
+      return {
+        data: response.data.data || [],
+        page: response.data.page || page,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+      };
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
 };

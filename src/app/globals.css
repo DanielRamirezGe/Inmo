@@ -6,6 +6,7 @@
   --color-primary-light: #FFECB3;
   --color-secondary: #37474F;
   --color-secondary-light: #607D8B;
+  --bottom-nav-height: 70px; /* Height of bottom navigation on mobile */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,6 +20,7 @@ html {
   height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -42,6 +44,28 @@ body {
 /* Main content area that grows to fill available space */
 .main-content {
   flex: 1;
+  /* Add padding bottom on mobile to account for bottom navigation */
+  padding-bottom: 0;
+}
+
+/* Mobile-specific spacing for bottom navigation */
+@media (max-width: 600px) {
+  .main-content {
+    /* Ensure content doesn't get hidden behind bottom navigation */
+    margin-bottom: 0;
+  }
+  
+  /* Ensure footer has proper spacing on mobile */
+  footer {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* Desktop spacing */
+@media (min-width: 601px) {
+  .main-content {
+    padding-bottom: 0;
+  }
 }
 
 * {
@@ -73,4 +97,9 @@ a {
 /* Asegurar que los iconos dentro de los círculos sean blancos */
 .icon-circle-primary svg {
   color: white;
+}
+
+/* Ensure proper spacing for pages with bottom navigation */
+.page-with-bottom-nav {
+  padding-bottom: var(--bottom-nav-height);
 }

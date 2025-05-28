@@ -11,11 +11,8 @@ import {
   Button,
   Card,
   CardContent,
-  Breadcrumbs,
   Link as MuiLink,
 } from "@mui/material";
-import Link from "next/link";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";

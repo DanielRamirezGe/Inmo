@@ -1404,9 +1404,7 @@ export default function PropertyDetailView({
                   property={relatedProperty}
                   onDetailClick={() => {
                     if (relatedProperty.prototypeId) {
-                      router.push(
-                        `/prototypeView/${relatedProperty.prototypeId}`
-                      );
+                      router.push(`/property/${relatedProperty.prototypeId}`);
                     }
                   }}
                 />
