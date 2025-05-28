@@ -28,10 +28,6 @@ export default function MainHeader() {
       >
         <Box
           sx={{
-            marginTop: {
-              xs: "40px",
-              sm: "50px",
-            },
             maxHeight: "600px",
             overflow: "hidden",
           }}

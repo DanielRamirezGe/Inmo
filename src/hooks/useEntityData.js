@@ -318,5 +318,8 @@ export const useEntityData = (entityType) => {
     getItemDetails,
     saveItem,
     deleteItem,
+    // Funciones para actualizar estado directamente (útil para búsquedas)
+    setItems,
+    setPagination,
   };
 };

@@ -13,7 +13,12 @@ import {
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";
 
-const PropertiesGrid = () => {
+const PropertiesGrid = ({
+  filteredProperties = null,
+  onLoadMore = null,
+  isFiltered = false,
+  onPropertyClick = null,
+}) => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,8 +41,22 @@ const PropertiesGrid = () => {
     };
   }, []);
 
+  // Effect para manejar propiedades filtradas
+  useEffect(() => {
+    if (filteredProperties) {
+      setProperties(filteredProperties.data || []);
+      setTotalProperties(filteredProperties.total || 0);
+      setPage(filteredProperties.page || 1);
+      setLoading(false);
+      setError(null);
+    }
+  }, [filteredProperties]);
+
   // Función para cargar propiedades
   const loadProperties = async (currentPage = 1) => {
+    // Si hay propiedades filtradas, no cargar propiedades por defecto
+    if (isFiltered) return;
+
     setLoading(true);
     setError(null);
 
@@ -62,17 +81,30 @@ const PropertiesGrid = () => {
 
   // Effect para carga inicial y cambios de página
   useEffect(() => {
-    loadProperties(page);
-  }, [page]);
+    if (!isFiltered) {
+      loadProperties(page);
+    }
+  }, [page, isFiltered]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
     window.scrollTo(0, 0);
+
+    // Si hay un callback para cargar más datos filtrados, usarlo
+    if (onLoadMore && isFiltered) {
+      onLoadMore(newPage);
+    }
   };
 
   const handleDetailClick = (propertyId) => {
     if (propertyId) {
-      router.push(`/prototypeView/${propertyId}`);
+      // If onPropertyClick callback is provided, use it (for drawer)
+      // Otherwise, use new property page navigation
+      if (onPropertyClick) {
+        onPropertyClick(propertyId);
+      } else {
+        router.push(`/property/${propertyId}`);
+      }
     }
   };
 
@@ -83,7 +115,11 @@ const PropertiesGrid = () => {
   return (
     <Container
       maxWidth="lg"
-      sx={{ mt: { xs: 2, md: 4 }, mb: { xs: 4, md: 8 } }}
+      sx={{
+        mt: { xs: 2, md: 4 },
+        mb: { xs: 2, md: 2 },
+        pb: { xs: 2, md: 0 },
+      }}
     >
       {loading && (
         <Box
@@ -142,7 +178,14 @@ const PropertiesGrid = () => {
         !error &&
         properties.length > 0 &&
         totalProperties > pageSize && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4, mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mt: 4,
+              mb: { xs: 4, md: 2 },
+            }}
+          >
             <Pagination
               count={Math.ceil(totalProperties / pageSize)}
               page={page}

@@ -7,6 +7,7 @@ import AdminNavbar from "../components/AdminNavbar";
 import EntityList from "./components/EntityList";
 import FormDialog from "./components/FormDialog";
 import DeleteDialog from "./components/DeleteDialog";
+import PropertyFiltersBar from "../../../components/PropertyFiltersBar";
 
 // Hooks personalizados
 import { useEntityData } from "../../../hooks/useEntityData";
@@ -164,6 +165,9 @@ export default function PropertiesPage() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [formError, setFormError] = useState(null);
 
+  // Estado para filtros
+  const [activeFilters, setActiveFilters] = useState({});
+
   // Hooks consolidados para todas las entidades
   const entityHooks = {
     [ENTITY_TYPES.DEVELOPER]: useEntityData(ENTITY_TYPES.DEVELOPER),
@@ -231,6 +235,49 @@ export default function PropertiesPage() {
   // Manejo de cambio de pestaña
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+    // Limpiar filtros al cambiar de pestaña
+    setActiveFilters({});
+  };
+
+  // Función para manejar cambios en los filtros
+  const handleFiltersChange = (filters, searchResults = null) => {
+    setActiveFilters(filters);
+
+    // Si hay resultados de búsqueda, actualizar la lista
+    if (searchResults) {
+      const entityHook = getCurrentEntityHook();
+      // Actualizar los items con los resultados de búsqueda
+      entityHook.setItems(searchResults.data);
+      entityHook.setPagination({
+        page: searchResults.page,
+        pageSize: searchResults.pageSize,
+        total: searchResults.total,
+      });
+      console.log("Resultados de búsqueda aplicados:", searchResults);
+    } else {
+      console.log("Filtros aplicados:", filters);
+    }
+  };
+
+  // Obtener el tipo de filtro según la pestaña activa
+  const getFilterType = () => {
+    switch (tabValue) {
+      case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
+        return "not-published";
+      case TAB_INDICES.PROPERTY_PUBLISHED:
+        return "published";
+      case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
+        return "minkaasa-not-published";
+      case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
+        return "minkaasa-published";
+      default:
+        return "all";
+    }
+  };
+
+  // Verificar si la pestaña actual es de propiedades
+  const isPropertyTab = () => {
+    return tabValue >= TAB_INDICES.PROPERTY_NOT_PUBLISHED;
   };
 
   // Función para abrir diálogo
@@ -463,6 +510,20 @@ export default function PropertiesPage() {
             ))}
           </Tabs>
         </Box>
+
+        {/* Barra de filtros - solo para pestañas de propiedades */}
+        {isPropertyTab() && (
+          <PropertyFiltersBar
+            filterType={getFilterType()}
+            onFiltersChange={handleFiltersChange}
+            showDevelopments={
+              tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
+              tabValue === TAB_INDICES.PROPERTY_PUBLISHED
+            }
+            title={`Filtros - ${TAB_LABELS[tabValue]}`}
+            compact={false}
+          />
+        )}
 
         {currentError && (
           <Alert severity="error" sx={{ mb: 3 }}>
