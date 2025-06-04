@@ -208,7 +208,7 @@ export const getFieldSectionsForFormType = (formType) => {
     case "developer":
       return [
         {
-          title: "Datos de la Desarrolladora",
+          title: "Información del Desarrollador",
           fields: developerFields,
         },
       ];
@@ -216,7 +216,7 @@ export const getFieldSectionsForFormType = (formType) => {
     case "development":
       return [
         {
-          title: "Datos del Desarrollo",
+          title: "Información del Desarrollo",
           fields: developmentFields,
         },
       ];
@@ -225,9 +225,9 @@ export const getFieldSectionsForFormType = (formType) => {
     case "propertyPublished":
       return [
         {
-          title: "Datos de la Propiedad",
-          fields: propertyFields.filter(
-            (field) => !field.showFor || field.showFor.includes(formType)
+          title: "Información Básica de la Propiedad",
+          fields: propertyFields.filter(field => 
+            !field.showFor || field.showFor.includes(formType)
           ),
         },
       ];
@@ -236,19 +236,13 @@ export const getFieldSectionsForFormType = (formType) => {
     case "propertyMinkaasaPublished":
       return [
         {
-          title: "Datos de la Propiedad",
-          fields: propertyFields.filter(
-            (field) =>
-              field.name !== "developmentId" && // Excluir desarrollo para Minkaasa
-              (!field.showFor || field.showFor.includes(formType))
+          title: "Información Básica de la Propiedad",
+          fields: propertyFields.filter(field => 
+            !field.showFor || field.showFor.includes(formType)
           ),
         },
         {
-          title: "Datos de Ubicación",
-          fields: minkaasaLocationFields,
-        },
-        {
-          title: "Datos de Contacto",
+          title: "Información del Contacto Externo",
           fields: minkaasaContactFields,
         },
       ];
@@ -351,5 +345,152 @@ export const getInitialDataForFormType = (formType) => {
       };
     default:
       return {};
+  }
+};
+
+// Campos básicos para el primer paso de creación (solo datos esenciales)
+export const getBasicPropertyFields = (formType) => {
+  const basicFields = [
+    { name: "prototypeName", label: "Nombre del Prototipo", required: true },
+    {
+      name: "propertyTypeId",
+      label: "Tipo de Propiedad",
+      type: "select",
+      required: true,
+      endpoint: "/nameType",
+      optionValue: "nameTypeId",
+      optionLabel: (option) => option.nameType,
+    },
+    {
+      name: "price",
+      label: "Precio",
+      type: "number",
+      required: true,
+      inputProps: {
+        min: 0,
+        step: "0.01",
+      },
+    },
+    {
+      name: "bedroom",
+      label: "Recámaras",
+      type: "number",
+      inputProps: {
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      name: "bathroom",
+      label: "Baños",
+      type: "number",
+      inputProps: {
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      name: "halfBathroom",
+      label: "Medios Baños",
+      type: "number",
+      inputProps: {
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      name: "parking",
+      label: "Estacionamiento",
+      type: "number",
+      inputProps: {
+        min: 0,
+        step: 1,
+      },
+    },
+    {
+      name: "size",
+      label: "Tamaño m2",
+      type: "number",
+      inputProps: {
+        min: 0,
+        step: "0.01",
+      },
+    },
+    { name: "url", label: "URL" },
+    { name: "mapLocation", label: "Ubicación en Mapa" },
+  ];
+
+  // Para propiedades normales (no Minkaasa), agregar el campo de desarrollo
+  if (formType === "propertyNotPublished" || formType === "propertyPublished") {
+    basicFields.splice(2, 0, {
+      name: "developmentId",
+      label: "Desarrollo",
+      required: true,
+      type: "select",
+      endpoint: "/development/basic",
+      optionLabel: (option) =>
+        `${option.developmentName} - ${option.realEstateDevelopmentName}`,
+      optionValue: "developmentId",
+    });
+  }
+
+  // Para propiedades Minkaasa, agregar campos de contacto
+  if (formType === "propertyMinkaasaUnpublished" || formType === "propertyMinkaasaPublished") {
+    basicFields.push(
+      { name: "name", label: "Nombre", required: true },
+      { name: "lastNameP", label: "Apellido Paterno", required: true },
+      { name: "lastNameM", label: "Apellido Materno" },
+      { name: "mainEmail", label: "Email Principal", type: "email", required: true },
+      { name: "mainPhone", label: "Teléfono Principal", type: "tel", required: true },
+      { name: "agent", label: "Agente" },
+      {
+        name: "commission",
+        label: "Comisión",
+        type: "number",
+        inputProps: {
+          min: 0,
+          step: "0.01",
+        },
+      }
+    );
+  }
+
+  return basicFields;
+};
+
+// Secciones para el primer paso
+export const getBasicPropertySections = (formType) => {
+  const basicFields = getBasicPropertyFields(formType);
+  
+  if (formType === "propertyMinkaasaUnpublished" || formType === "propertyMinkaasaPublished") {
+    // Para Minkaasa, dividir en dos secciones
+    const propertyFields = basicFields.slice(0, 10); // Campos de propiedad (incluyendo url y mapLocation)
+    const contactFields = basicFields.slice(10); // Campos de contacto
+    
+    return [
+      {
+        title: "Datos Básicos de la Propiedad",
+        fields: propertyFields,
+      },
+      {
+        title: "Información del Contacto Externo",
+        fields: contactFields,
+      },
+    ];
+  } else {
+    // Para propiedades normales, dividir en secciones lógicas
+    const mainPropertyFields = basicFields.slice(0, 9); // Desde prototypeName hasta size
+    const additionalFields = basicFields.slice(9); // url y mapLocation
+    
+    return [
+      {
+        title: "Información Principal",
+        fields: mainPropertyFields,
+      },
+      {
+        title: "Información Adicional",
+        fields: additionalFields,
+      },
+    ];
   }
 };

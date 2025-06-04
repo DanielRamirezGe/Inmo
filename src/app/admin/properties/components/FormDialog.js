@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 import ImageGallery from "./ImageGallery";
 import { FORM_TYPES } from "../constants";
 import { useEntityData } from "../../../../hooks/useEntityData";
@@ -29,7 +30,15 @@ import {
   getInitialDataForFormType,
   getFieldsForFormType,
   getFieldSectionsForFormType,
+  getBasicPropertySections,
 } from "./fieldsConfig";
+import { useMultiStepProperty } from "../../../../hooks/useMultiStepProperty";
+import { useMultiStepPropertyEdit } from "../../../../hooks/useMultiStepPropertyEdit";
+import PropertyCreationStepper from "./PropertyCreationStepper";
+import Step2Descriptions from "./Step2Descriptions";
+import Step3Images from "./Step3Images";
+import ConfirmCloseDialog from "./ConfirmCloseDialog";
+import PropertyEditTabs from "./PropertyEditTabs";
 
 // Componente de formulario genérico
 const FormDialog = ({
@@ -46,6 +55,7 @@ const FormDialog = ({
   setError,
   formType,
   currentItem,
+  onRefreshData,
 }) => {
   // Estados locales
   const [localLoading, setLocalLoading] = useState(false);
@@ -53,6 +63,7 @@ const FormDialog = ({
   const [fieldErrors, setFieldErrors] = useState([]);
   const [selectOptions, setSelectOptions] = useState({});
   const [loadingOptions, setLoadingOptions] = useState({});
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
 
   // Memoizar el ID del item actual para evitar bucles infinitos
   const currentItemId = useMemo(() => {
@@ -93,18 +104,70 @@ const FormDialog = ({
     getItemDetails,
   } = useEntityData(formType);
 
+  const {
+    currentStep,
+    prototypeId,
+    loading: multiStepLoading,
+    error: multiStepError,
+    setError: setMultiStepError,
+    createBasicProperty,
+    addDescriptions,
+    addImages,
+    nextStep,
+    previousStep,
+    clearCreationData,
+    isInCreationProcess,
+    getSavedFormType,
+  } = useMultiStepProperty();
+
+  // Hook para edición multi-paso (solo cuando estamos editando una propiedad)
+  const {
+    loading: editLoading,
+    error: editError,
+    setError: setEditError,
+    updateBasicProperty,
+    updateDescriptions,
+    updateImages,
+  } = useMultiStepPropertyEdit(
+    currentItem ? currentItemId : null,
+    formType
+  );
+
   // Definir isLoading después de inicializar todos los hooks
   const isLoading =
     externalLoading ||
     localLoading ||
     loadingImages ||
     loadingDevelopers ||
+    multiStepLoading ||
+    editLoading ||
     Object.values(loadingOptions).some((loading) => loading === true);
 
   // Obtener secciones de campos directamente desde la configuración - memoizada
   const fieldSections = useMemo(() => {
-    return getFieldSectionsForFormType(formType);
-  }, [formType]);
+    const isPropertyType = formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+                          formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+                          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+
+    // Si NO es un tipo de propiedad, usar la lógica original
+    if (!isPropertyType) {
+      return getFieldSectionsForFormType(formType);
+    }
+
+    // Para edición de propiedades: no mostrar campos individuales (se usan tabs)
+    if (currentItem) {
+      return [];
+    }
+
+    // Para creación de propiedades: mostrar campos según el paso de creación
+    if (currentStep === 1) {
+      return getBasicPropertySections(formType);
+    } else {
+      // Pasos 2 y 3: sin campos (se manejan por separado)
+      return [];
+    }
+  }, [formType, currentItem, currentStep]);
 
   // Función para cargar opciones de un campo específico
   const loadOptionsForField = async (field) => {
@@ -516,6 +579,156 @@ const FormDialog = ({
     }
   };
 
+  // Helper para crear objeto JSON del primer paso (básico) - MÁS EFICIENTE
+  const createBasicPropertyData = (formData, isMinkaasa = false) => {
+    console.log('🔍 createBasicPropertyData - formData recibido:', formData);
+    console.log('🔍 createBasicPropertyData - isMinkaasa:', isMinkaasa);
+    
+    const basicData = {};
+
+    // Campos básicos de propiedad (todos los campos esenciales)
+    const basicFields = [
+      'prototypeName', 'price', 'bedroom', 'bathroom', 'halfBathroom', 
+      'parking', 'size', 'url', 'mapLocation'
+    ];
+    
+    basicFields.forEach(field => {
+      const value = formData[field];
+      console.log(`🔍 Campo ${field}:`, value, typeof value);
+      if (value !== null && value !== undefined && value !== '') {
+        // Convertir números correctamente
+        if (['price', 'bedroom', 'bathroom', 'halfBathroom', 'parking', 'size'].includes(field)) {
+          basicData[field] = value === '' ? null : Number(value);
+        } else {
+          basicData[field] = value;
+        }
+        console.log(`✅ Agregado ${field}:`, basicData[field]);
+      } else {
+        console.log(`❌ Omitido ${field}:`, value);
+      }
+    });
+
+    // Mapear propertyTypeId a nameTypeId para la API
+    if (formData.propertyTypeId) {
+      basicData.nameTypeId = Number(formData.propertyTypeId);
+      console.log('✅ Agregado nameTypeId:', basicData.nameTypeId);
+    } else {
+      console.log('❌ Omitido nameTypeId:', formData.propertyTypeId);
+    }
+
+    // Para propiedades normales, agregar developmentId
+    if (!isMinkaasa && formData.developmentId) {
+      basicData.developmentId = Number(formData.developmentId);
+      console.log('✅ Agregado developmentId:', basicData.developmentId);
+    } else {
+      console.log('❌ Omitido developmentId:', formData.developmentId, 'isMinkaasa:', isMinkaasa);
+    }
+
+    // Para propiedades Minkaasa, agregar externalAgreement
+    if (isMinkaasa) {
+      const externalAgreement = {
+        name: formData.name || "",
+        lastNameP: formData.lastNameP || "",
+        lastNameM: formData.lastNameM || "",
+        mainEmail: formData.mainEmail || "",
+        mainPhone: formData.mainPhone || "",
+        agent: formData.agent || "",
+        commission: formData.commission ? Number(formData.commission) : 0,
+      };
+      basicData.externalAgreement = externalAgreement;
+      console.log('✅ Agregado externalAgreement:', externalAgreement);
+    }
+
+    console.log('📤 Objeto JSON final:', basicData);
+    return basicData;
+  };
+
+  // Manejador para el paso 2: Descripciones
+  const handleStep2Submit = async (descriptions) => {
+    const result = await addDescriptions(descriptions);
+    if (result.success) {
+      console.log('Paso 2 completado, descripciones agregadas:', result.descriptionsAdded);
+      // El hook automáticamente avanza al paso 3
+    }
+  };
+
+  // Manejador para el paso 3: Imágenes
+  const handleStep3Submit = async (mainImage, secondaryImages) => {
+    const result = await addImages(mainImage, secondaryImages);
+    if (result.success && result.completed) {
+      console.log('Proceso completado exitosamente');
+      // Cerrar diálogo y refrescar lista
+      onClose();
+      // Refrescar la lista de propiedades si hay una función disponible
+      if (typeof onSubmit === 'function') {
+        try {
+          await onSubmit(); // Esto debería refrescar la lista
+        } catch (error) {
+          console.log('Error al refrescar lista, pero el proceso fue exitoso');
+        }
+      }
+    }
+  };
+
+  // Manejar intento de cerrar el formulario
+  const handleCloseAttempt = () => {
+    // Si estamos editando (currentItem existe), permitir cerrar directamente
+    if (currentItem) {
+      handleForceClose();
+      return;
+    }
+
+    // Si no es creación de propiedades, permitir cerrar directamente
+    if (formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED && 
+        formType !== FORM_TYPES.PROPERTY_PUBLISHED &&
+        formType !== FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED &&
+        formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) {
+      handleForceClose();
+      return;
+    }
+
+    // Si estamos en proceso de creación de propiedades
+    // Verificar si hay datos importantes ingresados
+    const hasImportantData = currentStep > 1 || 
+      formData?.prototypeName?.trim() || 
+      formData?.price || 
+      formData?.propertyTypeId ||
+      formData?.developmentId ||
+      formData?.name?.trim() || // Para Minkaasa
+      formData?.mainEmail?.trim(); // Para Minkaasa
+
+    if (hasImportantData) {
+      setShowConfirmClose(true);
+    } else {
+      // Si no hay datos importantes, cerrar directamente
+      handleForceClose();
+    }
+  };
+
+  // Cerrar forzadamente (sin confirmación)
+  const handleForceClose = () => {
+    setLocalLoading(false);
+    setFieldErrors([]);
+    setShowConfirmClose(false);
+    if (setExternalLoading) {
+      setExternalLoading(false);
+    }
+    onClose();
+  };
+
+  // Confirmar el cierre y limpiar datos si es necesario
+  const handleConfirmClose = () => {
+    // Si estamos en paso 1, no hay nada que limpiar en el servidor
+    // Si estamos en pasos posteriores, ya se creó algo en el servidor
+    // pero el usuario decidió dejarlo incompleto
+    
+    if (!currentItem && currentStep > 1) {
+      clearCreationData();
+    }
+    
+    handleForceClose();
+  };
+
   // Manejar el envío del formulario
   const handleSubmit = async () => {
     try {
@@ -526,6 +739,31 @@ const FormDialog = ({
       }
       setFieldErrors([]);
 
+      // Si es creación de propiedad y estamos en el paso 1
+      if (!currentItem && 
+          (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+           formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+           formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+           formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
+          currentStep === 1) {
+
+        const isMinkaasa = formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED || 
+                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+        
+        const basicData = createBasicPropertyData(formData, isMinkaasa);
+        const result = await createBasicProperty(basicData, formType);
+
+        if (result.success) {
+          console.log('Paso 1 completado, prototypeId:', result.prototypeId);
+          // No cerrar el diálogo, continuar al siguiente paso
+          // El hook automáticamente avanza al paso 2
+        } else {
+          setError(result.error || 'Error al crear la propiedad básica');
+        }
+        return;
+      }
+
+      // Para otros tipos de formularios (desarrolladores, desarrollos), usar lógica original
       await onSubmit();
     } catch (error) {
       console.error("Error al guardar:", error);
@@ -554,301 +792,326 @@ const FormDialog = ({
       setFieldErrors([]);
       setSelectOptions({});
       setLoadingOptions({});
+      setShowConfirmClose(false);
       if (setExternalLoading) {
         setExternalLoading(false);
       }
+      // Nota: No limpiar datos de creación aquí automáticamente
+      // Eso se maneja en handleConfirmClose cuando el usuario confirma
     }
   }, [open, setExternalLoading]);
 
-  return (
-    <Dialog
-      open={open}
-      onClose={() => {
-        setLocalLoading(false);
-        setFieldErrors([]);
-        if (setExternalLoading) {
-          setExternalLoading(false);
+  // Manejar tecla Escape
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === 'Escape' && open && !showConfirmClose) {
+        event.preventDefault();
+        handleCloseAttempt();
+      }
+    };
+
+    if (open) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [open, showConfirmClose]);
+
+  // Determinar el título del diálogo
+  const getDialogTitle = () => {
+    const isPropertyType = formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+                          formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+                          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+
+    if (isPropertyType) {
+      if (currentItem) {
+        // Edición con tabs
+        return 'Editar Propiedad';
+      } else {
+        // Creación multi-paso
+        if (currentStep === 1) {
+          return 'Paso 1: Datos de la Propiedad';
+        } else if (currentStep === 2) {
+          return 'Paso 2: Descripciones';
+        } else if (currentStep === 3) {
+          return 'Paso 3: Imágenes';
         }
-        onClose();
-      }}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
-        <Box component="div" sx={{ mt: 2 }}>
-          {error && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2 }}
-              onClose={() => setError(null)}
-            >
-              {error}
-            </Alert>
-          )}
+      }
+    }
+    
+    return title; // Título por defecto
+  };
 
-          {/* Renderizar secciones de campos */}
-          {fieldSections.map((section, sectionIndex) => (
-            <Box key={sectionIndex}>
-              <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
-                {section.title}
-              </Typography>
-              <Grid container spacing={2}>
-                {section.fields.map((field) => (
-                  <Grid item xs={12} sm={6} md={4} key={field.name}>
-                    {renderField(field)}
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          ))}
+  // Función específica para refrescar datos después de edición exitosa
+  const handleRefreshAfterEdit = async (successMessage = null) => {
+    try {
+      // Usar la función de refresh específica si está disponible
+      if (typeof onRefreshData === 'function') {
+        await onRefreshData(successMessage);
+      } else {
+        console.warn('No se proporcionó función de refresh específica');
+      }
+    } catch (error) {
+      console.error('Error al refrescar datos:', error);
+    }
+  };
 
-          {/* Sección de Descripción para propiedades */}
-          {(formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <>
-              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                Descripciones de la Propiedad
-              </Typography>
-
-              {/* Mostrar el listado de descripciones existentes */}
-              {formData.descriptions &&
-              Array.isArray(formData.descriptions) &&
-              formData.descriptions.length > 0 ? (
-                <Box sx={{ mb: 3 }}>
-                  {formData.descriptions.map((desc, index) => (
-                    <Box
-                      key={desc.descriptionId || index}
-                      sx={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: 1,
-                        p: 2,
-                        mb: 2,
-                        position: "relative",
-                      }}
-                    >
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {desc.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          mt: 1,
-                          whiteSpace: "pre-wrap",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {desc.description}
-                      </Typography>
-                      <IconButton
-                        onClick={() => {
-                          const newDescriptions = [...formData.descriptions];
-                          newDescriptions.splice(index, 1);
-                          setFormData({
-                            ...formData,
-                            descriptions: newDescriptions,
-                          });
-                        }}
-                        sx={{
-                          position: "absolute",
-                          top: 8,
-                          right: 8,
-                          color: "error.main",
-                        }}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
-                  No hay descripciones. Agregue al menos una descripción para la
-                  propiedad.
-                </Typography>
-              )}
-
-              {/* Formulario para agregar una nueva descripción */}
-              <Box
-                component="div"
-                sx={{
-                  border: "1px dashed #ccc",
-                  borderRadius: 1,
-                  p: 2,
-                  mb: 3,
-                }}
-              >
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                  Agregar nueva descripción
-                </Typography>
-
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mb: 2, display: "block" }}
-                >
-                  El formato del texto (espacios, saltos de línea, tabulaciones)
-                  se preservará exactamente como lo ingreses.
-                </Typography>
-
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Título"
-                  id="description-title-field"
-                  sx={{ mb: 2 }}
-                  InputProps={{ sx: { height: 56 } }}
-                />
-
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Descripción"
-                  id="description-text-field"
-                  multiline
-                  rows={5}
-                  sx={{ mb: 2 }}
-                  placeholder="Escribe aquí la descripción completa. Puedes usar saltos de línea y espacios para formatear el texto como desees. Este formato se preservará exactamente como lo escribas."
-                  InputProps={{
-                    sx: {
-                      fontFamily: "monospace",
-                    },
-                  }}
-                />
-
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    const titleField = document.getElementById(
-                      "description-title-field"
-                    );
-                    const descriptionField = document.getElementById(
-                      "description-text-field"
-                    );
-
-                    if (
-                      titleField &&
-                      descriptionField &&
-                      titleField.value &&
-                      descriptionField.value
-                    ) {
-                      const title = titleField.value;
-                      const description = descriptionField.value;
-
-                      const newDescriptions = [
-                        ...(formData.descriptions || []),
-                      ];
-
-                      newDescriptions.push({ title, description });
-
-                      setFormData({
-                        ...formData,
-                        descriptions: newDescriptions,
-                      });
-
-                      titleField.value = "";
-                      descriptionField.value = "";
-                    } else {
-                      alert(
-                        "Por favor, complete tanto el título como la descripción."
-                      );
-                    }
-                  }}
-                >
-                  Agregar descripción
-                </Button>
-              </Box>
-            </>
-          )}
-
-          {/* Sección de Imágenes para desarrollos y propiedades */}
-          {(formType === FORM_TYPES.DEVELOPMENT ||
-            formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <>
-              <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
-                Imágenes
-              </Typography>
-              <ImageGallery
-                mainImage={formData?.mainImagePreview || formData?.mainImage}
-                secondaryImages={
-                  formData?.secondaryImagesPreview ||
-                  formData?.secondaryImages ||
-                  []
-                }
+  return (
+    <>
+      <Dialog
+        open={open}
+        onClose={handleCloseAttempt}
+        maxWidth="md"
+        fullWidth
+        disableEscapeKeyDown={true}
+      >
+        <DialogTitle>
+          {getDialogTitle()}
+          <IconButton
+            onClick={handleCloseAttempt}
+            sx={{ position: "absolute", right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box component="div" sx={{ mt: 2 }}>
+            {/* Mostrar stepper solo para creación de propiedades */}
+            {!currentItem && 
+             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+              <PropertyCreationStepper 
+                currentStep={currentStep} 
+                formType={formType}
               />
-              <Grid container spacing={2} sx={{ mt: 2 }}>
-                <Grid item xs={12} sm={6} md={4}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    sx={{ height: 56, justifyContent: "flex-start" }}
-                  >
-                    Cambiar imagen principal
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => handleMainImageChange(e.target.files[0])}
-                    />
-                  </Button>
+            )}
+
+            {error && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                onClose={() => setError(null)}
+              >
+                {error}
+              </Alert>
+            )}
+
+            {/* Mostrar error del multi-step si existe */}
+            {multiStepError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                onClose={() => setMultiStepError(null)}
+              >
+                {multiStepError}
+              </Alert>
+            )}
+
+            {/* Mostrar error del multi-step edit si existe */}
+            {editError && (
+              <Alert
+                severity="error"
+                sx={{ mb: 2 }}
+                onClose={() => setEditError(null)}
+              >
+                {editError}
+              </Alert>
+            )}
+
+            {/* Renderizar secciones de campos */}
+            {fieldSections.map((section, sectionIndex) => (
+              <Box key={sectionIndex}>
+                <Typography variant="h6" sx={{ mt: 2, mb: 2 }}>
+                  {section.title}
+                </Typography>
+                <Grid container spacing={2}>
+                  {section.fields.map((field) => (
+                    <Grid item xs={12} sm={6} md={4} key={field.name}>
+                      {renderField(field)}
+                    </Grid>
+                  ))}
                 </Grid>
-                <Grid item xs={12} sm={6} md={8}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    sx={{ height: 56, justifyContent: "flex-start" }}
-                  >
-                    Agregar imágenes secundarias
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      hidden
-                      onChange={(e) =>
-                        handleSecondaryImagesChange(e.target.files)
-                      }
-                    />
-                  </Button>
+              </Box>
+            ))}
+
+            {/* Contenido específico para cada paso de creación de propiedades */}
+            {!currentItem && 
+             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+              <>
+                {/* Paso 2: Descripciones */}
+                {currentStep === 2 && (
+                  <Step2Descriptions
+                    onSubmit={handleStep2Submit}
+                    onPrevious={previousStep}
+                    loading={multiStepLoading}
+                    error={multiStepError}
+                  />
+                )}
+
+                {/* Paso 3: Imágenes */}
+                {currentStep === 3 && (
+                  <Step3Images
+                    onSubmit={handleStep3Submit}
+                    onPrevious={previousStep}
+                    loading={multiStepLoading}
+                    error={multiStepError}
+                  />
+                )}
+              </>
+            )}
+
+            {/* Edición de propiedades con tabs */}
+            {currentItem && 
+             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+              <PropertyEditTabs
+                formData={formData}
+                setFormData={setFormData}
+                formType={formType}
+                renderField={renderField}
+                onUpdateBasic={updateBasicProperty}
+                onUpdateDescriptions={updateDescriptions}
+                onUpdateImages={updateImages}
+                loading={editLoading}
+                error={editError}
+                setError={setEditError}
+                onClose={onClose}
+                onRefresh={handleRefreshAfterEdit}
+              />
+            )}
+
+            {/* Sección de Imágenes para desarrollos (solo en edición) */}
+            {(formType === FORM_TYPES.DEVELOPMENT) && (
+              <>
+                <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
+                  Imágenes
+                </Typography>
+                <ImageGallery
+                  mainImage={formData?.mainImagePreview || formData?.mainImage}
+                  secondaryImages={
+                    formData?.secondaryImagesPreview ||
+                    formData?.secondaryImages ||
+                    []
+                  }
+                />
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                  <Grid item xs={12} sm={6} md={4}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      sx={{ height: 56, justifyContent: "flex-start" }}
+                    >
+                      Cambiar imagen principal
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={(e) => handleMainImageChange(e.target.files[0])}
+                      />
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={8}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      sx={{ height: 56, justifyContent: "flex-start" }}
+                    >
+                      Agregar imágenes secundarias
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        hidden
+                        onChange={(e) =>
+                          handleSecondaryImagesChange(e.target.files)
+                        }
+                      />
+                    </Button>
+                  </Grid>
                 </Grid>
-              </Grid>
+              </>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAttempt} color="primary">
+            Cancelar
+          </Button>
+          
+          {/* Para creación de propiedades multi-paso */}
+          {!currentItem && 
+           (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
+            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+            <>
+              {/* Botón Siguiente/Continuar para paso 1 */}
+              {currentStep === 1 && (
+                <Button
+                  onClick={handleSubmit}
+                  variant="contained"
+                  disabled={isLoading}
+                  sx={{
+                    bgcolor: "#25D366",
+                    "&:hover": { bgcolor: "#128C7E" },
+                  }}
+                >
+                  {isLoading ? (
+                    <CircularProgress size={24} sx={{ color: "white" }} />
+                  ) : (
+                    "Continuar"
+                  )}
+                </Button>
+              )}
+              
+              {/* Los pasos 2 y 3 manejan sus propios botones dentro de sus componentes */}
             </>
           )}
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary">
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={isLoading}
-          sx={{
-            bgcolor: "#25D366",
-            "&:hover": { bgcolor: "#128C7E" },
-          }}
-        >
-          {isLoading ? (
-            <CircularProgress size={24} sx={{ color: "white" }} />
-          ) : (
-            "Guardar"
+          
+          {/* Para otros tipos de formularios (desarrolladores, desarrollos) */}
+          {currentItem && 
+           (formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED && 
+            formType !== FORM_TYPES.PROPERTY_PUBLISHED &&
+            formType !== FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED &&
+            formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+              disabled={isLoading}
+              sx={{
+                bgcolor: "#25D366",
+                "&:hover": { bgcolor: "#128C7E" },
+              }}
+            >
+              {isLoading ? (
+                <CircularProgress size={24} sx={{ color: "white" }} />
+              ) : (
+                "Guardar"
+              )}
+            </Button>
           )}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de confirmación para cerrar */}
+      <ConfirmCloseDialog
+        open={showConfirmClose}
+        onClose={() => setShowConfirmClose(false)}
+        onConfirm={handleConfirmClose}
+        currentStep={currentStep}
+        prototypeId={prototypeId}
+        formType={formType}
+      />
+    </>
   );
 };
 
