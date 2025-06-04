@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Container, Typography, Tabs, Tab, Alert } from "@mui/material";
+import { Box, Container, Typography, Tabs, Tab, Alert, Snackbar } from "@mui/material";
 
 // Componentes
 import AdminNavbar from "../components/AdminNavbar";
@@ -167,6 +167,9 @@ export default function PropertiesPage() {
 
   // Estado para filtros
   const [activeFilters, setActiveFilters] = useState({});
+
+  // Estado para notificaciones de éxito
+  const [successNotification, setSuccessNotification] = useState(null);
 
   // Hooks consolidados para todas las entidades
   const entityHooks = {
@@ -339,6 +342,21 @@ export default function PropertiesPage() {
     }
   };
 
+  // Función específica para refrescar datos después de edición exitosa
+  const handleRefreshData = async (successMessage = null) => {
+    try {
+      const entityHook = getCurrentEntityHook();
+      await entityHook.fetchItems();
+      
+      // Mostrar notificación de éxito si se proporciona
+      if (successMessage) {
+        setSuccessNotification(successMessage);
+      }
+    } catch (error) {
+      console.error('Error al refrescar datos:', error);
+    }
+  };
+
   // Función simplificada para guardar elementos
   const handleSaveForm = async () => {
     try {
@@ -346,6 +364,24 @@ export default function PropertiesPage() {
       const idField = getIdField(tabValue);
       let dataToSave;
       let success = false;
+      const isEditing = !!currentItem?.[idField];
+
+      // Para creación nueva de propiedades, no hacer nada aquí
+      // El FormDialog maneja el proceso multi-paso internamente
+      if (!isEditing && (
+        tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
+        tabValue === TAB_INDICES.PROPERTY_PUBLISHED ||
+        tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED ||
+        tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED
+      )) {
+        console.log('🔄 Creación nueva de propiedades: delegando al proceso multi-paso de FormDialog');
+        // Refrescar listas después del proceso multi-paso
+        await entityHook.fetchItems();
+        setDialogOpen(false);
+        setCurrentItem(null);
+        setFormData({});
+        return;
+      }
 
       switch (tabValue) {
         case TAB_INDICES.DEVELOPER:
@@ -366,27 +402,33 @@ export default function PropertiesPage() {
 
         case TAB_INDICES.PROPERTY_NOT_PUBLISHED:
         case TAB_INDICES.PROPERTY_PUBLISHED:
-          dataToSave = createPropertyFormData(formData, false);
-          success = await entityHook.saveItem(
-            dataToSave,
-            currentItem?.[idField]
-          );
+          // Solo para edición (isEditing = true)
+          if (isEditing) {
+            dataToSave = createPropertyFormData(formData, false);
+            success = await entityHook.saveItem(
+              dataToSave,
+              currentItem?.[idField]
+            );
+          }
           break;
 
         case TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED:
         case TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED:
-          dataToSave = createPropertyFormData(formData, true);
-          // Agregar externalAgreementId si existe
-          if (currentItem?.externalAgreementId) {
-            dataToSave.append(
-              "externalAgreementId",
-              currentItem.externalAgreementId
+          // Solo para edición (isEditing = true)
+          if (isEditing) {
+            dataToSave = createPropertyFormData(formData, true);
+            // Agregar externalAgreementId si existe
+            if (currentItem?.externalAgreementId) {
+              dataToSave.append(
+                "externalAgreementId",
+                currentItem.externalAgreementId
+              );
+            }
+            success = await entityHook.saveItem(
+              dataToSave,
+              currentItem?.[idField]
             );
           }
-          success = await entityHook.saveItem(
-            dataToSave,
-            currentItem?.[idField]
-          );
           break;
       }
 
@@ -562,6 +604,7 @@ export default function PropertiesPage() {
           setError={setFormError}
           formType={type}
           currentItem={currentItem}
+          onRefreshData={handleRefreshData}
         />
 
         <DeleteDialog
@@ -571,6 +614,22 @@ export default function PropertiesPage() {
           itemToDelete={itemToDelete}
           loading={loading}
         />
+
+        {/* Notificación de éxito */}
+        <Snackbar
+          open={!!successNotification}
+          autoHideDuration={3000}
+          onClose={() => setSuccessNotification(null)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={() => setSuccessNotification(null)} 
+            severity="success" 
+            sx={{ width: '100%' }}
+          >
+            {successNotification}
+          </Alert>
+        </Snackbar>
       </Container>
     </>
   );

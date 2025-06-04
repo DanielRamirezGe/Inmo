@@ -8,12 +8,12 @@ export const useEntityData = (entityType) => {
   const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     page: 1,
-    pageSize: 15,
+    pageSize: 10,
     total: 0,
   });
 
   const fetchItems = useCallback(
-    async (page = 1, pageSize = 15) => {
+    async (page = 1, pageSize = 10) => {
       if (!entityType) return;
 
       setLoading(true);
@@ -201,54 +201,85 @@ export const useEntityData = (entityType) => {
       setLoading(true);
       setError(null);
       try {
-        let response;
         const isEditing = !!itemId;
+        
+        // Validar que no se use saveItem para creación nueva de CUALQUIER propiedad
+        // Todas las propiedades deben usar el proceso multi-paso
+        const isPropertyType = [
+          FORM_TYPES.PROPERTY_NOT_PUBLISHED,
+          FORM_TYPES.PROPERTY_PUBLISHED,
+          FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED,
+          FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+        ].includes(entityType);
 
-        switch (entityType) {
-          case FORM_TYPES.DEVELOPER:
-            if (isEditing) {
-              response = await api.updateDeveloper(itemId, formData);
-            } else {
-              response = await api.createDeveloper(formData);
+        if (!isEditing && isPropertyType) {
+          throw new Error(
+            `❌ DEPRECATED: Use multi-step creation process for new ${entityType}. ` +
+            "Property creation must go through FormDialog multi-step process (basic → descriptions → images)."
+          );
+        }
+
+        // Configuración de operaciones por tipo de entidad
+        const operations = {
+          [FORM_TYPES.DEVELOPER]: {
+            create: () => api.createDeveloper(formData),
+            update: () => api.updateDeveloper(itemId, formData)
+          },
+          [FORM_TYPES.DEVELOPMENT]: {
+            create: () => api.createDevelopment(formData),
+            update: () => api.updateDevelopment(itemId, formData)
+          },
+          // Las propiedades ahora usan edición multi-paso
+          [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: {
+            update: () => {
+              throw new Error(
+                "❌ DEPRECATED: Property editing now uses multi-step process. " +
+                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+              );
             }
-            break;
-          case FORM_TYPES.DEVELOPMENT:
-            if (isEditing) {
-              response = await api.updateDevelopment(itemId, formData);
-            } else {
-              response = await api.createDevelopment(formData);
+          },
+          [FORM_TYPES.PROPERTY_PUBLISHED]: {
+            update: () => {
+              throw new Error(
+                "❌ DEPRECATED: Property editing now uses multi-step process. " +
+                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+              );
             }
-            break;
-          case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-            if (isEditing) {
-              response = await api.updateProperty(itemId, formData);
-            } else {
-              response = await api.createProperty(formData);
+          },
+          [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
+            update: () => {
+              throw new Error(
+                "❌ DEPRECATED: Property editing now uses multi-step process. " +
+                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+              );
             }
-            break;
-          case FORM_TYPES.PROPERTY_PUBLISHED:
-            if (isEditing) {
-              response = await api.updatePublishedProperty(itemId, formData);
-            } else {
-              response = await api.createPublishedProperty(formData);
+          },
+          [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
+            update: () => {
+              throw new Error(
+                "❌ DEPRECATED: Property editing now uses multi-step process. " +
+                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+              );
             }
-            break;
-          case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
-            if (isEditing) {
-              response = await api.updateMinkaasaProperty(itemId, formData);
-            } else {
-              response = await api.createMinkaasaProperty(formData);
-            }
-            break;
-          case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
-            if (isEditing) {
-              response = await api.updateMinkaasaProperty(itemId, formData);
-            } else {
-              response = await api.createMinkaasaProperty(formData);
-            }
-            break;
-          default:
-            throw new Error("Tipo de entidad no válido");
+          }
+        };
+
+        const operation = operations[entityType];
+        if (!operation) {
+          throw new Error(`Tipo de entidad no válido: ${entityType}`);
+        }
+
+        let response;
+        if (isEditing) {
+          if (!operation.update) {
+            throw new Error(`Actualización no permitida para ${entityType}`);
+          }
+          response = await operation.update();
+        } else {
+          if (!operation.create) {
+            throw new Error(`Creación no permitida para ${entityType}`);
+          }
+          response = await operation.create();
         }
 
         // Actualizar la lista de items después de guardar
@@ -256,7 +287,7 @@ export const useEntityData = (entityType) => {
         return true;
       } catch (error) {
         console.error("Error al guardar item:", error);
-        setError("Error al guardar los datos");
+        setError(error.message || "Error al guardar los datos");
         return false;
       } finally {
         setLoading(false);
@@ -272,35 +303,34 @@ export const useEntityData = (entityType) => {
       setLoading(true);
       setError(null);
       try {
-        switch (entityType) {
-          case FORM_TYPES.DEVELOPER:
-            await api.deleteDeveloper(itemId);
-            break;
-          case FORM_TYPES.DEVELOPMENT:
-            await api.deleteDevelopment(itemId);
-            break;
-          case FORM_TYPES.PROPERTY_NOT_PUBLISHED:
-            await api.deleteProperty(itemId);
-            break;
-          case FORM_TYPES.PROPERTY_PUBLISHED:
+        // Configuración de operaciones de eliminación por tipo de entidad
+        const deleteOperations = {
+          [FORM_TYPES.DEVELOPER]: () => api.deleteDeveloper(itemId),
+          [FORM_TYPES.DEVELOPMENT]: () => api.deleteDevelopment(itemId),
+          [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: () => api.deleteProperty(itemId),
+          [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: () => api.deleteMinkaasaProperty(itemId),
+          // Propiedades publicadas no se pueden eliminar
+          [FORM_TYPES.PROPERTY_PUBLISHED]: () => {
             throw new Error("No se permite eliminar propiedades publicadas");
-          case FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED:
-            await api.deleteMinkaasaProperty(itemId);
-            break;
-          case FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED:
-            throw new Error(
-              "No se permite eliminar propiedades Minkaasa publicadas"
-            );
-          default:
-            throw new Error("Tipo de entidad no válido");
+          },
+          [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: () => {
+            throw new Error("No se permite eliminar propiedades Minkaasa publicadas");
+          }
+        };
+
+        const deleteOperation = deleteOperations[entityType];
+        if (!deleteOperation) {
+          throw new Error(`Tipo de entidad no válido: ${entityType}`);
         }
+
+        await deleteOperation();
 
         // Actualizar la lista de items después de eliminar
         await fetchItems();
         return true;
       } catch (error) {
         console.error("Error al eliminar item:", error);
-        setError("Error al eliminar el elemento");
+        setError(error.message || "Error al eliminar el elemento");
         return false;
       } finally {
         setLoading(false);

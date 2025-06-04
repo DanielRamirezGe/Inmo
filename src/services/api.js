@@ -292,6 +292,7 @@ export const api = {
   },
 
   createProperty: async (formData) => {
+    console.warn('⚠️ createProperty (DEPRECATED): Use createPropertyBasic for new multi-step creation');
     try {
       const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype", formData, {
@@ -302,51 +303,8 @@ export const api = {
     }
   },
 
-  updateProperty: async (id, formData) => {
-    try {
-      const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-
-  updateNotPublishedProperties: async (id, formData) => {
-    try {
-      const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-
-  updatePublishedProperties: async (id, formData) => {
-    try {
-      const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-
-  updatePublishedProperty: async (id, formData) => {
-    try {
-      const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-
   createPublishedProperty: async (formData) => {
+    console.warn('⚠️ createPublishedProperty (DEPRECATED): Use createPropertyBasic for new multi-step creation');
     try {
       const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype", formData, {
@@ -370,11 +328,10 @@ export const api = {
   unpublishProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      const formData = new FormData();
-      formData.append("published", false);
-
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axiosInstance.put(`/updatePrototype/${id}/basic`, {
+        published: false
+      }, {
+        headers: { "Content-Type": "application/json" },
       });
       return true;
     } catch (error) {
@@ -388,11 +345,10 @@ export const api = {
   publishProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      const formData = new FormData();
-      formData.append("published", true);
-
-      await axiosInstance.put(`/prototype/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axiosInstance.put(`/updatePrototype/${id}/basic`, {
+        published: true
+      }, {
+        headers: { "Content-Type": "application/json" },
       });
       return true;
     } catch (error) {
@@ -506,20 +462,10 @@ export const api = {
   },
 
   createMinkaasaProperty: async (formData) => {
+    console.warn('⚠️ createMinkaasaProperty (DEPRECATED): Use createMinkaasaPropertyBasic for new multi-step creation');
     try {
       const axiosInstance = getAxiosInstance();
       await axiosInstance.post("/prototype/minkaasa", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
-
-  updateMinkaasaProperty: async (id, formData) => {
-    try {
-      const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
     } catch (error) {
@@ -539,15 +485,15 @@ export const api = {
   publishMinkaasaProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      const formData = new FormData();
-      formData.append("published", true);
-
-      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axiosInstance.put(`/updatePrototype/${id}/basic`, {
+        published: true
+      }, {
+        headers: { "Content-Type": "application/json" },
       });
       return true;
     } catch (error) {
       console.error("Error al publicar propiedad Minkaasa:", error);
+      handleApiError(error);
       return false;
     }
   },
@@ -555,15 +501,15 @@ export const api = {
   unpublishMinkaasaProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      const formData = new FormData();
-      formData.append("published", false);
-
-      await axiosInstance.put(`/prototype/minkaasa/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const response = await axiosInstance.put(`/updatePrototype/${id}/basic`, {
+        published: false
+      }, {
+        headers: { "Content-Type": "application/json" },
       });
       return true;
     } catch (error) {
       console.error("Error al despublicar propiedad Minkaasa:", error);
+      handleApiError(error);
       return false;
     }
   },
@@ -701,6 +647,205 @@ export const api = {
         total: response.data.total || 0,
       };
     } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  patchDevelopment: async (id, formData) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      await axiosInstance.patch(`/development/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Basic property creation endpoints (Step 1 of multi-step creation)
+  createPropertyBasic: async (data) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      
+      console.log('🚀 API createPropertyBasic - data enviado:', data);
+      console.log('🚀 API createPropertyBasic - tipo de data:', typeof data);
+      
+      // Si es FormData, convertir a objeto JSON
+      let jsonData;
+      if (data instanceof FormData) {
+        jsonData = {};
+        for (let [key, value] of data.entries()) {
+          // Si es externalAgreement, ya está en JSON string, parsearlo
+          if (key === 'externalAgreement') {
+            try {
+              jsonData[key] = JSON.parse(value);
+            } catch (e) {
+              jsonData[key] = value;
+            }
+          } else {
+            jsonData[key] = value;
+          }
+        }
+        console.log('🔄 FormData convertido a JSON:', jsonData);
+      } else {
+        jsonData = data;
+      }
+      
+      const response = await axiosInstance.post("/createPrototype/basic", jsonData, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log('✅ API createPropertyBasic - respuesta:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API createPropertyBasic - error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  createMinkaasaPropertyBasic: async (data) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      
+      console.log('🚀 API createMinkaasaPropertyBasic - data enviado:', data);
+      console.log('🚀 API createMinkaasaPropertyBasic - tipo de data:', typeof data);
+      
+      // Si es FormData, convertir a objeto JSON
+      let jsonData;
+      if (data instanceof FormData) {
+        jsonData = {};
+        for (let [key, value] of data.entries()) {
+          // Si es externalAgreement, ya está en JSON string, parsearlo
+          if (key === 'externalAgreement') {
+            try {
+              jsonData[key] = JSON.parse(value);
+            } catch (e) {
+              jsonData[key] = value;
+            }
+          } else {
+            jsonData[key] = value;
+          }
+        }
+        console.log('🔄 FormData convertido a JSON:', jsonData);
+      } else {
+        jsonData = data;
+      }
+      
+      const response = await axiosInstance.post("/createPrototype/minkaasa/basic", jsonData, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log('✅ API createMinkaasaPropertyBasic - respuesta:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API createMinkaasaPropertyBasic - error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  // Step 2: Add descriptions to property
+  addPropertyDescriptions: async (prototypeId, descriptions) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.post(`/createPrototype/${prototypeId}/descriptions`, {
+        descriptions
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Step 3: Add images to property
+  addPropertyImages: async (prototypeId, formData) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.post(`/createPrototype/${prototypeId}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  // Property update endpoints (Multi-step editing)
+  updatePropertyBasic: async (id, data) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      
+      console.log('🚀 API updatePropertyBasic - id:', id);
+      console.log('🚀 API updatePropertyBasic - data enviado:', data);
+      
+      // Si es FormData, convertir a objeto JSON
+      let jsonData;
+      if (data instanceof FormData) {
+        jsonData = {};
+        for (let [key, value] of data.entries()) {
+          if (key === 'externalAgreement') {
+            try {
+              jsonData[key] = JSON.parse(value);
+            } catch (e) {
+              jsonData[key] = value;
+            }
+          } else {
+            jsonData[key] = value;
+          }
+        }
+        console.log('🔄 FormData convertido a JSON:', jsonData);
+      } else {
+        jsonData = data;
+      }
+      
+      const response = await axiosInstance.put(`/updatePrototype/${id}/basic`, jsonData, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log('✅ API updatePropertyBasic - respuesta:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API updatePropertyBasic - error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  updatePropertyDescriptions: async (id, descriptions) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      console.log('🚀 API updatePropertyDescriptions - id:', id, 'descriptions:', descriptions);
+      
+      const response = await axiosInstance.put(`/updatePrototype/${id}/descriptions`, {
+        descriptions
+      }, {
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      console.log('✅ API updatePropertyDescriptions - respuesta:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API updatePropertyDescriptions - error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  updatePropertyImages: async (id, formData) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      console.log('🚀 API updatePropertyImages - id:', id);
+      
+      const response = await axiosInstance.put(`/updatePrototype/${id}/images`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
+      console.log('✅ API updatePropertyImages - respuesta:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ API updatePropertyImages - error:', error);
+      console.error('❌ Error response:', error.response?.data);
       handleApiError(error);
     }
   },
