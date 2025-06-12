@@ -128,10 +128,7 @@ const FormDialog = ({
     updateBasicProperty,
     updateDescriptions,
     updateImages,
-  } = useMultiStepPropertyEdit(
-    currentItem ? currentItemId : null,
-    formType
-  );
+  } = useMultiStepPropertyEdit(currentItem ? currentItemId : null, formType);
 
   // Definir isLoading después de inicializar todos los hooks
   const isLoading =
@@ -145,10 +142,11 @@ const FormDialog = ({
 
   // Obtener secciones de campos directamente desde la configuración - memoizada
   const fieldSections = useMemo(() => {
-    const isPropertyType = formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-                          formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-                          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+    const isPropertyType =
+      formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
 
     // Si NO es un tipo de propiedad, usar la lógica original
     if (!isPropertyType) {
@@ -194,7 +192,6 @@ const FormDialog = ({
 
       setSelectOptions((prev) => ({ ...prev, [field.name]: options }));
     } catch (error) {
-      console.error(`Error al cargar opciones para ${field.name}:`, error);
       setError(`Error al cargar opciones para ${field.label}`);
     } finally {
       setLoadingOptions((prev) => ({ ...prev, [field.name]: false }));
@@ -313,7 +310,6 @@ const FormDialog = ({
           setError("No se pudieron cargar los detalles del elemento");
         }
       } catch (error) {
-        console.error("Error al cargar datos iniciales:", error);
         setError?.("Error al cargar los datos. Por favor, inténtalo de nuevo.");
       } finally {
         setIsLoadingInitialData(false);
@@ -348,12 +344,7 @@ const FormDialog = ({
           setFieldErrors(error.fieldErrors);
         }
       } catch (e) {
-        if (process.env.NODE_ENV === "development") {
-          console.log(
-            "Error no es JSON válido, ignorando parsing de campos:",
-            error
-          );
-        }
+        // Error no es JSON válido, ignorando parsing de campos
       }
     } else {
       setFieldErrors([]);
@@ -581,47 +572,50 @@ const FormDialog = ({
 
   // Helper para crear objeto JSON del primer paso (básico) - MÁS EFICIENTE
   const createBasicPropertyData = (formData, isMinkaasa = false) => {
-    console.log('🔍 createBasicPropertyData - formData recibido:', formData);
-    console.log('🔍 createBasicPropertyData - isMinkaasa:', isMinkaasa);
-    
     const basicData = {};
 
     // Campos básicos de propiedad (todos los campos esenciales)
     const basicFields = [
-      'prototypeName', 'price', 'bedroom', 'bathroom', 'halfBathroom', 
-      'parking', 'size', 'url', 'mapLocation'
+      "prototypeName",
+      "price",
+      "bedroom",
+      "bathroom",
+      "halfBathroom",
+      "parking",
+      "size",
+      "url",
+      "mapLocation",
     ];
-    
-    basicFields.forEach(field => {
+
+    basicFields.forEach((field) => {
       const value = formData[field];
-      console.log(`🔍 Campo ${field}:`, value, typeof value);
-      if (value !== null && value !== undefined && value !== '') {
+      if (value !== null && value !== undefined && value !== "") {
         // Convertir números correctamente
-        if (['price', 'bedroom', 'bathroom', 'halfBathroom', 'parking', 'size'].includes(field)) {
-          basicData[field] = value === '' ? null : Number(value);
+        if (
+          [
+            "price",
+            "bedroom",
+            "bathroom",
+            "halfBathroom",
+            "parking",
+            "size",
+          ].includes(field)
+        ) {
+          basicData[field] = value === "" ? null : Number(value);
         } else {
           basicData[field] = value;
         }
-        console.log(`✅ Agregado ${field}:`, basicData[field]);
-      } else {
-        console.log(`❌ Omitido ${field}:`, value);
       }
     });
 
     // Mapear propertyTypeId a nameTypeId para la API
     if (formData.propertyTypeId) {
       basicData.nameTypeId = Number(formData.propertyTypeId);
-      console.log('✅ Agregado nameTypeId:', basicData.nameTypeId);
-    } else {
-      console.log('❌ Omitido nameTypeId:', formData.propertyTypeId);
     }
 
     // Para propiedades normales, agregar developmentId
     if (!isMinkaasa && formData.developmentId) {
       basicData.developmentId = Number(formData.developmentId);
-      console.log('✅ Agregado developmentId:', basicData.developmentId);
-    } else {
-      console.log('❌ Omitido developmentId:', formData.developmentId, 'isMinkaasa:', isMinkaasa);
     }
 
     // Para propiedades Minkaasa, agregar externalAgreement
@@ -636,10 +630,8 @@ const FormDialog = ({
         commission: formData.commission ? Number(formData.commission) : 0,
       };
       basicData.externalAgreement = externalAgreement;
-      console.log('✅ Agregado externalAgreement:', externalAgreement);
     }
 
-    console.log('📤 Objeto JSON final:', basicData);
     return basicData;
   };
 
@@ -647,7 +639,6 @@ const FormDialog = ({
   const handleStep2Submit = async (descriptions) => {
     const result = await addDescriptions(descriptions);
     if (result.success) {
-      console.log('Paso 2 completado, descripciones agregadas:', result.descriptionsAdded);
       // El hook automáticamente avanza al paso 3
     }
   };
@@ -656,15 +647,14 @@ const FormDialog = ({
   const handleStep3Submit = async (mainImage, secondaryImages) => {
     const result = await addImages(mainImage, secondaryImages);
     if (result.success && result.completed) {
-      console.log('Proceso completado exitosamente');
       // Cerrar diálogo y refrescar lista
       onClose();
       // Refrescar la lista de propiedades si hay una función disponible
-      if (typeof onSubmit === 'function') {
+      if (typeof onSubmit === "function") {
         try {
           await onSubmit(); // Esto debería refrescar la lista
         } catch (error) {
-          console.log('Error al refrescar lista, pero el proceso fue exitoso');
+          // Error al refrescar lista, pero el proceso fue exitoso
         }
       }
     }
@@ -679,19 +669,22 @@ const FormDialog = ({
     }
 
     // Si no es creación de propiedades, permitir cerrar directamente
-    if (formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED && 
-        formType !== FORM_TYPES.PROPERTY_PUBLISHED &&
-        formType !== FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED &&
-        formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) {
+    if (
+      formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED &&
+      formType !== FORM_TYPES.PROPERTY_PUBLISHED &&
+      formType !== FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED &&
+      formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+    ) {
       handleForceClose();
       return;
     }
 
     // Si estamos en proceso de creación de propiedades
     // Verificar si hay datos importantes ingresados
-    const hasImportantData = currentStep > 1 || 
-      formData?.prototypeName?.trim() || 
-      formData?.price || 
+    const hasImportantData =
+      currentStep > 1 ||
+      formData?.prototypeName?.trim() ||
+      formData?.price ||
       formData?.propertyTypeId ||
       formData?.developmentId ||
       formData?.name?.trim() || // Para Minkaasa
@@ -721,11 +714,11 @@ const FormDialog = ({
     // Si estamos en paso 1, no hay nada que limpiar en el servidor
     // Si estamos en pasos posteriores, ya se creó algo en el servidor
     // pero el usuario decidió dejarlo incompleto
-    
+
     if (!currentItem && currentStep > 1) {
       clearCreationData();
     }
-    
+
     handleForceClose();
   };
 
@@ -740,25 +733,26 @@ const FormDialog = ({
       setFieldErrors([]);
 
       // Si es creación de propiedad y estamos en el paso 1
-      if (!currentItem && 
-          (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-           formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-           formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-           formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
-          currentStep === 1) {
+      if (
+        !currentItem &&
+        (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
+        currentStep === 1
+      ) {
+        const isMinkaasa =
+          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
 
-        const isMinkaasa = formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED || 
-                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
-        
         const basicData = createBasicPropertyData(formData, isMinkaasa);
         const result = await createBasicProperty(basicData, formType);
 
         if (result.success) {
-          console.log('Paso 1 completado, prototypeId:', result.prototypeId);
           // No cerrar el diálogo, continuar al siguiente paso
           // El hook automáticamente avanza al paso 2
         } else {
-          setError(result.error || 'Error al crear la propiedad básica');
+          setError(result.error || "Error al crear la propiedad básica");
         }
         return;
       }
@@ -766,8 +760,6 @@ const FormDialog = ({
       // Para otros tipos de formularios (desarrolladores, desarrollos), usar lógica original
       await onSubmit();
     } catch (error) {
-      console.error("Error al guardar:", error);
-
       if (error.response && error.response.data) {
         const errorData = error.response.data;
         if (errorData.fieldErrors && Array.isArray(errorData.fieldErrors)) {
@@ -804,41 +796,42 @@ const FormDialog = ({
   // Manejar tecla Escape
   useEffect(() => {
     const handleEscape = (event) => {
-      if (event.key === 'Escape' && open && !showConfirmClose) {
+      if (event.key === "Escape" && open && !showConfirmClose) {
         event.preventDefault();
         handleCloseAttempt();
       }
     };
 
     if (open) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
     }
   }, [open, showConfirmClose]);
 
   // Determinar el título del diálogo
   const getDialogTitle = () => {
-    const isPropertyType = formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-                          formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-                          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-                          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+    const isPropertyType =
+      formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
 
     if (isPropertyType) {
       if (currentItem) {
         // Edición con tabs
-        return 'Editar Propiedad';
+        return "Editar Propiedad";
       } else {
         // Creación multi-paso
         if (currentStep === 1) {
-          return 'Paso 1: Datos de la Propiedad';
+          return "Paso 1: Datos de la Propiedad";
         } else if (currentStep === 2) {
-          return 'Paso 2: Descripciones';
+          return "Paso 2: Descripciones";
         } else if (currentStep === 3) {
-          return 'Paso 3: Imágenes';
+          return "Paso 3: Imágenes";
         }
       }
     }
-    
+
     return title; // Título por defecto
   };
 
@@ -846,13 +839,11 @@ const FormDialog = ({
   const handleRefreshAfterEdit = async (successMessage = null) => {
     try {
       // Usar la función de refresh específica si está disponible
-      if (typeof onRefreshData === 'function') {
+      if (typeof onRefreshData === "function") {
         await onRefreshData(successMessage);
-      } else {
-        console.warn('No se proporcionó función de refresh específica');
       }
     } catch (error) {
-      console.error('Error al refrescar datos:', error);
+      // Error al refrescar datos
     }
   };
 
@@ -877,16 +868,16 @@ const FormDialog = ({
         <DialogContent>
           <Box component="div" sx={{ mt: 2 }}>
             {/* Mostrar stepper solo para creación de propiedades */}
-            {!currentItem && 
-             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-              <PropertyCreationStepper 
-                currentStep={currentStep} 
-                formType={formType}
-              />
-            )}
+            {!currentItem &&
+              (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+                <PropertyCreationStepper
+                  currentStep={currentStep}
+                  formType={formType}
+                />
+              )}
 
             {error && (
               <Alert
@@ -937,58 +928,58 @@ const FormDialog = ({
             ))}
 
             {/* Contenido específico para cada paso de creación de propiedades */}
-            {!currentItem && 
-             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-              <>
-                {/* Paso 2: Descripciones */}
-                {currentStep === 2 && (
-                  <Step2Descriptions
-                    onSubmit={handleStep2Submit}
-                    onPrevious={previousStep}
-                    loading={multiStepLoading}
-                    error={multiStepError}
-                  />
-                )}
+            {!currentItem &&
+              (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+                <>
+                  {/* Paso 2: Descripciones */}
+                  {currentStep === 2 && (
+                    <Step2Descriptions
+                      onSubmit={handleStep2Submit}
+                      onPrevious={previousStep}
+                      loading={multiStepLoading}
+                      error={multiStepError}
+                    />
+                  )}
 
-                {/* Paso 3: Imágenes */}
-                {currentStep === 3 && (
-                  <Step3Images
-                    onSubmit={handleStep3Submit}
-                    onPrevious={previousStep}
-                    loading={multiStepLoading}
-                    error={multiStepError}
-                  />
-                )}
-              </>
-            )}
+                  {/* Paso 3: Imágenes */}
+                  {currentStep === 3 && (
+                    <Step3Images
+                      onSubmit={handleStep3Submit}
+                      onPrevious={previousStep}
+                      loading={multiStepLoading}
+                      error={multiStepError}
+                    />
+                  )}
+                </>
+              )}
 
             {/* Edición de propiedades con tabs */}
-            {currentItem && 
-             (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-              <PropertyEditTabs
-                formData={formData}
-                setFormData={setFormData}
-                formType={formType}
-                renderField={renderField}
-                onUpdateBasic={updateBasicProperty}
-                onUpdateDescriptions={updateDescriptions}
-                onUpdateImages={updateImages}
-                loading={editLoading}
-                error={editError}
-                setError={setEditError}
-                onClose={onClose}
-                onRefresh={handleRefreshAfterEdit}
-              />
-            )}
+            {currentItem &&
+              (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+                formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+                <PropertyEditTabs
+                  formData={formData}
+                  setFormData={setFormData}
+                  formType={formType}
+                  renderField={renderField}
+                  onUpdateBasic={updateBasicProperty}
+                  onUpdateDescriptions={updateDescriptions}
+                  onUpdateImages={updateImages}
+                  loading={editLoading}
+                  error={editError}
+                  setError={setEditError}
+                  onClose={onClose}
+                  onRefresh={handleRefreshAfterEdit}
+                />
+              )}
 
-            {/* Sección de Imágenes para desarrollos (solo en edición) */}
-            {(formType === FORM_TYPES.DEVELOPMENT) && (
+            {/* Sección de Imágenes para desarrollos */}
+            {formType === FORM_TYPES.DEVELOPMENT && (
               <>
                 <Typography variant="h6" sx={{ mt: 4, mb: 2 }}>
                   Imágenes
@@ -1002,30 +993,36 @@ const FormDialog = ({
                   }
                 />
                 <Grid container spacing={2} sx={{ mt: 2 }}>
-                  <Grid item xs={12} sm={6} md={4}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <Button
                       variant="outlined"
                       component="label"
                       fullWidth
                       sx={{ height: 56, justifyContent: "flex-start" }}
                     >
-                      Cambiar imagen principal
+                      {currentItem
+                        ? "Cambiar imagen principal"
+                        : "Agregar imagen principal"}
                       <input
                         type="file"
                         accept="image/*"
                         hidden
-                        onChange={(e) => handleMainImageChange(e.target.files[0])}
+                        onChange={(e) =>
+                          handleMainImageChange(e.target.files[0])
+                        }
                       />
                     </Button>
                   </Grid>
-                  <Grid item xs={12} sm={6} md={8}>
+                  <Grid item xs={12} sm={6} md={6}>
                     <Button
                       variant="outlined"
                       component="label"
                       fullWidth
                       sx={{ height: 56, justifyContent: "flex-start" }}
                     >
-                      Agregar imágenes secundarias
+                      {currentItem
+                        ? "Cambiar imágenes secundarias"
+                        : "Agregar imágenes secundarias"}
                       <input
                         type="file"
                         accept="image/*"
@@ -1046,59 +1043,61 @@ const FormDialog = ({
           <Button onClick={handleCloseAttempt} color="primary">
             Cancelar
           </Button>
-          
+
           {/* Para creación de propiedades multi-paso */}
-          {!currentItem && 
-           (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED || 
-            formType === FORM_TYPES.PROPERTY_PUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
-            formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <>
-              {/* Botón Siguiente/Continuar para paso 1 */}
-              {currentStep === 1 && (
-                <Button
-                  onClick={handleSubmit}
-                  variant="contained"
-                  disabled={isLoading}
-                  sx={{
-                    bgcolor: "#25D366",
-                    "&:hover": { bgcolor: "#128C7E" },
-                  }}
-                >
-                  {isLoading ? (
-                    <CircularProgress size={24} sx={{ color: "white" }} />
-                  ) : (
-                    "Continuar"
-                  )}
-                </Button>
-              )}
-              
-              {/* Los pasos 2 y 3 manejan sus propios botones dentro de sus componentes */}
-            </>
-          )}
-          
+          {!currentItem &&
+            (formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+              formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+              <>
+                {/* Botón Siguiente/Continuar para paso 1 */}
+                {currentStep === 1 && (
+                  <Button
+                    onClick={handleSubmit}
+                    variant="contained"
+                    disabled={isLoading}
+                    sx={{
+                      bgcolor: "#25D366",
+                      "&:hover": { bgcolor: "#128C7E" },
+                    }}
+                  >
+                    {isLoading ? (
+                      <CircularProgress size={24} sx={{ color: "white" }} />
+                    ) : (
+                      "Continuar"
+                    )}
+                  </Button>
+                )}
+
+                {/* Los pasos 2 y 3 manejan sus propios botones dentro de sus componentes */}
+              </>
+            )}
+
           {/* Para otros tipos de formularios (desarrolladores, desarrollos) */}
-          {currentItem && 
-           (formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED && 
+          {(currentItem ||
+            formType === FORM_TYPES.DEVELOPER ||
+            formType === FORM_TYPES.DEVELOPMENT) &&
+            formType !== FORM_TYPES.PROPERTY_NOT_PUBLISHED &&
             formType !== FORM_TYPES.PROPERTY_PUBLISHED &&
             formType !== FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED &&
-            formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                bgcolor: "#25D366",
-                "&:hover": { bgcolor: "#128C7E" },
-              }}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} sx={{ color: "white" }} />
-              ) : (
-                "Guardar"
-              )}
-            </Button>
-          )}
+            formType !== FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED && (
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+                disabled={isLoading}
+                sx={{
+                  bgcolor: "#25D366",
+                  "&:hover": { bgcolor: "#128C7E" },
+                }}
+              >
+                {isLoading ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : (
+                  "Guardar"
+                )}
+              </Button>
+            )}
         </DialogActions>
       </Dialog>
 

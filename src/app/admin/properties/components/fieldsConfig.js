@@ -38,12 +38,12 @@ export const ESTADOS_MEXICO = [
 export const developerFields = [
   { name: "realEstateDevelopmentName", label: "Nombre", required: true },
   { name: "url", label: "Url web" },
-  { name: "contactName", label: "Nombre de Contacto" },
-  { name: "contactLastNameP", label: "Apellido Paterno de Contacto" },
-  { name: "contactLastNameM", label: "Apellido Materno de Contacto" },
-  { name: "contactPhone", label: "Teléfono de Contacto" },
-  { name: "contactRole", label: "Rol del Contacto" },
-  { name: "contactEmail", label: "Email de Contacto" },
+  // { name: "contactName", label: "Nombre de Contacto" },
+  // { name: "contactLastNameP", label: "Apellido Paterno de Contacto" },
+  // { name: "contactLastNameM", label: "Apellido Materno de Contacto" },
+  // { name: "contactPhone", label: "Teléfono de Contacto" },
+  // { name: "contactRole", label: "Rol del Contacto" },
+  // { name: "contactEmail", label: "Email de Contacto" },
 ];
 
 export const developmentFields = [
@@ -226,8 +226,8 @@ export const getFieldSectionsForFormType = (formType) => {
       return [
         {
           title: "Información Básica de la Propiedad",
-          fields: propertyFields.filter(field => 
-            !field.showFor || field.showFor.includes(formType)
+          fields: propertyFields.filter(
+            (field) => !field.showFor || field.showFor.includes(formType)
           ),
         },
       ];
@@ -237,8 +237,8 @@ export const getFieldSectionsForFormType = (formType) => {
       return [
         {
           title: "Información Básica de la Propiedad",
-          fields: propertyFields.filter(field => 
-            !field.showFor || field.showFor.includes(formType)
+          fields: propertyFields.filter(
+            (field) => !field.showFor || field.showFor.includes(formType)
           ),
         },
         {
@@ -435,13 +435,26 @@ export const getBasicPropertyFields = (formType) => {
   }
 
   // Para propiedades Minkaasa, agregar campos de contacto
-  if (formType === "propertyMinkaasaUnpublished" || formType === "propertyMinkaasaPublished") {
+  if (
+    formType === "propertyMinkaasaUnpublished" ||
+    formType === "propertyMinkaasaPublished"
+  ) {
     basicFields.push(
       { name: "name", label: "Nombre", required: true },
       { name: "lastNameP", label: "Apellido Paterno", required: true },
       { name: "lastNameM", label: "Apellido Materno" },
-      { name: "mainEmail", label: "Email Principal", type: "email", required: true },
-      { name: "mainPhone", label: "Teléfono Principal", type: "tel", required: true },
+      {
+        name: "mainEmail",
+        label: "Email Principal",
+        type: "email",
+        required: true,
+      },
+      {
+        name: "mainPhone",
+        label: "Teléfono Principal",
+        type: "tel",
+        required: true,
+      },
       { name: "agent", label: "Agente" },
       {
         name: "commission",
@@ -461,12 +474,15 @@ export const getBasicPropertyFields = (formType) => {
 // Secciones para el primer paso
 export const getBasicPropertySections = (formType) => {
   const basicFields = getBasicPropertyFields(formType);
-  
-  if (formType === "propertyMinkaasaUnpublished" || formType === "propertyMinkaasaPublished") {
+
+  if (
+    formType === "propertyMinkaasaUnpublished" ||
+    formType === "propertyMinkaasaPublished"
+  ) {
     // Para Minkaasa, dividir en dos secciones
     const propertyFields = basicFields.slice(0, 10); // Campos de propiedad (incluyendo url y mapLocation)
     const contactFields = basicFields.slice(10); // Campos de contacto
-    
+
     return [
       {
         title: "Datos Básicos de la Propiedad",
@@ -481,7 +497,7 @@ export const getBasicPropertySections = (formType) => {
     // Para propiedades normales, dividir en secciones lógicas
     const mainPropertyFields = basicFields.slice(0, 9); // Desde prototypeName hasta size
     const additionalFields = basicFields.slice(9); // url y mapLocation
-    
+
     return [
       {
         title: "Información Principal",
