@@ -19,6 +19,7 @@ import {
   Fade,
   Backdrop,
   Paper,
+  Chip,
 } from "@mui/material";
 import Link from "next/link";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
@@ -32,6 +33,11 @@ import SendIcon from "@mui/icons-material/Send";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ForumIcon from "@mui/icons-material/Forum";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import SecurityIcon from "@mui/icons-material/Security";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import PropertyCard from "@/components/PropertyCard";
 import ImageGalleryModal from "@/components/ImageGalleryModal";
 import PropertyFeature from "@/components/PropertyFeature";
@@ -1202,6 +1208,377 @@ export default function PropertyDetailView({
               ))}
             </Box>
           )}
+
+          {/* Cards promocionales - Visible en mobile */}
+          <Box
+            sx={{ display: { xs: "block", md: "none" }, mb: { xs: 3, md: 4 } }}
+          >
+            {/* Free Service Card - Mobile */}
+            <Card
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                boxShadow: 2,
+                border: "1px solid",
+                borderColor: "primary.light",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  px: 2,
+                  py: 2.5,
+                  position: "relative",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 45,
+                      height: 45,
+                      borderRadius: "50%",
+                      bgcolor: "#4CAF50",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: 1.5,
+                      boxShadow: "0 4px 12px rgba(76, 175, 80, 0.3)",
+                    }}
+                  >
+                    <MonetizationOnIcon
+                      sx={{
+                        fontSize: "1.5rem",
+                        color: "white",
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      color: "secondary.main",
+                    }}
+                  >
+                    ¡Servicio 100% Gratuito!
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.6,
+                    mb: 2.5,
+                  }}
+                >
+                  Te acompañamos en todo el proceso de compra sin ningún costo
+                  adicional para ti.
+                </Typography>
+
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <CheckCircleOutlineIcon
+                      sx={{
+                        fontSize: "1.1rem",
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      No cobramos comisión por asesoría
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <SupportAgentIcon
+                      sx={{
+                        fontSize: "1.1rem",
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      Atención personalizada garantizada
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <VerifiedUserIcon
+                      sx={{
+                        fontSize: "1.1rem",
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      Transparencia total en el proceso
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Box
+                  sx={{
+                    mt: 2.5,
+                    p: 1.5,
+                    bgcolor: "rgba(76, 175, 80, 0.1)",
+                    borderRadius: 1,
+                    border: "1px solid rgba(76, 175, 80, 0.3)",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "secondary.main",
+                      fontSize: "0.75rem",
+                      fontWeight: 500,
+                      textAlign: "center",
+                      display: "block",
+                    }}
+                  >
+                    💚 Tu confianza es nuestro mayor valor
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Payment Options Card - Mobile */}
+            <Card
+              sx={{
+                mb: 3,
+                borderRadius: 2,
+                boxShadow: 2,
+                border: "1px solid",
+                borderColor: "primary.light",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent sx={{ px: 2, py: 2.5 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2.5,
+                  }}
+                >
+                  <AccountBalanceIcon
+                    sx={{
+                      fontSize: "1.8rem",
+                      color: "primary.main",
+                      mr: 1.5,
+                    }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "1.1rem",
+                      fontWeight: 600,
+                      color: "secondary.main",
+                    }}
+                  >
+                    Formas de Pago
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: "0.85rem",
+                    mb: 2.5,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Te ayudamos con diferentes opciones para adquirir tu nueva
+                  casa:
+                </Typography>
+
+                {/* Sección de Créditos */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "secondary.main",
+                      fontSize: "0.9rem",
+                      mb: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <SecurityIcon
+                      sx={{ fontSize: "1rem", mr: 1, color: "info.main" }}
+                    />
+                    Opciones de Crédito
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ ml: 2 }}>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        • Créditos Bancarios
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.75rem",
+                          ml: 1,
+                        }}
+                      >
+                        Bancos tradicionales con las mejores tasas
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        • INFONAVIT
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.75rem",
+                          ml: 1,
+                        }}
+                      >
+                        Aprovecha tu crédito del instituto
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        • FOVISSSTE
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: "0.75rem",
+                          ml: 1,
+                        }}
+                      >
+                        Para trabajadores del gobierno
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                {/* Sección de Pago de Contado */}
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "secondary.main",
+                      fontSize: "0.9rem",
+                      mb: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <MonetizationOnIcon
+                      sx={{ fontSize: "1rem", mr: 1, color: "success.main" }}
+                    />
+                    Pago de Contado
+                  </Typography>
+
+                  <Box sx={{ ml: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        color: "secondary.main",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      • Pago único completo
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: "0.75rem",
+                        ml: 1,
+                      }}
+                    >
+                      Mejores precios y descuentos especiales
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 1.5,
+                    bgcolor: "rgba(255, 207, 64, 0.1)",
+                    borderRadius: 1,
+                    border: "1px solid rgba(255, 207, 64, 0.3)",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "secondary.main",
+                      fontSize: "0.8rem",
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    💡 Te asesoramos para elegir la opción que más te convenga
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
         </Grid>
 
         {/* Sidebar with contact form */}
@@ -1373,6 +1750,384 @@ export default function PropertyDetailView({
                     </Alert>
                   )}
                 </form>
+              </CardContent>
+            </Card>
+
+            {/* Free Service Card */}
+            <Card
+              sx={{
+                mb: 3,
+                display: { xs: "none", md: "block" },
+                borderRadius: 2,
+                boxShadow: 2,
+                border: "1px solid",
+                borderColor: "primary.light",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  px: { xs: 2, md: 3 },
+                  py: { xs: 2.5, md: 3 },
+                  position: "relative",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: { xs: 45, md: 50 },
+                      height: { xs: 45, md: 50 },
+                      borderRadius: "50%",
+                      bgcolor: "#4CAF50",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      mr: { xs: 1.5, md: 2 },
+                      boxShadow: "0 4px 12px rgba(76, 175, 80, 0.3)",
+                    }}
+                  >
+                    <MonetizationOnIcon
+                      sx={{
+                        fontSize: { xs: "1.5rem", md: "1.8rem" },
+                        color: "white",
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "1.1rem", md: "1.25rem" },
+                      fontWeight: 700,
+                      color: "secondary.main",
+                    }}
+                  >
+                    ¡Servicio 100% Gratuito!
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: { xs: "0.9rem", md: "0.95rem" },
+                    lineHeight: 1.6,
+                    mb: 2.5,
+                  }}
+                >
+                  Te acompañamos en todo el proceso de compra sin ningún costo
+                  adicional para ti.
+                </Typography>
+
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <CheckCircleOutlineIcon
+                      sx={{
+                        fontSize: { xs: "1.1rem", md: "1.2rem" },
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "0.8rem", md: "0.85rem" },
+                      }}
+                    >
+                      No cobramos comisión por asesoría
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <SupportAgentIcon
+                      sx={{
+                        fontSize: { xs: "1.1rem", md: "1.2rem" },
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "0.8rem", md: "0.85rem" },
+                      }}
+                    >
+                      Atención personalizada garantizada
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <VerifiedUserIcon
+                      sx={{
+                        fontSize: { xs: "1.1rem", md: "1.2rem" },
+                        color: "#4CAF50",
+                        mr: 1.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "0.8rem", md: "0.85rem" },
+                      }}
+                    >
+                      Transparencia total en el proceso
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Box
+                  sx={{
+                    mt: 2.5,
+                    p: { xs: 1.5, md: 2 },
+                    bgcolor: "rgba(76, 175, 80, 0.1)",
+                    borderRadius: 1,
+                    border: "1px solid rgba(76, 175, 80, 0.3)",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "secondary.main",
+                      fontSize: { xs: "0.75rem", md: "0.8rem" },
+                      fontWeight: 500,
+                      textAlign: "center",
+                      display: "block",
+                    }}
+                  >
+                    💚 Tu confianza es nuestro mayor valor
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Payment Options Card */}
+            <Card
+              sx={{
+                mb: 3,
+                display: { xs: "none", md: "block" },
+                borderRadius: 2,
+                boxShadow: 2,
+                border: "1px solid",
+                borderColor: "primary.light",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{ px: { xs: 2, md: 3 }, py: { xs: 2.5, md: 3 } }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 2.5,
+                  }}
+                >
+                  <AccountBalanceIcon
+                    sx={{
+                      fontSize: { xs: "1.8rem", md: "2rem" },
+                      color: "primary.main",
+                      mr: { xs: 1.5, md: 2 },
+                    }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "1.1rem", md: "1.25rem" },
+                      fontWeight: 600,
+                      color: "secondary.main",
+                    }}
+                  >
+                    Formas de Pago
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: { xs: "0.85rem", md: "0.9rem" },
+                    mb: 2.5,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Te ayudamos con diferentes opciones para adquirir tu nueva
+                  casa:
+                </Typography>
+
+                {/* Sección de Créditos */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "secondary.main",
+                      fontSize: { xs: "0.9rem", md: "0.95rem" },
+                      mb: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <SecurityIcon
+                      sx={{
+                        fontSize: { xs: "1rem", md: "1.1rem" },
+                        mr: 1,
+                        color: "info.main",
+                      }}
+                    />
+                    Opciones de Crédito
+                  </Typography>
+
+                  <Stack spacing={1.5} sx={{ ml: 2 }}>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: { xs: "0.85rem", md: "0.9rem" },
+                        }}
+                      >
+                        • Créditos Bancarios
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: { xs: "0.75rem", md: "0.8rem" },
+                          ml: 1,
+                        }}
+                      >
+                        Bancos tradicionales con las mejores tasas
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: { xs: "0.85rem", md: "0.9rem" },
+                        }}
+                      >
+                        • INFONAVIT
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: { xs: "0.75rem", md: "0.8rem" },
+                          ml: 1,
+                        }}
+                      >
+                        Aprovecha tu crédito del instituto
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
+                          color: "secondary.main",
+                          fontSize: { xs: "0.85rem", md: "0.9rem" },
+                        }}
+                      >
+                        • FOVISSSTE
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "text.secondary",
+                          fontSize: { xs: "0.75rem", md: "0.8rem" },
+                          ml: 1,
+                        }}
+                      >
+                        Para trabajadores del gobierno
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                {/* Sección de Pago de Contado */}
+                <Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 600,
+                      color: "secondary.main",
+                      fontSize: { xs: "0.9rem", md: "0.95rem" },
+                      mb: 1.5,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <MonetizationOnIcon
+                      sx={{
+                        fontSize: { xs: "1rem", md: "1.1rem" },
+                        mr: 1,
+                        color: "success.main",
+                      }}
+                    />
+                    Pago de Contado
+                  </Typography>
+
+                  <Box sx={{ ml: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 500,
+                        color: "secondary.main",
+                        fontSize: { xs: "0.85rem", md: "0.9rem" },
+                      }}
+                    >
+                      • Pago único completo
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "0.75rem", md: "0.8rem" },
+                        ml: 1,
+                      }}
+                    >
+                      Mejores precios y descuentos especiales
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: { xs: 1.5, md: 2 },
+                    bgcolor: "rgba(255, 207, 64, 0.1)",
+                    borderRadius: 1,
+                    border: "1px solid rgba(255, 207, 64, 0.3)",
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "secondary.main",
+                      fontSize: { xs: "0.8rem", md: "0.85rem" },
+                      textAlign: "center",
+                      fontWeight: 500,
+                    }}
+                  >
+                    💡 Te asesoramos para elegir la opción que más te convenga
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Box>
