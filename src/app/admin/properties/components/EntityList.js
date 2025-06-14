@@ -14,6 +14,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import Link from "next/link";
 import ItemCard from "./ItemCard";
 import { FORM_TYPES, TAB_INDICES, TAB_FORM_TYPE_MAP } from "../constants";
+import { ENTITY_PAGINATION_CONFIG } from "../../../../constants/pagination";
 
 const EntityList = ({
   title,
@@ -133,8 +134,11 @@ const EntityList = ({
                 count={pagination.total}
                 page={pagination.page - 1}
                 onPageChange={handleChangePage}
-                rowsPerPage={15}
-                rowsPerPageOptions={[15]}
+                rowsPerPage={pagination.pageSize}
+                rowsPerPageOptions={
+                  ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE_OPTIONS
+                }
+                onRowsPerPageChange={handleChangeRowsPerPage}
                 labelDisplayedRows={({ from, to, count }) =>
                   `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
                 }
