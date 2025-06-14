@@ -49,6 +49,8 @@ import {
   openWhatsAppChat,
   openMessengerChat,
 } from "@/utils/contactHelpers";
+import { MediaCard } from "./MediaCard";
+import { PropertyHeroCard } from "./PropertyHeroCard";
 
 /**
  * Shared Property Detail View component
@@ -133,6 +135,10 @@ export default function PropertyDetailView({
           : []),
       ].filter(Boolean)
     : [];
+
+  // Separar imagen principal de las secundarias
+  const mainImage = allImages[0];
+  const secondaryImages = allImages.slice(1);
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -582,325 +588,39 @@ export default function PropertyDetailView({
         </Box>
       </Box>
 
-      {/* Image Gallery */}
-      <Box
-        sx={{
-          position: "relative",
-          mb: { xs: 3, md: 4 },
-          borderRadius: 2,
-          overflow: "hidden",
-        }}
-      >
-        {allImages.length > 0 ? (
-          <Grid container spacing={1} sx={{ width: "100%" }}>
-            {/* Main image (takes 2/3 of the space) */}
-            <Grid item xs={12} sm={8} md={8}>
-              <Box
-                sx={{
-                  position: "relative",
-                  width: "100%",
-                  height: { xs: "250px", sm: "320px", md: "400px" },
-                  overflow: "hidden",
-                  borderRadius: 1,
-                  cursor: "pointer",
-                  "&:hover": {
-                    "& > .MuiBox-root": {
-                      opacity: 1,
-                    },
-                  },
-                }}
-                onClick={handleOpenGallery}
-              >
-                <Box
-                  component="img"
-                  src={`/api/image?path=${encodeURIComponent(allImages[0])}`}
-                  alt={`Imagen principal de ${displayProperty.prototypeName}`}
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    transition: "transform 0.3s ease, opacity 0.5s ease",
-                    "&:hover": {
-                      transform: "scale(1.05)",
-                    },
-                  }}
-                  onLoad={(e) => {
-                    e.target.style.opacity = 1;
-                  }}
-                  style={{ opacity: 0 }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  width="100%"
-                  height="100%"
-                  animation="wave"
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    zIndex: -1,
-                    bgcolor: "rgba(0, 0, 0, 0.08)",
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    color: "white",
-                    padding: "8px 16px",
-                    opacity: 0,
-                    transition: "opacity 0.3s ease",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography variant="body2">
-                    Ver todas las imágenes
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
+      {/* Layout unificado */}
+      <Box sx={{ mb: { xs: 0, sm: 3, md: 4 } }}>
+        {/* Tablet+: Card unificada con todo el contenido */}
+        <Box sx={{ display: { xs: "none", sm: "block" } }}>
+          <PropertyHeroCard
+            mainImage={mainImage}
+            secondaryImages={secondaryImages}
+            propertyName={displayProperty.prototypeName}
+            onImageClick={handleOpenGallery}
+            showVideo={true}
+          />
+        </Box>
 
-            {/* Secondary images on the right (mosaic) */}
-            <Grid item xs={12} sm={4} md={4}>
-              <Grid container spacing={1} sx={{ height: "100%" }}>
-                {/* Second image */}
-                {allImages.length > 1 ? (
-                  <Grid item xs={6} sm={12}>
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        height: { xs: "120px", sm: "157px", md: "197px" },
-                        overflow: "hidden",
-                        borderRadius: 1,
-                        cursor: "pointer",
-                        "&:hover": {
-                          "& > .MuiBox-root": {
-                            opacity: 1,
-                          },
-                        },
-                      }}
-                      onClick={handleOpenGallery}
-                    >
-                      <Box
-                        component="img"
-                        src={`/api/image?path=${encodeURIComponent(
-                          allImages[1]
-                        )}`}
-                        alt={`Imagen 2 de ${displayProperty.prototypeName}`}
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          transition: "transform 0.3s ease, opacity 0.5s ease",
-                          "&:hover": {
-                            transform: "scale(1.05)",
-                          },
-                        }}
-                        onLoad={(e) => {
-                          e.target.style.opacity = 1;
-                        }}
-                        style={{ opacity: 0 }}
-                      />
-                      <Skeleton
-                        variant="rectangular"
-                        width="100%"
-                        height="100%"
-                        animation="wave"
-                        sx={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          zIndex: -1,
-                          bgcolor: "rgba(0, 0, 0, 0.08)",
-                        }}
-                      />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          backgroundColor: "rgba(0, 0, 0, 0.5)",
-                          color: "white",
-                          padding: "4px 8px",
-                          opacity: 0,
-                          transition: "opacity 0.3s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
-                          Ver galería
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Grid>
-                ) : null}
-
-                {/* Third image */}
-                {allImages.length > 2 ? (
-                  <Grid item xs={6} sm={12}>
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: "100%",
-                        height: { xs: "120px", sm: "157px", md: "197px" },
-                        overflow: "hidden",
-                        borderRadius: 1,
-                        cursor: "pointer",
-                        "&:hover": {
-                          "& > .MuiBox-root": {
-                            opacity: 1,
-                          },
-                        },
-                      }}
-                      onClick={handleOpenGallery}
-                    >
-                      {allImages.length > 3 ? (
-                        <>
-                          <Box
-                            component="img"
-                            src={`/api/image?path=${encodeURIComponent(
-                              allImages[2]
-                            )}`}
-                            alt={`Imagen 3 de ${displayProperty.prototypeName}`}
-                            sx={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              filter: "brightness(0.7)",
-                              transition: "transform 0.3s ease",
-                              "&:hover": {
-                                transform: "scale(1.05)",
-                              },
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: "rgba(0, 0, 0, 0.4)",
-                              color: "white",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexDirection: "column",
-                            }}
-                          >
-                            <Typography
-                              variant="h6"
-                              sx={{
-                                fontWeight: "bold",
-                                fontSize: { xs: "1.2rem", md: "1.5rem" },
-                              }}
-                            >
-                              +{allImages.length - 3}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontSize: { xs: "0.7rem", md: "0.8rem" },
-                                textAlign: "center",
-                              }}
-                            >
-                              imágenes más
-                            </Typography>
-                          </Box>
-                        </>
-                      ) : (
-                        <>
-                          <Box
-                            component="img"
-                            src={`/api/image?path=${encodeURIComponent(
-                              allImages[2]
-                            )}`}
-                            alt={`Imagen 3 de ${displayProperty.prototypeName}`}
-                            sx={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                              transition: "transform 0.3s ease",
-                              "&:hover": {
-                                transform: "scale(1.05)",
-                              },
-                            }}
-                          />
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              backgroundColor: "rgba(0, 0, 0, 0.5)",
-                              color: "white",
-                              padding: "4px 8px",
-                              opacity: 0,
-                              transition: "opacity 0.3s ease",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontSize: "0.8rem" }}
-                            >
-                              Ver galería
-                            </Typography>
-                          </Box>
-                        </>
-                      )}
-                    </Box>
-                  </Grid>
-                ) : null}
-              </Grid>
-            </Grid>
-          </Grid>
-        ) : (
-          <Box
-            sx={{
-              width: "100%",
-              height: { xs: "250px", sm: "320px", md: "400px" },
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "#f5f5f5",
-              borderRadius: 2,
-            }}
-          >
-            <HomeIcon
-              sx={{
-                fontSize: { xs: 40, md: 60 },
-                color: "text.secondary",
-                mb: 2,
-              }}
+        {/* Mobile: Layout separado (imagen + video/imágenes) */}
+        <Box sx={{ display: { xs: "block", sm: "none" } }}>
+          {/* Imagen principal en mobile */}
+          <Box sx={{ mb: 2 }}>
+            <PropertyHeroCard
+              mainImage={mainImage}
+              secondaryImages={[]}
+              propertyName={displayProperty.prototypeName}
+              onImageClick={handleOpenGallery}
+              showVideo={false}
             />
-            <Typography
-              variant="h6"
-              color="text.secondary"
-              sx={{
-                fontSize: { xs: "1rem", md: "1.25rem" },
-                px: 2,
-                textAlign: "center",
-              }}
-            >
-              {displayProperty.isMock
-                ? "Imagen de muestra no disponible"
-                : "No hay imágenes disponibles"}
-            </Typography>
           </Box>
-        )}
+
+          {/* Video + imágenes secundarias en mobile */}
+          <MediaCard
+            secondaryImages={secondaryImages}
+            propertyName={displayProperty.prototypeName}
+            onOpenGallery={handleOpenGallery}
+          />
+        </Box>
       </Box>
 
       <Grid container spacing={{ xs: 2, md: 4 }}>
