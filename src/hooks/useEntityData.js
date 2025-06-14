@@ -1,19 +1,21 @@
 import { useState, useCallback, useEffect } from "react";
 import { api } from "../services/api";
 import { FORM_TYPES } from "../app/admin/properties/constants";
+import { createInitialPagination } from "../constants/pagination";
 
 export const useEntityData = (entityType) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    total: 0,
-  });
+  const [pagination, setPagination] = useState(
+    createInitialPagination("PROPERTIES")
+  );
 
   const fetchItems = useCallback(
-    async (page = 1, pageSize = 10) => {
+    async (
+      page = 1,
+      pageSize = createInitialPagination("PROPERTIES").pageSize
+    ) => {
       if (!entityType) return;
 
       setLoading(true);
@@ -202,20 +204,20 @@ export const useEntityData = (entityType) => {
       setError(null);
       try {
         const isEditing = !!itemId;
-        
+
         // Validar que no se use saveItem para creación nueva de CUALQUIER propiedad
         // Todas las propiedades deben usar el proceso multi-paso
         const isPropertyType = [
           FORM_TYPES.PROPERTY_NOT_PUBLISHED,
           FORM_TYPES.PROPERTY_PUBLISHED,
           FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED,
-          FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED
+          FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED,
         ].includes(entityType);
 
         if (!isEditing && isPropertyType) {
           throw new Error(
             `❌ DEPRECATED: Use multi-step creation process for new ${entityType}. ` +
-            "Property creation must go through FormDialog multi-step process (basic → descriptions → images)."
+              "Property creation must go through FormDialog multi-step process (basic → descriptions → images)."
           );
         }
 
@@ -223,45 +225,45 @@ export const useEntityData = (entityType) => {
         const operations = {
           [FORM_TYPES.DEVELOPER]: {
             create: () => api.createDeveloper(formData),
-            update: () => api.updateDeveloper(itemId, formData)
+            update: () => api.updateDeveloper(itemId, formData),
           },
           [FORM_TYPES.DEVELOPMENT]: {
             create: () => api.createDevelopment(formData),
-            update: () => api.updateDevelopment(itemId, formData)
+            update: () => api.updateDevelopment(itemId, formData),
           },
           // Las propiedades ahora usan edición multi-paso
           [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: {
             update: () => {
               throw new Error(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
-                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+                  "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
-            }
+            },
           },
           [FORM_TYPES.PROPERTY_PUBLISHED]: {
             update: () => {
               throw new Error(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
-                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+                  "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
-            }
+            },
           },
           [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
             update: () => {
               throw new Error(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
-                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+                  "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
-            }
+            },
           },
           [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
             update: () => {
               throw new Error(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
-                "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
+                  "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
-            }
-          }
+            },
+          },
         };
 
         const operation = operations[entityType];
@@ -308,14 +310,17 @@ export const useEntityData = (entityType) => {
           [FORM_TYPES.DEVELOPER]: () => api.deleteDeveloper(itemId),
           [FORM_TYPES.DEVELOPMENT]: () => api.deleteDevelopment(itemId),
           [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: () => api.deleteProperty(itemId),
-          [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: () => api.deleteMinkaasaProperty(itemId),
+          [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: () =>
+            api.deleteMinkaasaProperty(itemId),
           // Propiedades publicadas no se pueden eliminar
           [FORM_TYPES.PROPERTY_PUBLISHED]: () => {
             throw new Error("No se permite eliminar propiedades publicadas");
           },
           [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: () => {
-            throw new Error("No se permite eliminar propiedades Minkaasa publicadas");
-          }
+            throw new Error(
+              "No se permite eliminar propiedades Minkaasa publicadas"
+            );
+          },
         };
 
         const deleteOperation = deleteOperations[entityType];

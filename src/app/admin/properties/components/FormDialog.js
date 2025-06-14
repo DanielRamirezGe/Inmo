@@ -184,7 +184,7 @@ const FormDialog = ({
         const response = await api.getDevelopmentsBasic();
         options = response?.data || [];
       } else if (field.endpoint === "/realEstateDevelopment") {
-        const response = await api.getDevelopers(1, 1000);
+        const response = await api.getDevelopers(1, 10);
         options = response?.data || [];
       } else {
         // Para otros endpoints, usar el método genérico

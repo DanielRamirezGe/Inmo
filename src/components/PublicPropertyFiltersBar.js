@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { usePublicPropertyFilters } from "../hooks/usePublicPropertyFilters";
 import { api } from "../services/api";
+import { ENTITY_PAGINATION_CONFIG } from "../constants/pagination";
 
 // Constantes
 const MOBILE_BREAKPOINT = 600;
@@ -364,7 +365,11 @@ const PublicPropertyFiltersBar = ({
     try {
       if (Object.keys(updatedFilters).length === 0) {
         const emptyFilters = { type: filterType };
-        const results = await api.searchPublicProperties(emptyFilters, 1, 10);
+        const results = await api.searchPublicProperties(
+          emptyFilters,
+          1,
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+        );
         notifyFiltersChange({}, results);
       } else {
         const searchFilters = { ...updatedFilters, type: filterType };
@@ -379,7 +384,11 @@ const PublicPropertyFiltersBar = ({
           delete searchFilters.development;
         }
 
-        const results = await api.searchPublicProperties(searchFilters, 1, 10);
+        const results = await api.searchPublicProperties(
+          searchFilters,
+          1,
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+        );
         notifyFiltersChange(updatedFilters, results);
       }
     } catch (error) {
@@ -394,7 +403,11 @@ const PublicPropertyFiltersBar = ({
       // Clear sessionStorage when clearing all filters
       sessionStorage.removeItem("searchFilters");
       const emptyFilters = { type: filterType };
-      const results = await api.searchPublicProperties(emptyFilters, 1, 10);
+      const results = await api.searchPublicProperties(
+        emptyFilters,
+        1,
+        ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+      );
       clearFilters();
       notifyFiltersChange({}, results);
     } catch (error) {

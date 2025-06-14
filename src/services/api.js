@@ -2,6 +2,10 @@ import {
   createAxiosInstance,
   createPublicAxiosInstance,
 } from "../utils/axiosMiddleware";
+import {
+  ENTITY_PAGINATION_CONFIG,
+  validatePaginationParams,
+} from "../constants/pagination";
 
 /**
  * API Service Layer
@@ -35,16 +39,25 @@ const handleApiError = (error) => {
 
 export const api = {
   // Developer endpoints
-  getDevelopers: async (page = 1, pageSize = 10) => {
+  getDevelopers: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.DEVELOPERS.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "DEVELOPERS"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/realEstateDevelopment", {
-        params: { page, pageSize },
+        params: validParams,
       });
+      console.log(response.data);
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -100,16 +113,24 @@ export const api = {
   },
 
   // Development endpoints
-  getDevelopments: async (page = 1, pageSize = 10) => {
+  getDevelopments: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.DEVELOPMENTS.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "DEVELOPMENTS"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/development", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -158,16 +179,24 @@ export const api = {
     }
   },
 
-  getDevelopmentsBasic: async (page = 1, pageSize = 1000) => {
+  getDevelopmentsBasic: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.DEVELOPMENTS_BASIC.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "DEVELOPMENTS_BASIC"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/development/basic", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -176,16 +205,24 @@ export const api = {
   },
 
   // Property endpoints
-  getProperties: async (page = 1, pageSize = 10) => {
+  getProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -193,16 +230,24 @@ export const api = {
     }
   },
 
-  getPublishedProperties: async (page = 1, pageSize = 10) => {
+  getPublishedProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype/published", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -210,16 +255,24 @@ export const api = {
     }
   },
 
-  getPublicProperties: async (page = 1, pageSize = 10) => {
+  getPublicProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PUBLIC_PROPERTIES"
+      );
       const axiosInstance = getPublicAxiosInstance();
       const response = await axiosInstance.get("/public/prototype", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -244,16 +297,24 @@ export const api = {
     }
   },
 
-  getNotPublishedProperties: async (page = 1, pageSize = 10) => {
+  getNotPublishedProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype/not-published", {
-        params: { page, pageSize },
+        params: validParams,
       });
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -423,19 +484,27 @@ export const api = {
   },
 
   // Minkaasa Property endpoints
-  getMinkaasaUnpublishedProperties: async (page = 1, pageSize = 10) => {
+  getMinkaasaUnpublishedProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(
         "/prototype/minkaasa-not-published",
         {
-          params: { page, pageSize },
+          params: validParams,
         }
       );
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -443,19 +512,27 @@ export const api = {
     }
   },
 
-  getMinkaasaPublishedProperties: async (page = 1, pageSize = 10) => {
+  getMinkaasaPublishedProperties: async (
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get(
         "/prototype/minkaasa-published",
         {
-          params: { page, pageSize },
+          params: validParams,
         }
       );
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
       };
     } catch (error) {
@@ -565,14 +642,22 @@ export const api = {
   },
 
   // Search properties with filters (private)
-  searchProperties: async (filters = {}, page = 1, pageSize = 10) => {
+  searchProperties: async (
+    filters = {},
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PROPERTIES"
+      );
       const axiosInstance = getAxiosInstance();
 
       // Preparar parámetros de búsqueda
       const params = {
-        page,
-        pageSize,
+        ...validParams,
         ...filters,
       };
 
@@ -593,8 +678,8 @@ export const api = {
 
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
         filters: response.data.filters || {},
       };
@@ -617,14 +702,22 @@ export const api = {
   },
 
   // Public Search properties with filters
-  searchPublicProperties: async (filters = {}, page = 1, pageSize = 10) => {
+  searchPublicProperties: async (
+    filters = {},
+    page = 1,
+    pageSize = ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+  ) => {
     try {
+      const validParams = validatePaginationParams(
+        page,
+        pageSize,
+        "PUBLIC_PROPERTIES"
+      );
       const axiosInstance = getPublicAxiosInstance();
 
       // Preparar parámetros de búsqueda
       const params = {
-        page,
-        pageSize,
+        ...validParams,
         ...filters,
       };
 
@@ -645,8 +738,8 @@ export const api = {
 
       return {
         data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
+        page: response.data.page || validParams.page,
+        pageSize: response.data.pageSize || validParams.pageSize,
         total: response.data.total || 0,
         filters: response.data.filters || {},
       };
@@ -655,23 +748,7 @@ export const api = {
     }
   },
 
-  // Get public properties (for homepage)
-  getPublicProperties: async (page = 1, pageSize = 12) => {
-    try {
-      const axiosInstance = getPublicAxiosInstance();
-      const response = await axiosInstance.get("/public/prototype", {
-        params: { page, pageSize },
-      });
-      return {
-        data: response.data.data || [],
-        page: response.data.page || page,
-        pageSize: response.data.pageSize || pageSize,
-        total: response.data.total || 0,
-      };
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
+  // Get public properties (for homepage) - DUPLICATE REMOVED - Using the one above with proper pagination
 
   patchDevelopment: async (id, formData) => {
     try {

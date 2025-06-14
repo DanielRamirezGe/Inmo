@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";
+import { ENTITY_PAGINATION_CONFIG } from "../constants/pagination";
 
 const PropertiesGrid = ({
   filteredProperties = null,
@@ -23,7 +24,9 @@ const PropertiesGrid = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(12);
+  const [pageSize] = useState(
+    ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+  );
   const [totalProperties, setTotalProperties] = useState(0);
 
   const router = useRouter();

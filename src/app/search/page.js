@@ -7,6 +7,7 @@ import PublicPropertyFiltersBar from "@/components/PublicPropertyFiltersBar";
 import BottomNavigationBar from "@/components/BottomNavigationBar";
 import TopNavigationBar from "@/components/TopNavigationBar";
 import { api } from "@/services/api";
+import { ENTITY_PAGINATION_CONFIG } from "../../constants/pagination";
 import SearchIcon from "@mui/icons-material/Search";
 import HomeIcon from "@mui/icons-material/Home";
 
@@ -59,11 +60,18 @@ export default function SearchPage() {
           delete searchFilters.development;
         }
 
-        const results = await api.searchPublicProperties(searchFilters, 1, 12);
+        const results = await api.searchPublicProperties(
+          searchFilters,
+          1,
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+        );
         setFilteredProperties(results);
       } else {
         // Load all properties if no filters
-        const response = await api.getPublicProperties(1, 100);
+        const response = await api.getPublicProperties(
+          1,
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE * 4
+        ); // Cargar más para la página inicial
         setAllProperties(response);
         setFilteredProperties(response);
       }
@@ -112,12 +120,15 @@ export default function SearchPage() {
         const results = await api.searchPublicProperties(
           searchFilters,
           page,
-          12
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
         );
         setFilteredProperties(results);
       } else {
         // Load more general properties
-        const results = await api.getPublicProperties(page, 12);
+        const results = await api.getPublicProperties(
+          page,
+          ENTITY_PAGINATION_CONFIG.PUBLIC_PROPERTIES.PAGE_SIZE
+        );
         setFilteredProperties(results);
       }
     } catch (error) {
