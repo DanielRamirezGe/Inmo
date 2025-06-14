@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -11,69 +11,152 @@ import {
   Chip,
   CircularProgress,
   Skeleton,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import { useIndividualImageHandling } from "../../../../hooks/useIndividualImageHandling";
+import ImageUploadProgress from "../../../../components/ImageUploadProgress";
 
-const Step3Images = ({ 
-  onSubmit, 
-  onPrevious, 
-  loading, 
+const Step3Images = ({
+  onSubmit,
+  onPrevious,
+  loading,
   error,
   initialMainImage = null,
   initialSecondaryImages = [],
+  initialSecondaryImagesPreview = [], // URLs blob para mostrar las imágenes
   showButtons = false,
-  buttonText = "Finalizar"
+  buttonText = "Finalizar",
+  prototypeId = null, // ID de la propiedad para el nuevo sistema
 }) => {
+  // Estados para imágenes nuevas (archivos File)
   const [mainImage, setMainImage] = useState(null);
   const [secondaryImages, setSecondaryImages] = useState([]);
+
+  // Estados para previews de imágenes
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [secondaryImagesPreview, setSecondaryImagesPreview] = useState([]);
+
+  // Estados para el sistema de carga
   const [imagesLoading, setImagesLoading] = useState(false);
-  
-  // Estado para tracking si la imagen principal fue eliminada
-  const [mainImageRemoved, setMainImageRemoved] = useState(false);
+
+  // Estados para el nuevo sistema de imágenes individuales
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [existingImages, setExistingImages] = useState({
+    mainImage: null,
+    secondaryImages: [],
+  });
+
+  // Hook para manejo individual de imágenes
+  const {
+    loading: imageHandlerLoading,
+    error: imageHandlerError,
+    uploadProgress,
+    uploadImages,
+    deleteImage,
+    deleteImages,
+    clearProgress,
+    clearError,
+  } = useIndividualImageHandling();
 
   // Cargar imágenes iniciales cuando el componente se monta
   useEffect(() => {
-    if (initialMainImage || (initialSecondaryImages && initialSecondaryImages.length > 0)) {
+    if (
+      initialMainImage ||
+      (initialSecondaryImages && initialSecondaryImages.length > 0)
+    ) {
       setImagesLoading(true);
-      
-      // Simular tiempo de carga para imágenes
+
       const loadImages = async () => {
         try {
+          // Cargar imagen principal
           if (initialMainImage) {
-            // Si es una URL, usar como preview
-            if (typeof initialMainImage === 'string') {
+            if (typeof initialMainImage === "string") {
               setMainImagePreview(initialMainImage);
-            } else {
+              setExistingImages((prev) => ({
+                ...prev,
+                mainImage: { url: initialMainImage, id: "main" },
+              }));
+            } else if (
+              initialMainImage &&
+              typeof initialMainImage === "object"
+            ) {
+              // Si es un objeto, puede tener pathImage e id
+              const imagePath =
+                initialMainImage.pathImage ||
+                initialMainImage.path ||
+                initialMainImage.imagePath;
+              const imageId =
+                initialMainImage.id ||
+                initialMainImage.prototypeImageId ||
+                initialMainImage.imageId;
+
+              if (imagePath) {
+                setMainImagePreview(imagePath);
+                setExistingImages((prev) => ({
+                  ...prev,
+                  mainImage: {
+                    url: imagePath,
+                    id: imageId || "main",
+                    prototypeImageId: imageId,
+                  },
+                }));
+              }
+            } else if (initialMainImage instanceof File) {
               setMainImage(initialMainImage);
               setMainImagePreview(createImagePreview(initialMainImage));
             }
           }
 
+          // Cargar imágenes secundarias
           if (initialSecondaryImages && initialSecondaryImages.length > 0) {
-            // Separar URLs de archivos File
-            const urlImages = [];
             const fileImages = [];
-            
-            initialSecondaryImages.forEach(img => {
-              if (typeof img === 'string') {
-                urlImages.push(img);
-              } else {
+            const existingSecondaryImages = [];
+
+            initialSecondaryImages.forEach((img, index) => {
+              if (typeof img === "string") {
+                // Usar preview si está disponible, sino usar la string directamente
+                const previewUrl = initialSecondaryImagesPreview[index] || img;
+                existingSecondaryImages.push({
+                  url: previewUrl,
+                  id: `secondary-${index}`,
+                });
+              } else if (img && typeof img === "object") {
+                // Buscar diferentes propiedades que pueden contener la ruta de la imagen
+                const imagePath = img.pathImage || img.path || img.imagePath;
+                const imageId = img.prototypeImageId || img.id || img.imageId;
+
+                if (imagePath) {
+                  // Usar preview si está disponible, sino usar la ruta original
+                  const previewUrl =
+                    initialSecondaryImagesPreview[index] || imagePath;
+                  const imageObject = {
+                    url: previewUrl,
+                    id: imageId || `secondary-${index}`,
+                    prototypeImageId: imageId,
+                  };
+                  existingSecondaryImages.push(imageObject);
+                }
+              } else if (img instanceof File) {
                 fileImages.push(img);
               }
             });
 
             setSecondaryImages(fileImages);
-            
-            // Crear previews para archivos File y usar URLs directamente
-            const previews = fileImages.map(createImagePreview);
-            setSecondaryImagesPreview([...urlImages, ...previews]);
+            setExistingImages((prev) => ({
+              ...prev,
+              secondaryImages: existingSecondaryImages,
+            }));
+
+            // Para las previews, usar las previews disponibles + previews de archivos File
+            const filePreviews = fileImages.map(createImagePreview);
+            setSecondaryImagesPreview([
+              ...initialSecondaryImagesPreview,
+              ...filePreviews,
+            ]);
           }
-          
-          // Pequeño delay para mostrar el loading
-          await new Promise(resolve => setTimeout(resolve, 800));
+
+          await new Promise((resolve) => setTimeout(resolve, 800));
         } finally {
           setImagesLoading(false);
         }
@@ -81,7 +164,7 @@ const Step3Images = ({
 
       loadImages();
     }
-  }, [initialMainImage, initialSecondaryImages]);
+  }, [initialMainImage, initialSecondaryImages, initialSecondaryImagesPreview]);
 
   const createImagePreview = (file) => {
     if (file && file instanceof File) {
@@ -93,11 +176,10 @@ const Step3Images = ({
   const handleMainImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Limpiar preview anterior si era un archivo
       if (mainImagePreview && mainImage) {
         URL.revokeObjectURL(mainImagePreview);
       }
-      
+
       setMainImage(file);
       setMainImagePreview(createImagePreview(file));
     }
@@ -106,150 +188,219 @@ const Step3Images = ({
   const handleSecondaryImagesChange = (event) => {
     const files = Array.from(event.target.files);
     if (files.length > 0) {
-      // Limitar a máximo 10 imágenes secundarias
-      const currentCount = secondaryImages.length;
-      const remainingSlots = 10 - currentCount;
-      const limitedFiles = files.slice(0, remainingSlots);
-      
-      setSecondaryImages(prev => [...prev, ...limitedFiles]);
-      
-      const previews = limitedFiles.map(createImagePreview);
-      setSecondaryImagesPreview(prev => [...prev, ...previews]);
+      setSecondaryImages((prev) => [...prev, ...files]);
+
+      const previews = files.map(createImagePreview);
+      setSecondaryImagesPreview((prev) => [...prev, ...previews]);
     }
   };
 
-  const handleRemoveMainImage = () => {
-    // Solo revocar URL si era un archivo (no una URL inicial)
+  const handleRemoveMainImage = async () => {
+    if (showButtons && existingImages.mainImage && prototypeId) {
+      // Modo edición: marcar para eliminar
+      const mainImageId =
+        existingImages.mainImage.id ||
+        existingImages.mainImage.prototypeImageId;
+
+      if (mainImageId) {
+        setImagesToDelete((prev) => [
+          ...prev,
+          {
+            id: prototypeId, // Para imagen principal, usar prototypeId
+            isMainImage: true,
+          },
+        ]);
+      }
+    }
+
+    // Limpiar preview y archivo
     if (mainImagePreview && mainImage) {
       URL.revokeObjectURL(mainImagePreview);
     }
     setMainImage(null);
     setMainImagePreview(null);
-    setMainImageRemoved(true);
+    setExistingImages((prev) => ({ ...prev, mainImage: null }));
   };
 
-  const handleRemoveSecondaryImage = (index) => {
-    // Solo revocar URL si era un archivo (verificar si es blob:)
+  const handleRemoveSecondaryImage = async (index) => {
     const preview = secondaryImagesPreview[index];
-    if (preview && preview.startsWith('blob:')) {
-      URL.revokeObjectURL(preview);
-    }
-    
-    // Contar solo archivos File para el índice correcto
-    const fileIndex = secondaryImages.findIndex((_, fileIdx) => {
-      // Calcular cuántas URLs hay antes de este archivo
-      const urlsBeforeThisFile = initialSecondaryImages
-        .filter(img => typeof img === 'string').length;
-      return index === urlsBeforeThisFile + fileIdx;
-    });
 
-    if (fileIndex >= 0) {
-      setSecondaryImages(prev => prev.filter((_, i) => i !== fileIndex));
+    // Determinar si es una imagen existente o nueva
+    const existingImagesCount = existingImages.secondaryImages.length;
+
+    if (index < existingImagesCount) {
+      // Es una imagen existente, marcar para eliminar
+      const imageToDelete = existingImages.secondaryImages[index];
+
+      if (showButtons && prototypeId && imageToDelete.prototypeImageId) {
+        setImagesToDelete((prev) => [
+          ...prev,
+          {
+            id: imageToDelete.prototypeImageId,
+            isMainImage: false,
+          },
+        ]);
+      }
+
+      // Remover de existingImages
+      setExistingImages((prev) => ({
+        ...prev,
+        secondaryImages: prev.secondaryImages.filter((_, i) => i !== index),
+      }));
+    } else {
+      // Es una imagen nueva (archivo File)
+      const fileIndex = index - existingImagesCount;
+
+      if (preview && preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+
+      setSecondaryImages((prev) => prev.filter((_, i) => i !== fileIndex));
     }
-    
-    setSecondaryImagesPreview(prev => prev.filter((_, i) => i !== index));
+
+    setSecondaryImagesPreview((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
-    // En modo edición (showButtons = true), permitir envío sin nuevos archivos
-    // En modo creación, requerir al menos una imagen
-    if (!showButtons && !mainImage && !mainImagePreview && secondaryImages.length === 0 && secondaryImagesPreview.length === 0) {
-      alert('Debe agregar al menos una imagen (principal o secundaria)');
+    // Validar que hay imágenes para procesar
+    const hasImages = mainImage || secondaryImages.length > 0;
+    const hasExistingOperations = imagesToDelete.length > 0;
+
+    if (!hasImages && !hasExistingOperations) {
+      alert("Debe agregar al menos una imagen (principal o secundaria)");
       return;
     }
-    
+
+    // Modo creación: usar el nuevo sistema individual si tenemos prototypeId
     if (!showButtons) {
-      // Modo creación: usar lógica original
-      onSubmit(mainImage, secondaryImages);
+      if (prototypeId && hasImages) {
+        // Usar el nuevo sistema individual para creación también
+        try {
+          const result = await uploadImages(
+            prototypeId,
+            mainImage,
+            secondaryImages
+          );
+
+          if (result.success) {
+            // Limpiar imágenes después de subir
+            setMainImage(null);
+            setSecondaryImages([]);
+
+            // Limpiar previews
+            if (mainImagePreview && mainImage) {
+              URL.revokeObjectURL(mainImagePreview);
+              setMainImagePreview(null);
+            }
+
+            secondaryImagesPreview.forEach((preview) => {
+              if (preview && preview.startsWith("blob:")) {
+                URL.revokeObjectURL(preview);
+              }
+            });
+            setSecondaryImagesPreview([]);
+
+            onSubmit(null, []);
+          } else {
+            throw new Error(result.error || "Error al subir imágenes");
+          }
+        } catch (error) {
+          console.error("Error al procesar las imágenes:", error);
+          alert(
+            "Error al procesar las imágenes. Por favor, inténtelo de nuevo."
+          );
+        }
+      } else {
+        // Fallback al sistema original si no hay prototypeId
+        onSubmit(mainImage, secondaryImages);
+      }
       return;
     }
-    
-    // MODO EDICIÓN: Necesitamos enviar TODAS las imágenes que deben quedar
+
+    // Modo edición: usar nuevo sistema individual directamente
+    if (!prototypeId) {
+      alert("Error: No se encontró el ID de la propiedad");
+      return;
+    }
+
     try {
-      const finalMainImage = await prepareFinalMainImage();
-      const finalSecondaryImages = await prepareFinalSecondaryImages();
-      
-      onSubmit(finalMainImage, finalSecondaryImages);
-    } catch (error) {
-      console.error('Error preparando imágenes:', error);
-      alert('Error al preparar las imágenes. Por favor, inténtelo de nuevo.');
-    }
-  };
-  
-  // Preparar imagen principal final (nueva o existente que se mantiene)
-  const prepareFinalMainImage = async () => {
-    if (mainImage) {
-      // Hay una nueva imagen principal
-      return mainImage;
-    }
-    
-    if (mainImagePreview && !mainImageRemoved) {
-      // Mantener imagen principal existente - convertir URL a File
-      const file = await urlToFile(mainImagePreview, 'main-image.jpg');
-      return file;
-    }
-    
-    // No hay imagen principal
-    return null;
-  };
-  
-  // Preparar imágenes secundarias finales (nuevas + existentes que se mantienen)
-  const prepareFinalSecondaryImages = async () => {
-    const finalImages = [];
-    
-    // Agregar archivos nuevos
-    secondaryImages.forEach(file => {
-      finalImages.push(file);
-    });
-    
-    // Calcular cuántas imágenes nuevas hay para saber dónde empiezan las existentes
-    const newImagesCount = secondaryImages.length;
-    
-    // Procesar todas las previews, saltando solo las que corresponden a archivos nuevos
-    for (let i = 0; i < secondaryImagesPreview.length; i++) {
-      const preview = secondaryImagesPreview[i];
-      
-      // Saltar las primeras N previews que corresponden a archivos nuevos
-      if (i < newImagesCount) {
-        continue;
-      }
-      
-      // Procesar todas las imágenes existentes (sean blob URLs o no)
-      if (preview) {
-        try {
-          const file = await urlToFile(preview, `secondary-image-${i + 1}.jpg`);
-          finalImages.push(file);
-        } catch (error) {
-          console.error('Error convirtiendo imagen secundaria a File:', error);
+      let hasOperations = false;
+
+      // Paso 1: Eliminar imágenes marcadas para eliminación
+      if (imagesToDelete.length > 0) {
+        hasOperations = true;
+
+        for (const imageToDelete of imagesToDelete) {
+          const result = await deleteImage(
+            imageToDelete.id,
+            imageToDelete.isMainImage
+          );
+
+          if (!result.success) {
+            console.error("Error eliminando imagen:", result.error);
+          }
         }
+
+        // Limpiar lista de imágenes a eliminar
+        setImagesToDelete([]);
       }
-    }
-    
-    return finalImages;
-  };
-  
-  // Función helper para convertir URL a File
-  const urlToFile = async (url, filename) => {
-    try {
-      const response = await fetch(url);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+
+      // Paso 2: Subir nuevas imágenes
+      const hasNewImages = mainImage || secondaryImages.length > 0;
+      if (hasNewImages) {
+        hasOperations = true;
+
+        const result = await uploadImages(
+          prototypeId,
+          mainImage,
+          secondaryImages
+        );
+
+        if (result.success) {
+          // Limpiar imágenes nuevas después de subir
+          setMainImage(null);
+          setSecondaryImages([]);
+
+          // Limpiar previews de archivos File
+          if (mainImagePreview && mainImage) {
+            URL.revokeObjectURL(mainImagePreview);
+            setMainImagePreview(null);
+          }
+
+          secondaryImagesPreview.forEach((preview) => {
+            if (preview && preview.startsWith("blob:")) {
+              URL.revokeObjectURL(preview);
+            }
+          });
+          setSecondaryImagesPreview([]);
+
+          onSubmit(null, [], imagesToDelete);
+        } else {
+          throw new Error(result.error || "Error al subir imágenes");
+        }
+      } else if (!hasOperations) {
+        // No hay operaciones que realizar
+        onSubmit(null, [], []);
+      } else {
+        // Solo se eliminaron imágenes
+        onSubmit(null, [], imagesToDelete);
       }
-      
-      const blob = await response.blob();
-      const file = new File([blob], filename, { type: blob.type });
-      
-      return file;
     } catch (error) {
-      console.error('Error convirtiendo URL a File:', error);
-      throw error;
+      console.error("Error al procesar las imágenes:", error);
+      alert("Error al procesar las imágenes. Por favor, inténtelo de nuevo.");
     }
   };
 
   const getTotalImages = () => {
-    return (mainImage || mainImagePreview ? 1 : 0) + secondaryImagesPreview.length;
+    const newImages = (mainImage ? 1 : 0) + secondaryImages.length;
+    const existingImagesCount =
+      (existingImages.mainImage ? 1 : 0) +
+      existingImages.secondaryImages.length;
+    return newImages + existingImagesCount;
   };
+
+  const isProcessing =
+    loading || imageHandlerLoading || uploadProgress.isUploading;
 
   return (
     <Box>
@@ -259,22 +410,42 @@ const Step3Images = ({
         </Typography>
       )}
 
-      {error && (
+      {(error || imageHandlerError) && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {error || imageHandlerError}
         </Alert>
       )}
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {showButtons 
-          ? "Gestione las imágenes de la propiedad. Puede tener una imagen principal y hasta 10 imágenes secundarias."
-          : "Agregue una imagen principal y hasta 10 imágenes secundarias para mostrar la propiedad."
+      {/* Indicador de progreso para subida/eliminación de imágenes */}
+      <ImageUploadProgress
+        uploadProgress={uploadProgress}
+        isVisible={uploadProgress.isUploading}
+        operation={
+          imagesToDelete.length > 0 && (mainImage || secondaryImages.length > 0)
+            ? "mixed"
+            : imagesToDelete.length > 0
+            ? "delete"
+            : "upload"
         }
+      />
+
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        {showButtons
+          ? "Gestione las imágenes de la propiedad. Puede tener una imagen principal y múltiples imágenes secundarias."
+          : "Agregue una imagen principal y múltiples imágenes secundarias para mostrar la propiedad."}
       </Typography>
 
       {/* Indicador de carga para imágenes iniciales */}
       {imagesLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4, mb: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            py: 4,
+            mb: 3,
+          }}
+        >
           <CircularProgress size={40} sx={{ mr: 2 }} />
           <Typography variant="body2" color="text.secondary">
             Cargando imágenes existentes...
@@ -286,37 +457,40 @@ const Step3Images = ({
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {/* Imagen principal */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ minHeight: 280, display: 'flex', flexDirection: 'column' }}>
+          <Card
+            sx={{ minHeight: 280, display: "flex", flexDirection: "column" }}
+          >
             {imagesLoading ? (
-              <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
-                <Skeleton variant="rectangular" width={120} height={24} sx={{ mx: 'auto', mb: 1 }} />
-                <Skeleton variant="text" width={80} height={20} sx={{ mx: 'auto' }} />
+              <Box sx={{ p: 2, textAlign: "center", flexGrow: 1 }}>
+                <Skeleton
+                  variant="rectangular"
+                  width={120}
+                  height={24}
+                  sx={{ mx: "auto", mb: 1 }}
+                />
+                <Skeleton
+                  variant="text"
+                  width={80}
+                  height={20}
+                  sx={{ mx: "auto" }}
+                />
               </Box>
-            ) : (mainImage || mainImagePreview) ? (
+            ) : mainImage || mainImagePreview || existingImages.mainImage ? (
               <>
-                {/* Mostrar imagen existente */}
                 <Box
-                  sx={{
-                    height: 200,
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
+                  sx={{ height: 200, position: "relative", overflow: "hidden" }}
                 >
                   <Box
                     component="img"
-                    src={mainImagePreview}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
+                    src={mainImagePreview || existingImages.mainImage?.url}
+                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                   <Box
                     sx={{
-                      position: 'absolute',
+                      position: "absolute",
                       top: 8,
                       right: 8,
-                      bgcolor: 'rgba(0,0,0,0.7)',
+                      bgcolor: "rgba(0,0,0,0.7)",
                       borderRadius: 1,
                       px: 1,
                       py: 0.5,
@@ -346,8 +520,19 @@ const Step3Images = ({
                 </Box>
               </>
             ) : (
-              <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <PhotoCameraIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+              <Box
+                sx={{
+                  p: 2,
+                  textAlign: "center",
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <PhotoCameraIcon
+                  sx={{ fontSize: 48, color: "grey.400", mb: 1 }}
+                />
                 <Typography variant="h6" gutterBottom>
                   Imagen Principal
                 </Typography>
@@ -356,14 +541,18 @@ const Step3Images = ({
                 </Typography>
               </Box>
             )}
-            <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+            <CardActions sx={{ justifyContent: "center", p: 2 }}>
               {imagesLoading ? (
                 <Skeleton variant="rectangular" width={100} height={36} />
-              ) : !(mainImage || mainImagePreview) ? (
+              ) : !(
+                  mainImage ||
+                  mainImagePreview ||
+                  existingImages.mainImage
+                ) ? (
                 <Button
                   variant="outlined"
                   component="label"
-                  disabled={loading}
+                  disabled={isProcessing}
                   startIcon={<PhotoCameraIcon />}
                 >
                   Seleccionar
@@ -375,11 +564,11 @@ const Step3Images = ({
                   />
                 </Button>
               ) : (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: "flex", gap: 1 }}>
                   <Button
                     variant="outlined"
                     component="label"
-                    disabled={loading}
+                    disabled={isProcessing}
                     size="small"
                   >
                     Cambiar
@@ -393,7 +582,7 @@ const Step3Images = ({
                   <IconButton
                     color="error"
                     onClick={handleRemoveMainImage}
-                    disabled={loading}
+                    disabled={isProcessing}
                     size="small"
                   >
                     <DeleteIcon />
@@ -406,37 +595,55 @@ const Step3Images = ({
 
         {/* Imágenes secundarias */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ minHeight: 280, display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ p: 2, textAlign: 'center', flexGrow: 1 }}>
-              <PhotoCameraIcon sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+          <Card
+            sx={{ minHeight: 280, display: "flex", flexDirection: "column" }}
+          >
+            <Box sx={{ p: 2, textAlign: "center", flexGrow: 1 }}>
+              <PhotoCameraIcon
+                sx={{ fontSize: 48, color: "grey.400", mb: 1 }}
+              />
               <Typography variant="h6" gutterBottom>
                 Imágenes Secundarias
               </Typography>
-              
+
               {imagesLoading ? (
                 <Box>
-                  <Skeleton variant="rectangular" width={120} height={24} sx={{ mx: 'auto', mb: 1 }} />
-                  <Skeleton variant="text" width={100} height={20} sx={{ mx: 'auto' }} />
+                  <Skeleton
+                    variant="rectangular"
+                    width={120}
+                    height={24}
+                    sx={{ mx: "auto", mb: 1 }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width={100}
+                    height={20}
+                    sx={{ mx: "auto" }}
+                  />
                 </Box>
-              ) : secondaryImagesPreview.length > 0 ? (
+              ) : secondaryImagesPreview.length > 0 ||
+                existingImages.secondaryImages.length > 0 ? (
                 <Box>
                   <Chip
-                    label={`${secondaryImagesPreview.length} imagen(es)`}
+                    label={`${
+                      secondaryImagesPreview.length +
+                      existingImages.secondaryImages.length
+                    } imagen(es)`}
                     color="info"
                     variant="outlined"
                     sx={{ mb: 1 }}
                   />
                   <Typography variant="body2" color="text.secondary">
-                    Máximo 10 imágenes
+                    Imágenes secundarias
                   </Typography>
                 </Box>
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  Seleccione hasta 10 imágenes adicionales
+                  Seleccione imágenes adicionales
                 </Typography>
               )}
             </Box>
-            <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+            <CardActions sx={{ justifyContent: "center", p: 2 }}>
               {imagesLoading ? (
                 <Skeleton variant="rectangular" width={120} height={36} />
               ) : (
@@ -444,10 +651,13 @@ const Step3Images = ({
                   <Button
                     variant="outlined"
                     component="label"
-                    disabled={loading || secondaryImagesPreview.length >= 10}
+                    disabled={isProcessing}
                     startIcon={<PhotoCameraIcon />}
                   >
-                    {secondaryImagesPreview.length === 0 ? 'Seleccionar' : 'Agregar más'}
+                    {secondaryImagesPreview.length === 0 &&
+                    existingImages.secondaryImages.length === 0
+                      ? "Seleccionar"
+                      : "Agregar más"}
                     <input
                       type="file"
                       accept="image/*"
@@ -456,21 +666,25 @@ const Step3Images = ({
                       onChange={handleSecondaryImagesChange}
                     />
                   </Button>
-                  {secondaryImagesPreview.length > 0 && (
+                  {(secondaryImagesPreview.length > 0 ||
+                    existingImages.secondaryImages.length > 0) && (
                     <Button
                       variant="text"
                       color="error"
                       onClick={() => {
-                        // Solo revocar URLs de archivos File (blob:)
-                        secondaryImagesPreview.forEach(preview => {
-                          if (preview && preview.startsWith('blob:')) {
+                        secondaryImagesPreview.forEach((preview) => {
+                          if (preview && preview.startsWith("blob:")) {
                             URL.revokeObjectURL(preview);
                           }
                         });
                         setSecondaryImages([]);
                         setSecondaryImagesPreview([]);
+                        setExistingImages((prev) => ({
+                          ...prev,
+                          secondaryImages: [],
+                        }));
                       }}
-                      disabled={loading}
+                      disabled={isProcessing}
                       size="small"
                     >
                       Limpiar todo
@@ -483,137 +697,176 @@ const Step3Images = ({
         </Grid>
       </Grid>
 
-      {/* Lista de imágenes secundarias con opción de eliminar individual */}
-      {!imagesLoading && secondaryImagesPreview.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
-            Imágenes secundarias ({secondaryImagesPreview.length}/10):
-          </Typography>
-          <Grid container spacing={2}>
-            {secondaryImagesPreview.map((preview, index) => (
-              <Grid item key={index} xs={6} sm={4} md={3} lg={2}>
-                <Card sx={{ position: 'relative' }}>
-                  <Box
-                    component="img"
-                    src={preview}
-                    sx={{
-                      width: '100%',
-                      height: 120,
-                      objectFit: 'cover',
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      bgcolor: 'rgba(255,255,255,0.9)',
-                      borderRadius: '50%',
-                      width: 28,
-                      height: 28,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemoveSecondaryImage(index)}
-                      disabled={loading}
-                      sx={{ 
-                        width: 24, 
-                        height: 24,
-                        '&:hover': {
-                          bgcolor: 'rgba(255,0,0,0.1)'
-                        }
+      {/* Lista de imágenes secundarias */}
+      {!imagesLoading &&
+        (secondaryImagesPreview.length > 0 ||
+          existingImages.secondaryImages.length > 0) && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2 }}>
+              Imágenes secundarias (
+              {secondaryImagesPreview.length +
+                existingImages.secondaryImages.length}
+              ):
+            </Typography>
+            <Grid container spacing={2}>
+              {/* Mostrar imágenes existentes primero */}
+              {existingImages.secondaryImages.map((img, index) => (
+                <Grid
+                  item
+                  key={`existing-${index}`}
+                  xs={6}
+                  sm={4}
+                  md={3}
+                  lg={2}
+                >
+                  <Card sx={{ position: "relative" }}>
+                    <Box
+                      component="img"
+                      src={img.url}
+                      sx={{ width: "100%", height: 120, objectFit: "cover" }}
+                    />
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        bgcolor: "rgba(255,255,255,0.9)",
+                        borderRadius: "50%",
+                        width: 28,
+                        height: 28,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                  <Box sx={{ p: 1 }}>
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary"
-                      sx={{ 
-                        display: 'block',
-                        textAlign: 'center'
-                      }}
-                    >
-                      Imagen {index + 1}
-                    </Typography>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      )}
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveSecondaryImage(index)}
+                        disabled={isProcessing}
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          "&:hover": { bgcolor: "rgba(255,0,0,0.1)" },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                    <Box sx={{ p: 1 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: "block", textAlign: "center" }}
+                      >
+                        Imagen {index + 1} (existente)
+                      </Typography>
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
 
-      {/* Skeleton para lista de imágenes secundarias */}
-      {imagesLoading && secondaryImagesPreview.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Skeleton variant="text" width="40%" height={20} sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            {[1, 2, 3].map((item) => (
-              <Grid item key={item} xs={6} sm={4} md={3} lg={2}>
-                <Skeleton variant="rectangular" height={140} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      )}
+              {/* Mostrar imágenes nuevas */}
+              {secondaryImagesPreview
+                .slice(existingImages.secondaryImages.length)
+                .map((preview, index) => (
+                  <Grid item key={`new-${index}`} xs={6} sm={4} md={3} lg={2}>
+                    <Card sx={{ position: "relative" }}>
+                      <Box
+                        component="img"
+                        src={preview}
+                        sx={{ width: "100%", height: 120, objectFit: "cover" }}
+                      />
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          bgcolor: "rgba(255,255,255,0.9)",
+                          borderRadius: "50%",
+                          width: 28,
+                          height: 28,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            handleRemoveSecondaryImage(
+                              existingImages.secondaryImages.length + index
+                            )
+                          }
+                          disabled={isProcessing}
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            "&:hover": { bgcolor: "rgba(255,0,0,0.1)" },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                      <Box sx={{ p: 1 }}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: "block", textAlign: "center" }}
+                        >
+                          Imagen{" "}
+                          {existingImages.secondaryImages.length + index + 1}{" "}
+                          (nueva)
+                        </Typography>
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))}
+            </Grid>
+          </Box>
+        )}
 
-      {/* Botones - solo mostrar si no es modo tabs (showButtons = false) */}
+      {/* Botones - modo creación */}
       {!showButtons && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <Button
               variant="outlined"
               onClick={onPrevious}
-              disabled={loading || imagesLoading}
+              disabled={isProcessing}
             >
               Anterior
             </Button>
-            
             <Typography variant="body2" color="text.secondary">
-              {imagesLoading 
-                ? 'Cargando imágenes...'
-                : getTotalImages() === 0 
-                  ? 'Agregue al menos una imagen para continuar'
-                  : `${getTotalImages()} imagen(es) lista(s) para enviar`
-              }
+              {imagesLoading
+                ? "Cargando imágenes..."
+                : getTotalImages() === 0
+                ? "Agregue al menos una imagen para continuar"
+                : `${getTotalImages()} imagen(es) lista(s) para enviar`}
             </Typography>
           </Box>
-          
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || imagesLoading || getTotalImages() === 0}
-            sx={{
-              bgcolor: '#25D366',
-              '&:hover': { bgcolor: '#128C7E' },
-            }}
+            disabled={isProcessing || getTotalImages() === 0}
+            sx={{ bgcolor: "#25D366", "&:hover": { bgcolor: "#128C7E" } }}
           >
-            {loading ? 'Guardando...' : buttonText}
+            {isProcessing ? "Guardando..." : buttonText}
           </Button>
         </Box>
       )}
 
-      {/* Botón para modo tabs (showButtons = true) */}
+      {/* Botón - modo edición */}
       {showButtons && (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={loading || imagesLoading}
-            sx={{
-              bgcolor: '#25D366',
-              '&:hover': { bgcolor: '#128C7E' },
-            }}
+            disabled={isProcessing}
+            sx={{ bgcolor: "#25D366", "&:hover": { bgcolor: "#128C7E" } }}
           >
-            {loading ? 'Guardando...' : imagesLoading ? 'Cargando...' : buttonText}
+            {isProcessing ? "Procesando..." : buttonText}
           </Button>
         </Box>
       )}
@@ -621,4 +874,4 @@ const Step3Images = ({
   );
 };
 
-export default Step3Images; 
+export default Step3Images;

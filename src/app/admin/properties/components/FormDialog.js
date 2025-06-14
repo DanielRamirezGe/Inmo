@@ -116,6 +116,7 @@ const FormDialog = ({
     nextStep,
     previousStep,
     clearCreationData,
+    initializeNewCreation,
     isInCreationProcess,
     getSavedFormType,
   } = useMultiStepProperty();
@@ -210,6 +211,23 @@ const FormDialog = ({
       setFormData(initialData);
     }
   }, [open, formType, currentItem, setFormData]);
+
+  // Inicializar nueva creación de propiedad cuando se abre el formulario
+  useEffect(() => {
+    if (!open || currentItem) return;
+
+    // Solo para tipos de propiedad
+    const isPropertyType =
+      formType === FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_PUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+      formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+
+    if (isPropertyType) {
+      // Inicializar nueva creación (resetear al paso 1)
+      initializeNewCreation();
+    }
+  }, [open, currentItem, formType, initializeNewCreation]);
 
   // Cargar opciones de campos cuando se abre el diálogo
   useEffect(() => {
@@ -951,6 +969,7 @@ const FormDialog = ({
                       onPrevious={previousStep}
                       loading={multiStepLoading}
                       error={multiStepError}
+                      prototypeId={prototypeId}
                     />
                   )}
                 </>
@@ -975,6 +994,7 @@ const FormDialog = ({
                   setError={setEditError}
                   onClose={onClose}
                   onRefresh={handleRefreshAfterEdit}
+                  prototypeId={currentItemId}
                 />
               )}
 

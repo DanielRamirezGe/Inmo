@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Tabs,
@@ -11,11 +11,11 @@ import {
   Skeleton,
   Card,
   CardContent,
-} from '@mui/material';
-import { FORM_TYPES } from '../constants';
-import { getBasicPropertySections } from './fieldsConfig';
-import Step2Descriptions from './Step2Descriptions';
-import Step3Images from './Step3Images';
+} from "@mui/material";
+import { FORM_TYPES } from "../constants";
+import { getBasicPropertySections } from "./fieldsConfig";
+import Step2Descriptions from "./Step2Descriptions";
+import Step3Images from "./Step3Images";
 
 // Componente TabPanel
 function TabPanel({ children, value, index, ...other }) {
@@ -27,11 +27,7 @@ function TabPanel({ children, value, index, ...other }) {
       aria-labelledby={`property-edit-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -40,7 +36,7 @@ function TabPanel({ children, value, index, ...other }) {
 function a11yProps(index) {
   return {
     id: `property-edit-tab-${index}`,
-    'aria-controls': `property-edit-tabpanel-${index}`,
+    "aria-controls": `property-edit-tabpanel-${index}`,
   };
 }
 
@@ -57,6 +53,7 @@ const PropertyEditTabs = ({
   setError,
   onClose,
   onRefresh,
+  prototypeId, // Nuevo prop para el ID de la propiedad
 }) => {
   const [currentTab, setCurrentTab] = useState(0);
   const [tabErrors, setTabErrors] = useState({});
@@ -89,68 +86,69 @@ const PropertyEditTabs = ({
   // Manejar guardado del tab 1 (datos básicos)
   const handleSaveBasic = async () => {
     try {
-      setTabLoading(prev => ({ ...prev, 0: true }));
-      setTabErrors(prev => ({ ...prev, 0: null }));
-      
+      setTabLoading((prev) => ({ ...prev, 0: true }));
+      setTabErrors((prev) => ({ ...prev, 0: null }));
+
       const result = await onUpdateBasic(formData);
-      
+
       if (result.success) {
-        console.log('Datos básicos actualizados exitosamente');
-        showSuccessAndClose('✅ Datos básicos actualizados correctamente');
+        console.log("Datos básicos actualizados exitosamente");
+        showSuccessAndClose("✅ Datos básicos actualizados correctamente");
       } else {
-        setTabErrors(prev => ({ ...prev, 0: result.error }));
+        setTabErrors((prev) => ({ ...prev, 0: result.error }));
       }
     } catch (error) {
-      setTabErrors(prev => ({ ...prev, 0: error.message }));
+      setTabErrors((prev) => ({ ...prev, 0: error.message }));
     } finally {
-      setTabLoading(prev => ({ ...prev, 0: false }));
+      setTabLoading((prev) => ({ ...prev, 0: false }));
     }
   };
 
   // Manejar guardado del tab 2 (descripciones)
   const handleSaveDescriptions = async (descriptions) => {
     try {
-      setTabLoading(prev => ({ ...prev, 1: true }));
-      setTabErrors(prev => ({ ...prev, 1: null }));
-      
+      setTabLoading((prev) => ({ ...prev, 1: true }));
+      setTabErrors((prev) => ({ ...prev, 1: null }));
+
       const result = await onUpdateDescriptions(descriptions);
-      
+
       if (result.success) {
         // Actualizar formData con las nuevas descripciones
-        setFormData(prev => ({ ...prev, descriptions }));
-        console.log('Descripciones actualizadas exitosamente');
-        showSuccessAndClose('✅ Descripciones actualizadas correctamente');
+        setFormData((prev) => ({ ...prev, descriptions }));
+        console.log("Descripciones actualizadas exitosamente");
+        showSuccessAndClose("✅ Descripciones actualizadas correctamente");
       } else {
-        setTabErrors(prev => ({ ...prev, 1: result.error }));
+        setTabErrors((prev) => ({ ...prev, 1: result.error }));
       }
     } catch (error) {
-      setTabErrors(prev => ({ ...prev, 1: error.message }));
+      setTabErrors((prev) => ({ ...prev, 1: error.message }));
     } finally {
-      setTabLoading(prev => ({ ...prev, 1: false }));
+      setTabLoading((prev) => ({ ...prev, 1: false }));
     }
   };
 
   // Manejar guardado del tab 3 (imágenes)
   const handleSaveImages = async (mainImage, secondaryImages) => {
     try {
-      setTabLoading(prev => ({ ...prev, 2: true }));
-      setTabErrors(prev => ({ ...prev, 2: null }));
-      
+      setTabLoading((prev) => ({ ...prev, 2: true }));
+      setTabErrors((prev) => ({ ...prev, 2: null }));
+
       const result = await onUpdateImages(mainImage, secondaryImages);
-      
+
       if (result.success) {
-        console.log('Imágenes actualizadas exitosamente');
-        
+        console.log("Imágenes actualizadas exitosamente");
+
         // Usar el mensaje del resultado si está disponible, o uno por defecto
-        const message = result.message || '✅ Imágenes actualizadas correctamente';
+        const message =
+          result.message || "✅ Imágenes actualizadas correctamente";
         showSuccessAndClose(message);
       } else {
-        setTabErrors(prev => ({ ...prev, 2: result.error }));
+        setTabErrors((prev) => ({ ...prev, 2: result.error }));
       }
     } catch (error) {
-      setTabErrors(prev => ({ ...prev, 2: error.message }));
+      setTabErrors((prev) => ({ ...prev, 2: error.message }));
     } finally {
-      setTabLoading(prev => ({ ...prev, 2: false }));
+      setTabLoading((prev) => ({ ...prev, 2: false }));
     }
   };
 
@@ -175,7 +173,7 @@ const PropertyEditTabs = ({
           </CardContent>
         </Card>
       </Box>
-      <Box sx={{ border: '1px dashed #ccc', borderRadius: 1, p: 2 }}>
+      <Box sx={{ border: "1px dashed #ccc", borderRadius: 1, p: 2 }}>
         <Skeleton variant="text" width="30%" height={24} sx={{ mb: 2 }} />
         <Skeleton variant="rectangular" height={56} sx={{ mb: 2 }} />
         <Skeleton variant="rectangular" height={120} sx={{ mb: 2 }} />
@@ -189,11 +187,11 @@ const PropertyEditTabs = ({
     <Box>
       <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
       <Skeleton variant="text" width="70%" height={20} sx={{ mb: 3 }} />
-      
+
       {/* Skeleton para galería de vista previa */}
       <Box sx={{ mb: 3 }}>
         <Skeleton variant="text" width="30%" height={24} sx={{ mb: 2 }} />
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
           <Skeleton variant="rectangular" width={200} height={150} />
           <Skeleton variant="rectangular" width={150} height={150} />
           <Skeleton variant="rectangular" width={150} height={150} />
@@ -213,11 +211,11 @@ const PropertyEditTabs = ({
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs 
-          value={currentTab} 
-          onChange={handleTabChange} 
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={currentTab}
+          onChange={handleTabChange}
           aria-label="Tabs de edición de propiedad"
           variant="fullWidth"
         >
@@ -234,7 +232,11 @@ const PropertyEditTabs = ({
         </Typography>
 
         {tabErrors[0] && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setTabErrors(prev => ({ ...prev, 0: null }))}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => setTabErrors((prev) => ({ ...prev, 0: null }))}
+          >
             {tabErrors[0]}
           </Alert>
         )}
@@ -244,7 +246,12 @@ const PropertyEditTabs = ({
           <Box>
             {[1, 2, 3].map((section) => (
               <Box key={section}>
-                <Skeleton variant="text" width="25%" height={32} sx={{ mt: 2, mb: 2 }} />
+                <Skeleton
+                  variant="text"
+                  width="25%"
+                  height={32}
+                  sx={{ mt: 2, mb: 2 }}
+                />
                 <Grid container spacing={2}>
                   {[1, 2, 3].map((field) => (
                     <Grid item xs={12} sm={6} md={4} key={field}>
@@ -254,7 +261,7 @@ const PropertyEditTabs = ({
                 </Grid>
               </Box>
             ))}
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
               <Skeleton variant="rectangular" width={200} height={36} />
             </Box>
           </Box>
@@ -275,7 +282,7 @@ const PropertyEditTabs = ({
               </Box>
             ))}
 
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
               <Button
                 variant="contained"
                 onClick={handleSaveBasic}
@@ -303,7 +310,11 @@ const PropertyEditTabs = ({
         </Typography>
 
         {tabErrors[1] && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setTabErrors(prev => ({ ...prev, 1: null }))}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => setTabErrors((prev) => ({ ...prev, 1: null }))}
+          >
             {tabErrors[1]}
           </Alert>
         )}
@@ -329,7 +340,11 @@ const PropertyEditTabs = ({
         </Typography>
 
         {tabErrors[2] && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setTabErrors(prev => ({ ...prev, 2: null }))}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => setTabErrors((prev) => ({ ...prev, 2: null }))}
+          >
             {tabErrors[2]}
           </Alert>
         )}
@@ -342,9 +357,13 @@ const PropertyEditTabs = ({
             loading={tabLoading[2]}
             error={tabErrors[2]}
             initialMainImage={formData?.mainImagePreview || formData?.mainImage}
-            initialSecondaryImages={formData?.secondaryImagesPreview || formData?.secondaryImages || []}
+            initialSecondaryImages={formData?.secondaryImages || []}
+            initialSecondaryImagesPreview={
+              formData?.secondaryImagesPreview || []
+            }
             showButtons={true}
             buttonText="Guardar Imágenes"
+            prototypeId={prototypeId}
           />
         )}
       </TabPanel>
@@ -352,4 +371,4 @@ const PropertyEditTabs = ({
   );
 };
 
-export default PropertyEditTabs; 
+export default PropertyEditTabs;
