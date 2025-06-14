@@ -9,9 +9,12 @@ import {
   IconButton,
   Typography,
   CircularProgress,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ExploreIcon from "@mui/icons-material/Explore";
+import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import { useMainVideo } from "../hooks/useMainVideo";
 
 // Constantes de configuración
@@ -186,20 +189,32 @@ const PlayButton = () => (
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      bgcolor: "rgba(0, 0, 0, 0.6)",
+      background: "linear-gradient(135deg, #F0B92B 0%, #FFD666 100%)",
       borderRadius: "50%",
-      p: 1,
+      p: 1.5,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       opacity: 0,
-      transition: "opacity 0.3s ease",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      boxShadow: "0 4px 20px rgba(240, 185, 43, 0.4)",
+      border: "3px solid rgba(255, 255, 255, 0.9)",
+      zIndex: 10,
       "&:hover": {
         opacity: 1,
+        transform: "translate(-50%, -50%) scale(1.1)",
+        boxShadow: "0 6px 30px rgba(240, 185, 43, 0.6)",
       },
     }}
   >
-    <PlayArrowIcon sx={{ color: "white", fontSize: "2rem" }} />
+    <PlayArrowIcon
+      sx={{
+        color: "#37474F",
+        fontSize: "2.5rem",
+        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+        ml: 0.3, // Ajuste visual para centrar el ícono de play
+      }}
+    />
   </Box>
 );
 
@@ -245,7 +260,7 @@ const VideoSection = ({
   secondaryImages,
   propertyName,
 }) => (
-  <Grid item xs={GRID_CONFIG.videoColumns}>
+  <Grid item xs={GRID_CONFIG.videoColumns} paddingBottom={1}>
     <Box
       sx={{
         height: "100%",
@@ -253,8 +268,30 @@ const VideoSection = ({
         position: "relative",
         cursor: videoUrl && !videoError ? "pointer" : "default",
         backgroundColor: "#000",
-        borderRadius: 1,
+        borderRadius: 2,
         overflow: "hidden",
+        boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+        transition: "all 0.3s ease",
+        "&:hover": {
+          transform: videoUrl && !videoError ? "scale(1.02)" : "none",
+          boxShadow:
+            videoUrl && !videoError
+              ? "0 6px 24px rgba(240,185,43,0.2)"
+              : "0 4px 16px rgba(0,0,0,0.15)",
+        },
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background:
+            "linear-gradient(135deg, rgba(240,185,43,0.1) 0%, transparent 30%)",
+          pointerEvents: "none",
+          zIndex: 1,
+          opacity: videoUrl && !videoError ? 1 : 0,
+        },
       }}
       onClick={videoUrl && !videoError ? onVideoClick : undefined}
     >
@@ -286,16 +323,39 @@ const ImageOverlay = ({ remainingCount }) => (
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.6)",
+      background:
+        "linear-gradient(135deg, rgba(55, 71, 79, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%)",
       display: "flex",
+      flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
       color: "white",
-      fontSize: "0.75rem",
-      fontWeight: 600,
+      zIndex: 2,
+      backdropFilter: "blur(2px)",
     }}
   >
-    +{remainingCount}
+    <Typography
+      sx={{
+        fontSize: "1.2rem",
+        fontWeight: 700,
+        mb: 0.5,
+        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+      }}
+    >
+      +{remainingCount}
+    </Typography>
+    <Typography
+      sx={{
+        fontSize: "0.65rem",
+        fontWeight: 500,
+        opacity: 0.9,
+        textTransform: "uppercase",
+        letterSpacing: "0.5px",
+        textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+      }}
+    >
+      más fotos
+    </Typography>
   </Box>
 );
 
@@ -314,15 +374,35 @@ const SecondaryImage = ({
     sx={{
       position: "relative",
       height: `${imageLayout.height}px`,
-      borderRadius: 1,
+      borderRadius: 2,
       overflow: "hidden",
       cursor: "pointer",
       flexShrink: 0,
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      border: "1px solid rgba(240, 185, 43, 0.2)",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
       "&:hover": {
-        transform: "scale(1.02)",
-        boxShadow: 2,
+        transform: "scale(1.05) translateY(-2px)",
+        boxShadow: "0 8px 25px rgba(240, 185, 43, 0.3)",
+        borderColor: "rgba(240, 185, 43, 0.5)",
       },
-      transition: "all 0.2s ease",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background:
+          "linear-gradient(135deg, rgba(240,185,43,0.1) 0%, transparent 50%)",
+        opacity: 0,
+        transition: "opacity 0.3s ease",
+        zIndex: 1,
+        pointerEvents: "none",
+      },
+      "&:hover::before": {
+        opacity: 1,
+      },
     }}
   >
     <Box
@@ -333,6 +413,7 @@ const SecondaryImage = ({
         width: "100%",
         height: "100%",
         objectFit: "cover",
+        transition: "transform 0.3s ease",
       }}
     />
     {showOverlay && <ImageOverlay remainingCount={remainingCount} />}
@@ -519,21 +600,106 @@ export const MediaCard = ({
       <Card
         sx={{
           mb: 2,
-          borderRadius: 2,
+          borderRadius: 3,
           overflow: "hidden",
-          boxShadow: 2,
-          border: "1px solid",
-          borderColor: "primary.light",
+          boxShadow: "0 8px 32px rgba(240, 185, 43, 0.15)",
+          border: "2px solid",
+          borderColor: "rgba(240, 185, 43, 0.3)",
           position: "relative",
+          background: "linear-gradient(135deg, #ffffff 0%, #fefefe 100%)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          "&:hover": {
+            transform: "translateY(-4px)",
+            boxShadow: "0 12px 40px rgba(240, 185, 43, 0.25)",
+            borderColor: "rgba(240, 185, 43, 0.5)",
+          },
         }}
       >
+        {/* Header con título y badges */}
+        <Box
+          sx={{
+            background:
+              "linear-gradient(135deg, rgba(240, 185, 43, 0.15) 0%, rgba(255, 214, 102, 0.1) 100%)",
+            backdropFilter: "blur(10px)",
+            px: 2,
+            py: 1.5,
+            position: "relative",
+            overflow: "hidden",
+            borderBottom: "1px solid rgba(240, 185, 43, 0.2)",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background:
+                "linear-gradient(45deg, rgba(255,255,255,0.3) 0%, transparent 100%)",
+              pointerEvents: "none",
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+              <PhotoLibraryIcon
+                sx={{
+                  color: "#37474F",
+                  fontSize: "1.3rem",
+                  filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.15))",
+                  opacity: 0.8,
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "#37474F",
+                  fontWeight: 600,
+                  fontSize: { xs: "0.95rem", sm: "1.1rem" },
+                  textShadow: "0 1px 2px rgba(255,255,255,0.7)",
+                  letterSpacing: "0.3px",
+                  opacity: 0.9,
+                }}
+              >
+                Conoce más...
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Contenido principal */}
         <Box
           sx={{
             height: `${dimensions.cardHeight}px`,
             minHeight: "280px",
+            position: "relative",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background:
+                "linear-gradient(180deg, rgba(240,185,43,0.02) 0%, transparent 20%)",
+              pointerEvents: "none",
+              zIndex: 1,
+            },
           }}
         >
-          <Grid container sx={{ height: "100%" }} spacing={0.5}>
+          <Grid
+            container
+            sx={{ height: "100%", position: "relative", zIndex: 2 }}
+            spacing={0.5}
+            paddingLeft={1}
+          >
             <VideoSection
               videoLoading={videoLoading}
               videoUrl={videoUrl}
@@ -551,6 +717,27 @@ export const MediaCard = ({
             />
           </Grid>
         </Box>
+
+        {/* Decorative bottom accent */}
+        <Box
+          sx={{
+            height: "4px",
+            background:
+              "linear-gradient(90deg, #F0B92B 0%, #FFD666 50%, #F0B92B 100%)",
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "60px",
+              height: "4px",
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)",
+            },
+          }}
+        />
       </Card>
 
       <VideoModal

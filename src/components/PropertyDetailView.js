@@ -601,7 +601,7 @@ export default function PropertyDetailView({
           />
         </Box>
 
-        {/* Mobile: Layout separado (imagen + video/imágenes) */}
+        {/* Mobile: Layout separado (imagen principal solamente) */}
         <Box sx={{ display: { xs: "block", sm: "none" } }}>
           {/* Imagen principal en mobile */}
           <Box sx={{ mb: 2 }}>
@@ -613,13 +613,6 @@ export default function PropertyDetailView({
               showVideo={false}
             />
           </Box>
-
-          {/* Video + imágenes secundarias en mobile */}
-          <MediaCard
-            secondaryImages={secondaryImages}
-            propertyName={displayProperty.prototypeName}
-            onOpenGallery={handleOpenGallery}
-          />
         </Box>
       </Box>
 
@@ -736,6 +729,15 @@ export default function PropertyDetailView({
               </Grid>
             </CardContent>
           </Card>
+
+          {/* Video + imágenes secundarias en mobile - después del card de precio */}
+          <Box sx={{ display: { xs: "block", sm: "none" }, mb: 3 }}>
+            <MediaCard
+              secondaryImages={secondaryImages}
+              propertyName={displayProperty.prototypeName}
+              onOpenGallery={handleOpenGallery}
+            />
+          </Box>
 
           {/* Contact card for WhatsApp and Messenger */}
           <Card
