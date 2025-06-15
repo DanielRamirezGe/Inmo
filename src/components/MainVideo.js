@@ -1,10 +1,19 @@
-import React, { useRef, useEffect } from "react";
-import { Box, CircularProgress, Card } from "@mui/material";
+import React, { useRef, useEffect, useState } from "react";
+import {
+  Box,
+  CircularProgress,
+  Card,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { VolumeOff, VolumeUp } from "@mui/icons-material";
 import { useMainVideo } from "../hooks/useMainVideo";
 
 export const MainVideo = () => {
   const { videoUrl, loading, error } = useMainVideo();
   const videoRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
 
   // Manejar reproducción automática una sola vez
   useEffect(() => {
@@ -34,7 +43,7 @@ export const MainVideo = () => {
     if (video && videoUrl) {
       const handleLoadedData = () => {
         video.volume = 0.7; // Volumen al 70%
-        video.muted = false; // Asegurar que no esté silenciado
+        video.muted = isMuted; // Usar el estado de muted
       };
 
       video.addEventListener("loadeddata", handleLoadedData);
@@ -51,7 +60,22 @@ export const MainVideo = () => {
         }
       };
     }
-  }, [videoUrl]);
+  }, [videoUrl, isMuted]);
+
+  // Función para activar/desactivar audio
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (video) {
+      const newMutedState = !isMuted;
+      video.muted = newMutedState;
+      setIsMuted(newMutedState);
+
+      // Ocultar el prompt después del primer clic
+      if (showUnmutePrompt) {
+        setShowUnmutePrompt(false);
+      }
+    }
+  };
 
   // Si hay error o no hay video, no mostrar nada
   if (error || !videoUrl) {
@@ -105,7 +129,7 @@ export const MainVideo = () => {
             xs: 0, // Sin padding en móvil, usar altura real de viewport
             md: 0, // Sin padding en desktop, usar altura real
           },
-          overflow: "hidden",
+          overflow: "visible", // Cambiar a visible para mostrar botones
         }}
       >
         <Box
@@ -114,7 +138,7 @@ export const MainVideo = () => {
           autoPlay
           playsInline
           controls
-          muted={false}
+          muted={true}
           volume={0.7}
           crossOrigin="anonymous"
           onError={() => {
@@ -130,6 +154,70 @@ export const MainVideo = () => {
         >
           <source src={videoUrl} type="video/mp4" />
         </Box>
+
+        {/* Botón flotante para activar audio */}
+        {showUnmutePrompt && (
+          <Box
+            onClick={toggleMute}
+            sx={{
+              position: "absolute",
+              top: 20,
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              backgroundColor: "rgba(255, 193, 7, 0.95)",
+              borderRadius: 3,
+              padding: "12px 20px",
+              color: "#000",
+              zIndex: 1000,
+              boxShadow: "0 6px 20px rgba(255, 193, 7, 0.4)",
+              cursor: "pointer",
+              animation: "bounce 1s infinite",
+              "@keyframes bounce": {
+                "0%, 20%, 50%, 80%, 100%": {
+                  transform: "translateX(-50%) translateY(0)",
+                },
+                "40%": { transform: "translateX(-50%) translateY(-10px)" },
+                "60%": { transform: "translateX(-50%) translateY(-5px)" },
+              },
+              "&:hover": {
+                backgroundColor: "rgba(255, 193, 7, 1)",
+                transform: "translateX(-50%) scale(1.05)",
+              },
+            }}
+          >
+            <VolumeOff sx={{ fontSize: 20 }} />
+            <Typography
+              variant="body2"
+              sx={{ fontSize: "0.9rem", fontWeight: 700 }}
+            >
+              ¡Activa el audio!
+            </Typography>
+          </Box>
+        )}
+
+        {/* Botón de control de audio siempre visible */}
+        <IconButton
+          onClick={toggleMute}
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            color: "white",
+            zIndex: 999,
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.9)",
+              transform: "scale(1.1)",
+            },
+            transition: "all 0.2s ease-in-out",
+          }}
+        >
+          {isMuted ? <VolumeOff /> : <VolumeUp />}
+        </IconButton>
       </Box>
     </Card>
   );

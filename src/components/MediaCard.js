@@ -15,6 +15,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ExploreIcon from "@mui/icons-material/Explore";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
+import { VolumeOff, VolumeUp } from "@mui/icons-material";
 import { useMainVideo } from "../hooks/useMainVideo";
 
 // Constantes de configuración
@@ -218,7 +219,14 @@ const PlayButton = () => (
   </Box>
 );
 
-const VideoContent = ({ videoUrl, videoRef, onVideoClick }) => (
+const VideoContent = ({
+  videoUrl,
+  videoRef,
+  onVideoClick,
+  isMuted,
+  onToggleMute,
+  showUnmutePrompt,
+}) => (
   <>
     <Box
       component="video"
@@ -235,6 +243,82 @@ const VideoContent = ({ videoUrl, videoRef, onVideoClick }) => (
       <source src={videoUrl} type="video/mp4" />
     </Box>
     <PlayButton />
+
+    {/* Botón flotante para activar audio */}
+    {showUnmutePrompt && (
+      <Box
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleMute();
+        }}
+        sx={{
+          position: "absolute",
+          top: 10,
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          backgroundColor: "rgba(255, 193, 7, 0.95)",
+          borderRadius: 2,
+          padding: "6px 12px",
+          color: "#000",
+          zIndex: 1000,
+          boxShadow: "0 4px 16px rgba(255, 193, 7, 0.4)",
+          cursor: "pointer",
+          animation: "bounce 1s infinite",
+          "@keyframes bounce": {
+            "0%, 20%, 50%, 80%, 100%": {
+              transform: "translateX(-50%) translateY(0)",
+            },
+            "40%": { transform: "translateX(-50%) translateY(-8px)" },
+            "60%": { transform: "translateX(-50%) translateY(-4px)" },
+          },
+          "&:hover": {
+            backgroundColor: "rgba(255, 193, 7, 1)",
+            transform: "translateX(-50%) scale(1.05)",
+          },
+        }}
+      >
+        <VolumeOff sx={{ fontSize: 16 }} />
+        <Typography
+          variant="caption"
+          sx={{ fontSize: "0.7rem", fontWeight: 700 }}
+        >
+          Audio
+        </Typography>
+      </Box>
+    )}
+
+    {/* Botón de control de audio siempre visible */}
+    <IconButton
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggleMute();
+      }}
+      sx={{
+        position: "absolute",
+        bottom: 8,
+        right: 8,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        color: "white",
+        zIndex: 999,
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+        width: 32,
+        height: 32,
+        "&:hover": {
+          backgroundColor: "rgba(0, 0, 0, 0.9)",
+          transform: "scale(1.1)",
+        },
+        transition: "all 0.2s ease-in-out",
+      }}
+    >
+      {isMuted ? (
+        <VolumeOff sx={{ fontSize: 18 }} />
+      ) : (
+        <VolumeUp sx={{ fontSize: 18 }} />
+      )}
+    </IconButton>
   </>
 );
 
@@ -259,6 +343,9 @@ const VideoSection = ({
   onVideoClick,
   secondaryImages,
   propertyName,
+  isMuted,
+  onToggleMute,
+  showUnmutePrompt,
 }) => (
   <Grid item xs={GRID_CONFIG.videoColumns} paddingBottom={1}>
     <Box
@@ -302,6 +389,9 @@ const VideoSection = ({
           videoUrl={videoUrl}
           videoRef={videoRef}
           onVideoClick={onVideoClick}
+          isMuted={isMuted}
+          onToggleMute={onToggleMute}
+          showUnmutePrompt={showUnmutePrompt}
         />
       ) : (
         secondaryImages.length > 0 && (
@@ -547,6 +637,8 @@ export const MediaCard = ({
     cardHeight: 320,
     imageLayout: { count: 0, height: 0, gap: 0 },
   });
+  const [isMuted, setIsMuted] = useState(true);
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
   const videoRef = useRef(null);
 
   // Calcular dimensiones
@@ -580,15 +672,45 @@ export const MediaCard = ({
         video.pause();
         video.removeAttribute("autoplay");
       };
+      const handleLoadedData = () => {
+        video.volume = 0.7;
+        // Solo cambiar muted si el usuario ya interactuó
+        if (!showUnmutePrompt) {
+          video.muted = isMuted;
+        }
+      };
+
       video.addEventListener("ended", handleEnded);
-      return () => video.removeEventListener("ended", handleEnded);
+      video.addEventListener("loadeddata", handleLoadedData);
+
+      if (video.readyState >= 2) {
+        handleLoadedData();
+      }
+
+      return () => {
+        video.removeEventListener("ended", handleEnded);
+        video.removeEventListener("loadeddata", handleLoadedData);
+      };
     }
-  }, [videoUrl]);
+  }, [videoUrl, isMuted, showUnmutePrompt]);
 
   // Handlers
   const handleVideoClick = () => setExpandedVideo(true);
   const handleImageClick = () => onOpenGallery?.();
   const handleCloseVideo = () => setExpandedVideo(false);
+
+  const handleToggleMute = () => {
+    const video = videoRef.current;
+    if (video) {
+      const newMutedState = !isMuted;
+      video.muted = newMutedState;
+      setIsMuted(newMutedState);
+
+      if (showUnmutePrompt) {
+        setShowUnmutePrompt(false);
+      }
+    }
+  };
 
   // Early return si no hay contenido
   if (!secondaryImages.length && (!videoUrl || videoError)) {
@@ -708,6 +830,9 @@ export const MediaCard = ({
               onVideoClick={handleVideoClick}
               secondaryImages={secondaryImages}
               propertyName={propertyName}
+              isMuted={isMuted}
+              onToggleMute={handleToggleMute}
+              showUnmutePrompt={showUnmutePrompt}
             />
             <ImagesSection
               secondaryImages={secondaryImages}
