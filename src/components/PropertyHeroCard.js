@@ -150,11 +150,18 @@ export const PropertyHeroCard = ({
   }, [videoUrl, showVideo, hasTriedAutoplay]);
 
   const handleVideoClick = () => {
+    // Pausar el video original antes de abrir el modal
+    const video = videoRef.current;
+    if (video && !video.paused) {
+      video.pause();
+    }
     setExpandedVideo(true);
   };
 
   const handleCloseVideo = () => {
     setExpandedVideo(false);
+    // Resetear el estado del video original cuando se cierra el modal
+    setIsPlaying(false);
   };
 
   const handleToggleMute = () => {
@@ -215,72 +222,19 @@ export const PropertyHeroCard = ({
 
   // Función para calcular layout de imágenes secundarias
   const calculateSecondaryImageLayout = () => {
-    const isTabletPlus = window.innerWidth >= 576;
     const totalImages = secondaryImages.length;
 
     if (totalImages === 0) return { count: 0, height: 0, gap: 0 };
 
-    const totalHeight = 400; // Altura fija para tablet+
-    const padding = isTabletPlus ? 8 : 4;
-    const availableHeight = totalHeight - padding * 2;
-
-    let imageHeight, gap, maxVisible;
-
-    if (isTabletPlus) {
-      // Tablet+: Optimizar para el espacio disponible
-      if (totalImages <= 4) {
-        maxVisible = totalImages;
-        const minGap = 6;
-        const totalGapSpace = minGap * (maxVisible - 1);
-        imageHeight = Math.floor(
-          (availableHeight - totalGapSpace) / maxVisible
-        );
-
-        const remainingSpace =
-          availableHeight - (imageHeight * maxVisible + totalGapSpace);
-        gap = minGap + Math.floor(remainingSpace / Math.max(1, maxVisible - 1));
-      } else {
-        const baseHeight = 85;
-        const baseGap = 6;
-        maxVisible = Math.floor(availableHeight / (baseHeight + baseGap));
-        maxVisible = Math.max(2, Math.min(maxVisible, totalImages));
-
-        const totalGapSpace = baseGap * (maxVisible - 1);
-        imageHeight = Math.floor(
-          (availableHeight - totalGapSpace) / maxVisible
-        );
-
-        const remainingSpace =
-          availableHeight - (imageHeight * maxVisible + totalGapSpace);
-        gap =
-          baseGap + Math.floor(remainingSpace / Math.max(1, maxVisible - 1));
-      }
-    } else {
-      // Mobile: Usar el espacio de la imagen principal
-      const mobileHeight = 250;
-      const mobileAvailableHeight = mobileHeight - padding * 2;
-
-      if (totalImages <= 3) {
-        maxVisible = totalImages;
-        const minGap = 3;
-        const totalGapSpace = minGap * (maxVisible - 1);
-        imageHeight = Math.floor(
-          (mobileAvailableHeight - totalGapSpace) / maxVisible
-        );
-        imageHeight = Math.max(50, Math.min(imageHeight, 120));
-        gap = minGap;
-      } else {
-        imageHeight = 60;
-        gap = 3;
-        maxVisible = Math.floor(mobileAvailableHeight / (imageHeight + gap));
-        maxVisible = Math.max(2, Math.min(maxVisible, totalImages));
-      }
-    }
+    // Configuración simple y fija que no depende del tamaño de pantalla
+    const imageHeight = 90; // Altura fija para cada imagen
+    const gap = 8; // Gap fijo entre imágenes
+    const maxVisible = Math.min(4, totalImages); // Máximo 4 imágenes visibles
 
     return {
-      count: Math.min(maxVisible, totalImages),
-      height: Math.max(imageHeight, 50),
-      gap: Math.max(gap, 2),
+      count: maxVisible,
+      height: imageHeight,
+      gap: gap,
     };
   };
 
@@ -549,11 +503,10 @@ export const PropertyHeroCard = ({
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent:
-                      imageLayout.count <= 3 ? "center" : "flex-start",
+                    justifyContent: "flex-start",
                     gap: `${imageLayout.gap}px`,
-                    p: 0.5,
-                    overflowY: "auto",
+                    p: 1,
+                    overflowY: "hidden", // Evitar scroll, mantener contenido dentro del contenedor
                   }}
                 >
                   {secondaryImages
@@ -677,9 +630,15 @@ export const PropertyHeroCard = ({
                     controls
                     autoPlay
                     sx={{
-                      maxWidth: "100%",
-                      maxHeight: "100%",
+                      // Simular dimensiones de celular para videos verticales
+                      width: { xs: "100%", sm: "390px" }, // Ancho típico de iPhone/Android
+                      height: { xs: "auto", sm: "844px" }, // Altura típica de celular moderno
+                      maxWidth: { xs: "100%", sm: "390px" },
+                      maxHeight: { xs: "auto", sm: "844px" },
                       objectFit: "contain",
+                      // Centrar el video horizontalmente
+                      margin: "0 auto",
+                      display: "block",
                     }}
                   >
                     <source src={videoUrl} type="video/mp4" />

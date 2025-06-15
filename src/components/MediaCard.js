@@ -605,9 +605,15 @@ const VideoModal = ({ open, onClose, videoUrl, propertyName }) => (
               controls
               autoPlay
               sx={{
-                maxWidth: "100%",
-                maxHeight: "100%",
+                // Simular dimensiones de celular para videos verticales
+                width: { xs: "100%", sm: "390px" }, // Ancho típico de iPhone/Android
+                height: { xs: "auto", sm: "844px" }, // Altura típica de celular moderno
+                maxWidth: { xs: "100%", sm: "390px" },
+                maxHeight: { xs: "auto", sm: "844px" },
                 objectFit: "contain",
+                // Centrar el video horizontalmente
+                margin: "0 auto",
+                display: "block",
               }}
             >
               <source src={videoUrl} type="video/mp4" />
@@ -783,9 +789,20 @@ export const MediaCard = ({
   }, [videoUrl, hasTriedAutoplay]);
 
   // Handlers
-  const handleVideoClick = () => setExpandedVideo(true);
+  const handleVideoClick = () => {
+    // Pausar el video original antes de abrir el modal
+    const video = videoRef.current;
+    if (video && !video.paused) {
+      video.pause();
+    }
+    setExpandedVideo(true);
+  };
   const handleImageClick = () => onOpenGallery?.();
-  const handleCloseVideo = () => setExpandedVideo(false);
+  const handleCloseVideo = () => {
+    setExpandedVideo(false);
+    // Resetear el estado del video original cuando se cierra el modal
+    setIsPlaying(false);
+  };
 
   const handleToggleMute = () => {
     const video = videoRef.current;
