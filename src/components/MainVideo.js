@@ -28,6 +28,31 @@ export const MainVideo = () => {
     }
   }, [videoUrl]);
 
+  // Configurar volumen cuando el video se carga
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && videoUrl) {
+      const handleLoadedData = () => {
+        video.volume = 0.7; // Volumen al 70%
+        video.muted = false; // Asegurar que no esté silenciado
+      };
+
+      video.addEventListener("loadeddata", handleLoadedData);
+
+      // Si el video ya está cargado, aplicar configuración inmediatamente
+      if (video.readyState >= 2) {
+        handleLoadedData();
+      }
+
+      // Cleanup
+      return () => {
+        if (video) {
+          video.removeEventListener("loadeddata", handleLoadedData);
+        }
+      };
+    }
+  }, [videoUrl]);
+
   // Si hay error o no hay video, no mostrar nada
   if (error || !videoUrl) {
     return null;
@@ -89,6 +114,8 @@ export const MainVideo = () => {
           autoPlay
           playsInline
           controls
+          muted={false}
+          volume={0.7}
           crossOrigin="anonymous"
           onError={() => {
             // Si hay error de reproducción, el componente padre se re-renderizará
