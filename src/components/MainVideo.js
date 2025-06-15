@@ -16,19 +16,19 @@ export const MainVideo = () => {
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
   const [hasTriedAutoplay, setHasTriedAutoplay] = useState(false);
 
-  // Verificar si el usuario ya experimentó autoplay con audio
-  const hasUserHeardAutoplay = () => {
+  // Verificar si el usuario ya experimentó autoplay
+  const hasUserExperiencedAutoplay = () => {
     try {
-      return localStorage.getItem("video-autoplay-heard") === "true";
+      return localStorage.getItem("video-autoplay-experienced") === "true";
     } catch (error) {
       return false;
     }
   };
 
-  // Marcar que el usuario ya escuchó autoplay
-  const markUserHeardAutoplay = () => {
+  // Marcar que el usuario ya experimentó autoplay
+  const markUserExperiencedAutoplay = () => {
     try {
-      localStorage.setItem("video-autoplay-heard", "true");
+      localStorage.setItem("video-autoplay-experienced", "true");
     } catch (error) {
       console.log("Could not save to localStorage:", error);
     }
@@ -76,18 +76,18 @@ export const MainVideo = () => {
           }
         });
 
-        // Verificar si el usuario ya escuchó autoplay antes
-        const userAlreadyHeard = hasUserHeardAutoplay();
+        // Verificar si el usuario ya experimentó autoplay antes
+        const userAlreadyExperienced = hasUserExperiencedAutoplay();
 
-        if (!userAlreadyHeard) {
-          // Primera vez: intentar con audio
+        if (!userAlreadyExperienced) {
+          // Primera vez: intentar autoplay con audio
           try {
             video.muted = false;
             video.volume = 0.7;
             await video.play();
 
-            // Si funciona, marcar que el usuario ya escuchó y actualizar estados
-            markUserHeardAutoplay();
+            // Si funciona, marcar como experimentado y actualizar estados
+            markUserExperiencedAutoplay();
             setIsMuted(false);
             setShowUnmutePrompt(false);
             console.log("First-time autoplay with audio successful!");
@@ -97,18 +97,25 @@ export const MainVideo = () => {
               "First-time autoplay with audio failed, trying muted:",
               error
             );
+
+            // Si falla con audio, intentar silenciado solo esta vez
+            try {
+              video.muted = true;
+              await video.play();
+              markUserExperiencedAutoplay(); // Marcar como experimentado aunque haya sido silenciado
+              console.log("First-time autoplay muted successful!");
+              return;
+            } catch (mutedError) {
+              console.log("First-time autoplay completely failed:", mutedError);
+              markUserExperiencedAutoplay(); // Marcar como experimentado para evitar futuros intentos
+            }
           }
         } else {
-          console.log("User already heard autoplay before, playing muted");
-        }
-
-        // Si ya escuchó antes O si falló el autoplay con audio, reproducir silenciado
-        try {
-          video.muted = true;
-          await video.play();
-          console.log("Autoplay muted successful!");
-        } catch (mutedError) {
-          console.log("All autoplay attempts failed:", mutedError);
+          // Usuario ya experimentó autoplay antes - NO reproducir automáticamente
+          console.log(
+            "User already experienced autoplay before, waiting for user interaction"
+          );
+          // El video permanece pausado hasta que el usuario interactúe
         }
       };
 
@@ -144,9 +151,9 @@ export const MainVideo = () => {
       // Ocultar el prompt después del primer clic
       if (showUnmutePrompt) {
         setShowUnmutePrompt(false);
-        // Si el usuario activa el audio manualmente, marcar como escuchado
+        // Si el usuario activa el audio manualmente, marcar como experimentado
         if (!newMutedState) {
-          markUserHeardAutoplay();
+          markUserExperiencedAutoplay();
         }
       }
     }

@@ -225,7 +225,8 @@ const VideoContent = ({
   onVideoClick,
   isMuted,
   onToggleMute,
-  showUnmutePrompt,
+  isPlaying,
+  onPlayVideo,
 }) => (
   <>
     <Box
@@ -242,83 +243,75 @@ const VideoContent = ({
     >
       <source src={videoUrl} type="video/mp4" />
     </Box>
-    <PlayButton />
-
-    {/* Botón flotante para activar audio */}
-    {showUnmutePrompt && (
+    {!isPlaying && (
       <Box
+        onClick={(e) => {
+          e.stopPropagation();
+          onPlayVideo();
+        }}
+        sx={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          background: "linear-gradient(135deg, #F0B92B 0%, #FFD666 100%)",
+          borderRadius: "50%",
+          p: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          boxShadow: "0 3px 12px rgba(240, 185, 43, 0.4)",
+          border: "2px solid rgba(255, 255, 255, 0.9)",
+          zIndex: 10,
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          "&:hover": {
+            transform: "scale(1.1)",
+            boxShadow: "0 4px 16px rgba(240, 185, 43, 0.6)",
+          },
+        }}
+      >
+        <PlayArrowIcon
+          sx={{
+            color: "#37474F",
+            fontSize: "1.5rem",
+            filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+            ml: 0.2,
+          }}
+        />
+      </Box>
+    )}
+
+    {/* Botón de control de audio - solo visible cuando está reproduciéndose */}
+    {isPlaying && (
+      <IconButton
         onClick={(e) => {
           e.stopPropagation();
           onToggleMute();
         }}
         sx={{
           position: "absolute",
-          top: 10,
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          alignItems: "center",
-          gap: 0.5,
-          backgroundColor: "rgba(255, 193, 7, 0.95)",
-          borderRadius: 2,
-          padding: "6px 12px",
-          color: "#000",
-          zIndex: 1000,
-          boxShadow: "0 4px 16px rgba(255, 193, 7, 0.4)",
-          cursor: "pointer",
-          animation: "bounce 1s infinite",
-          "@keyframes bounce": {
-            "0%, 20%, 50%, 80%, 100%": {
-              transform: "translateX(-50%) translateY(0)",
-            },
-            "40%": { transform: "translateX(-50%) translateY(-8px)" },
-            "60%": { transform: "translateX(-50%) translateY(-4px)" },
-          },
+          bottom: 8,
+          right: 8,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          color: "white",
+          zIndex: 999,
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+          width: 32,
+          height: 32,
           "&:hover": {
-            backgroundColor: "rgba(255, 193, 7, 1)",
-            transform: "translateX(-50%) scale(1.05)",
+            backgroundColor: "rgba(0, 0, 0, 0.9)",
+            transform: "scale(1.1)",
           },
+          transition: "all 0.2s ease-in-out",
         }}
       >
-        <VolumeOff sx={{ fontSize: 16 }} />
-        <Typography
-          variant="caption"
-          sx={{ fontSize: "0.7rem", fontWeight: 700 }}
-        >
-          Audio
-        </Typography>
-      </Box>
+        {isMuted ? (
+          <VolumeOff sx={{ fontSize: 18 }} />
+        ) : (
+          <VolumeUp sx={{ fontSize: 18 }} />
+        )}
+      </IconButton>
     )}
-
-    {/* Botón de control de audio siempre visible */}
-    <IconButton
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggleMute();
-      }}
-      sx={{
-        position: "absolute",
-        bottom: 8,
-        right: 8,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        color: "white",
-        zIndex: 999,
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-        width: 32,
-        height: 32,
-        "&:hover": {
-          backgroundColor: "rgba(0, 0, 0, 0.9)",
-          transform: "scale(1.1)",
-        },
-        transition: "all 0.2s ease-in-out",
-      }}
-    >
-      {isMuted ? (
-        <VolumeOff sx={{ fontSize: 18 }} />
-      ) : (
-        <VolumeUp sx={{ fontSize: 18 }} />
-      )}
-    </IconButton>
   </>
 );
 
@@ -345,7 +338,8 @@ const VideoSection = ({
   propertyName,
   isMuted,
   onToggleMute,
-  showUnmutePrompt,
+  isPlaying,
+  onPlayVideo,
 }) => (
   <Grid item xs={GRID_CONFIG.videoColumns} paddingBottom={1}>
     <Box
@@ -391,7 +385,8 @@ const VideoSection = ({
           onVideoClick={onVideoClick}
           isMuted={isMuted}
           onToggleMute={onToggleMute}
-          showUnmutePrompt={showUnmutePrompt}
+          isPlaying={isPlaying}
+          onPlayVideo={onPlayVideo}
         />
       ) : (
         secondaryImages.length > 0 && (
@@ -640,21 +635,22 @@ export const MediaCard = ({
   const [isMuted, setIsMuted] = useState(true);
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
   const [hasTriedAutoplay, setHasTriedAutoplay] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
 
-  // Verificar si el usuario ya experimentó autoplay con audio
-  const hasUserHeardAutoplay = () => {
+  // Verificar si el usuario ya experimentó autoplay
+  const hasUserExperiencedAutoplay = () => {
     try {
-      return localStorage.getItem("video-autoplay-heard") === "true";
+      return localStorage.getItem("video-autoplay-experienced") === "true";
     } catch (error) {
       return false;
     }
   };
 
-  // Marcar que el usuario ya escuchó autoplay
-  const markUserHeardAutoplay = () => {
+  // Marcar que el usuario ya experimentó autoplay
+  const markUserExperiencedAutoplay = () => {
     try {
-      localStorage.setItem("video-autoplay-heard", "true");
+      localStorage.setItem("video-autoplay-experienced", "true");
     } catch (error) {
       console.log("Could not save to localStorage:", error);
     }
@@ -735,20 +731,21 @@ export const MediaCard = ({
           }
         });
 
-        // Verificar si el usuario ya escuchó autoplay antes
-        const userAlreadyHeard = hasUserHeardAutoplay();
+        // Verificar si el usuario ya experimentó autoplay antes
+        const userAlreadyExperienced = hasUserExperiencedAutoplay();
 
-        if (!userAlreadyHeard) {
-          // Primera vez: intentar con audio
+        if (!userAlreadyExperienced) {
+          // Primera vez: intentar autoplay con audio
           try {
             video.muted = false;
             video.volume = 0.7;
             await video.play();
 
-            // Si funciona, marcar que el usuario ya escuchó y actualizar estados
-            markUserHeardAutoplay();
+            // Si funciona, marcar como experimentado y actualizar estados
+            markUserExperiencedAutoplay();
             setIsMuted(false);
             setShowUnmutePrompt(false);
+            setIsPlaying(true);
             console.log("First-time autoplay with audio successful!");
             return;
           } catch (error) {
@@ -756,18 +753,26 @@ export const MediaCard = ({
               "First-time autoplay with audio failed, trying muted:",
               error
             );
+
+            // Si falla con audio, intentar silenciado solo esta vez
+            try {
+              video.muted = true;
+              await video.play();
+              markUserExperiencedAutoplay(); // Marcar como experimentado aunque haya sido silenciado
+              setIsPlaying(true);
+              console.log("First-time autoplay muted successful!");
+              return;
+            } catch (mutedError) {
+              console.log("First-time autoplay completely failed:", mutedError);
+              markUserExperiencedAutoplay(); // Marcar como experimentado para evitar futuros intentos
+            }
           }
         } else {
-          console.log("User already heard autoplay before, playing muted");
-        }
-
-        // Si ya escuchó antes O si falló el autoplay con audio, reproducir silenciado
-        try {
-          video.muted = true;
-          await video.play();
-          console.log("Autoplay muted successful!");
-        } catch (mutedError) {
-          console.log("All autoplay attempts failed:", mutedError);
+          // Usuario ya experimentó autoplay antes - NO reproducir automáticamente
+          console.log(
+            "User already experienced autoplay before, waiting for user interaction"
+          );
+          // El video permanece pausado hasta que el usuario interactúe
         }
       };
 
@@ -791,9 +796,48 @@ export const MediaCard = ({
 
       if (showUnmutePrompt) {
         setShowUnmutePrompt(false);
-        // Si el usuario activa el audio manualmente, marcar como escuchado
+        // Si el usuario activa el audio manualmente, marcar como experimentado
         if (!newMutedState) {
-          markUserHeardAutoplay();
+          markUserExperiencedAutoplay();
+        }
+      }
+    }
+  };
+
+  const handlePlayVideo = async () => {
+    const video = videoRef.current;
+    if (video) {
+      try {
+        // Pausar otros videos
+        const allVideos = document.querySelectorAll("video");
+        allVideos.forEach((v) => {
+          if (v !== video && !v.paused) {
+            v.pause();
+          }
+        });
+
+        // Intentar reproducir con audio primero
+        video.muted = false;
+        setIsMuted(false);
+        await video.play();
+        setIsPlaying(true);
+        setShowUnmutePrompt(false); // Ocultar prompt ya que está con audio
+        markUserExperiencedAutoplay(); // Marcar como experimentado
+        console.log("Manual video play with audio successful!");
+      } catch (error) {
+        console.log(
+          "Manual video play with audio failed, trying muted:",
+          error
+        );
+        try {
+          // Si falla con audio, intentar silenciado
+          video.muted = true;
+          setIsMuted(true);
+          await video.play();
+          setIsPlaying(true);
+          console.log("Manual video play muted successful!");
+        } catch (mutedError) {
+          console.log("Manual video play completely failed:", mutedError);
         }
       }
     }
@@ -919,7 +963,8 @@ export const MediaCard = ({
               propertyName={propertyName}
               isMuted={isMuted}
               onToggleMute={handleToggleMute}
-              showUnmutePrompt={showUnmutePrompt}
+              isPlaying={isPlaying}
+              onPlayVideo={handlePlayVideo}
             />
             <ImagesSection
               secondaryImages={secondaryImages}
