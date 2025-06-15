@@ -136,41 +136,119 @@ const ItemCard = ({
         }}
       >
         <CardContent>{renderContent()}</CardContent>
-        <CardActions>
-          <Button
-            size="small"
-            startIcon={<EditIcon />}
-            onClick={() => onEdit(item)}
-          >
-            Editar
-          </Button>
-          {(TAB_FORM_TYPE_MAP[currentTab] ===
-            FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
-            TAB_FORM_TYPE_MAP[currentTab] ===
-              FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED) && (
+        <CardActions sx={{ justifyContent: "space-between", px: 2 }}>
+          {/* Botón de eliminar a la izquierda (separado) */}
+          <Box>
+            {(TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.DEVELOPER ||
+              TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.DEVELOPMENT ||
+              TAB_FORM_TYPE_MAP[currentTab] ===
+                FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+              TAB_FORM_TYPE_MAP[currentTab] ===
+                FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED) && (
+              <Button
+                size="small"
+                startIcon={<DeleteIcon />}
+                onClick={() => onDelete(item)}
+                variant="outlined"
+                sx={{
+                  borderColor: "rgba(244, 67, 54, 0.6)",
+                  color: "rgba(244, 67, 54, 0.8)",
+                  backgroundColor: "rgba(244, 67, 54, 0.05)",
+                  "&:hover": {
+                    borderColor: "rgba(244, 67, 54, 0.8)",
+                    color: "rgba(244, 67, 54, 1)",
+                    backgroundColor: "rgba(244, 67, 54, 0.1)",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 12px rgba(244, 67, 54, 0.2)",
+                  },
+                  "&:active": {
+                    transform: "translateY(0)",
+                  },
+                }}
+              >
+                Eliminar
+              </Button>
+            )}
+          </Box>
+
+          {/* Botones de acción a la derecha */}
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               size="small"
-              startIcon={<PublishIcon />}
-              onClick={() => setPublishDialogOpen(true)}
-              color="success"
-              disabled={publishing}
+              startIcon={<EditIcon />}
+              onClick={() => onEdit(item)}
+              variant="contained"
+              sx={{
+                bgcolor: "rgba(240, 185, 43, 0.9)",
+                color: "#2C3E50",
+                fontWeight: 600,
+                "&:hover": {
+                  bgcolor: "rgba(240, 185, 43, 1)",
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(240, 185, 43, 0.3)",
+                },
+                "&:active": {
+                  transform: "translateY(0)",
+                },
+              }}
             >
-              {publishing ? "Publicando..." : "Publicar"}
+              Editar
             </Button>
-          )}
-          {(TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED ||
-            TAB_FORM_TYPE_MAP[currentTab] ===
-              FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
-            <Button
-              size="small"
-              startIcon={<UnpublishedIcon />}
-              onClick={() => setUnpublishDialogOpen(true)}
-              color="warning"
-              disabled={unpublishing}
-            >
-              {unpublishing ? "Procesando..." : "Dejar de publicar"}
-            </Button>
-          )}
+
+            {(TAB_FORM_TYPE_MAP[currentTab] ===
+              FORM_TYPES.PROPERTY_NOT_PUBLISHED ||
+              TAB_FORM_TYPE_MAP[currentTab] ===
+                FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED) && (
+              <Button
+                size="small"
+                startIcon={<PublishIcon />}
+                onClick={() => setPublishDialogOpen(true)}
+                variant="contained"
+                disabled={publishing}
+                sx={{
+                  bgcolor: "rgba(76, 175, 80, 0.8)",
+                  color: "white",
+                  "&:hover": {
+                    bgcolor: "rgba(76, 175, 80, 0.9)",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 12px rgba(76, 175, 80, 0.3)",
+                  },
+                  "&:disabled": {
+                    bgcolor: "rgba(76, 175, 80, 0.4)",
+                    color: "rgba(255, 255, 255, 0.7)",
+                  },
+                }}
+              >
+                {publishing ? "Publicando..." : "Publicar"}
+              </Button>
+            )}
+            {(TAB_FORM_TYPE_MAP[currentTab] === FORM_TYPES.PROPERTY_PUBLISHED ||
+              TAB_FORM_TYPE_MAP[currentTab] ===
+                FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) && (
+              <Button
+                size="small"
+                startIcon={<UnpublishedIcon />}
+                onClick={() => setUnpublishDialogOpen(true)}
+                variant="contained"
+                disabled={unpublishing}
+                sx={{
+                  bgcolor: "rgba(255, 152, 0, 0.8)",
+                  color: "white",
+                  "&:hover": {
+                    bgcolor: "rgba(255, 152, 0, 0.9)",
+                    transform: "translateY(-1px)",
+                    boxShadow: "0 4px 12px rgba(255, 152, 0, 0.3)",
+                  },
+                  "&:disabled": {
+                    bgcolor: "rgba(255, 152, 0, 0.4)",
+                    color: "rgba(255, 255, 255, 0.7)",
+                  },
+                }}
+              >
+                {unpublishing ? "Procesando..." : "Dejar de publicar"}
+              </Button>
+            )}
+          </Box>
         </CardActions>
       </Card>
 
