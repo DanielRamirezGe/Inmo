@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { VolumeOff, VolumeUp } from "@mui/icons-material";
 import { useMainVideo } from "../hooks/useMainVideo";
 
 export const PropertyHeroCard = ({
@@ -23,6 +24,8 @@ export const PropertyHeroCard = ({
 }) => {
   const { videoUrl, loading: videoLoading, error: videoError } = useMainVideo();
   const [expandedVideo, setExpandedVideo] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
   const videoRef = useRef(null);
 
   // Manejar reproducción automática del video
@@ -33,10 +36,27 @@ export const PropertyHeroCard = ({
         video.pause();
         video.removeAttribute("autoplay");
       };
+      const handleLoadedData = () => {
+        video.volume = 0.7;
+        // Solo cambiar muted si el usuario ya interactuó
+        if (!showUnmutePrompt) {
+          video.muted = isMuted;
+        }
+      };
+
       video.addEventListener("ended", handleEnded);
-      return () => video.removeEventListener("ended", handleEnded);
+      video.addEventListener("loadeddata", handleLoadedData);
+
+      if (video.readyState >= 2) {
+        handleLoadedData();
+      }
+
+      return () => {
+        video.removeEventListener("ended", handleEnded);
+        video.removeEventListener("loadeddata", handleLoadedData);
+      };
     }
-  }, [videoUrl, showVideo]);
+  }, [videoUrl, showVideo, isMuted, showUnmutePrompt]);
 
   const handleVideoClick = () => {
     setExpandedVideo(true);
@@ -44,6 +64,19 @@ export const PropertyHeroCard = ({
 
   const handleCloseVideo = () => {
     setExpandedVideo(false);
+  };
+
+  const handleToggleMute = () => {
+    const video = videoRef.current;
+    if (video) {
+      const newMutedState = !isMuted;
+      video.muted = newMutedState;
+      setIsMuted(newMutedState);
+
+      if (showUnmutePrompt) {
+        setShowUnmutePrompt(false);
+      }
+    }
   };
 
   if (!mainImage) {
@@ -296,6 +329,88 @@ export const PropertyHeroCard = ({
                           >
                             <source src={videoUrl} type="video/mp4" />
                           </Box>
+
+                          {/* Botón flotante para activar audio */}
+                          {showUnmutePrompt && (
+                            <Box
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleMute();
+                              }}
+                              sx={{
+                                position: "absolute",
+                                top: 8,
+                                left: "50%",
+                                transform: "translateX(-50%)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                backgroundColor: "rgba(255, 193, 7, 0.95)",
+                                borderRadius: 2,
+                                padding: "4px 8px",
+                                color: "#000",
+                                zIndex: 1000,
+                                boxShadow: "0 2px 12px rgba(255, 193, 7, 0.4)",
+                                cursor: "pointer",
+                                animation: "bounce 1s infinite",
+                                "@keyframes bounce": {
+                                  "0%, 20%, 50%, 80%, 100%": {
+                                    transform: "translateX(-50%) translateY(0)",
+                                  },
+                                  "40%": {
+                                    transform:
+                                      "translateX(-50%) translateY(-6px)",
+                                  },
+                                  "60%": {
+                                    transform:
+                                      "translateX(-50%) translateY(-3px)",
+                                  },
+                                },
+                                "&:hover": {
+                                  backgroundColor: "rgba(255, 193, 7, 1)",
+                                  transform: "translateX(-50%) scale(1.05)",
+                                },
+                              }}
+                            >
+                              <VolumeOff sx={{ fontSize: 14 }} />
+                              <Typography
+                                variant="caption"
+                                sx={{ fontSize: "0.6rem", fontWeight: 700 }}
+                              >
+                                Audio
+                              </Typography>
+                            </Box>
+                          )}
+
+                          {/* Botón de control de audio siempre visible */}
+                          <IconButton
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleMute();
+                            }}
+                            sx={{
+                              position: "absolute",
+                              bottom: 6,
+                              right: 6,
+                              backgroundColor: "rgba(0, 0, 0, 0.7)",
+                              color: "white",
+                              zIndex: 999,
+                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                              width: 28,
+                              height: 28,
+                              "&:hover": {
+                                backgroundColor: "rgba(0, 0, 0, 0.9)",
+                                transform: "scale(1.1)",
+                              },
+                              transition: "all 0.2s ease-in-out",
+                            }}
+                          >
+                            {isMuted ? (
+                              <VolumeOff sx={{ fontSize: 16 }} />
+                            ) : (
+                              <VolumeUp sx={{ fontSize: 16 }} />
+                            )}
+                          </IconButton>
                           <Box
                             sx={{
                               position: "absolute",
