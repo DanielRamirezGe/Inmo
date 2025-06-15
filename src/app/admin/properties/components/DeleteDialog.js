@@ -20,8 +20,10 @@ const DeleteDialog = ({ open, onClose, onDelete, itemToDelete, loading }) => {
           <strong>
             {itemToDelete?.realEstateDevelopmentName ||
               itemToDelete?.developmentName ||
+              itemToDelete?.prototypeName ||
               itemToDelete?.name ||
-              itemToDelete?.title}
+              itemToDelete?.title ||
+              "este elemento"}
           </strong>
           ? Esta acción no se puede deshacer.
         </Typography>

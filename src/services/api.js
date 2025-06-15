@@ -567,7 +567,7 @@ export const api = {
   deleteMinkaasaProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.delete(`/prototype/minkaasa/${id}`);
+      await axiosInstance.delete(`/prototype/${id}`);
     } catch (error) {
       handleApiError(error);
     }
