@@ -25,7 +25,7 @@ export const PropertyHeroCard = ({
   const { videoUrl, loading: videoLoading, error: videoError } = useMainVideo();
   const [expandedVideo, setExpandedVideo] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [hasTriedAutoplay, setHasTriedAutoplay] = useState(false);
   const videoRef = useRef(null);
 
@@ -54,15 +54,12 @@ export const PropertyHeroCard = ({
       const handleEnded = () => {
         video.pause();
         video.removeAttribute("autoplay");
+        setIsPlaying(false);
       };
       const handleLoadedData = () => {
         video.volume = 0.7;
         // Asegurar que el video esté silenciado para autoplay
         video.muted = true;
-        // Solo cambiar muted si el usuario ya interactuó
-        if (!showUnmutePrompt) {
-          video.muted = isMuted;
-        }
       };
 
       video.addEventListener("ended", handleEnded);
@@ -77,7 +74,7 @@ export const PropertyHeroCard = ({
         video.removeEventListener("loadeddata", handleLoadedData);
       };
     }
-  }, [videoUrl, showVideo, isMuted, showUnmutePrompt]);
+  }, [videoUrl, showVideo, isMuted]);
 
   // Intentar autoplay con audio, si falla usar silenciado
   useEffect(() => {
@@ -112,7 +109,7 @@ export const PropertyHeroCard = ({
             // Si funciona, marcar como experimentado y actualizar estados
             markUserExperiencedAutoplay();
             setIsMuted(false);
-            setShowUnmutePrompt(false);
+            setIsPlaying(true);
             console.log("First-time autoplay with audio successful!");
             return;
           } catch (error) {
@@ -125,6 +122,7 @@ export const PropertyHeroCard = ({
             try {
               video.muted = true;
               await video.play();
+              setIsPlaying(true);
               markUserExperiencedAutoplay(); // Marcar como experimentado aunque haya sido silenciado
               console.log("First-time autoplay muted successful!");
               return;
@@ -138,7 +136,10 @@ export const PropertyHeroCard = ({
           console.log(
             "User already experienced autoplay before, waiting for user interaction"
           );
-          // El video permanece pausado hasta que el usuario interactúe
+          // Asegurar que el video esté pausado y listo para interacción manual
+          video.pause();
+          video.currentTime = 0;
+          setIsPlaying(false);
         }
       };
 
@@ -162,12 +163,47 @@ export const PropertyHeroCard = ({
       const newMutedState = !isMuted;
       video.muted = newMutedState;
       setIsMuted(newMutedState);
+    }
+  };
 
-      if (showUnmutePrompt) {
-        setShowUnmutePrompt(false);
-        // Si el usuario activa el audio manualmente, marcar como experimentado
-        if (!newMutedState) {
-          markUserExperiencedAutoplay();
+  const handlePlayVideo = async () => {
+    const video = videoRef.current;
+    if (video) {
+      try {
+        // Pausar otros videos
+        const allVideos = document.querySelectorAll("video");
+        allVideos.forEach((v) => {
+          if (v !== video && !v.paused) {
+            v.pause();
+          }
+        });
+
+        // Resetear el video
+        video.currentTime = 0;
+
+        // Intentar reproducir con audio primero
+        video.muted = false;
+        video.volume = 0.7;
+        setIsMuted(false);
+
+        await video.play();
+        setIsPlaying(true);
+        markUserExperiencedAutoplay(); // Marcar como experimentado
+        console.log("Manual video play with audio successful!");
+      } catch (error) {
+        console.log(
+          "Manual video play with audio failed, trying muted:",
+          error
+        );
+        try {
+          // Si falla con audio, intentar silenciado
+          video.muted = true;
+          setIsMuted(true);
+          await video.play();
+          setIsPlaying(true);
+          console.log("Manual video play muted successful!");
+        } catch (mutedError) {
+          console.log("Manual video play completely failed:", mutedError);
         }
       }
     }
@@ -412,7 +448,6 @@ export const PropertyHeroCard = ({
                           <Box
                             component="video"
                             ref={videoRef}
-                            autoPlay
                             muted
                             playsInline
                             sx={{
@@ -424,110 +459,80 @@ export const PropertyHeroCard = ({
                             <source src={videoUrl} type="video/mp4" />
                           </Box>
 
-                          {/* Botón flotante para activar audio */}
-                          {showUnmutePrompt && (
+                          {/* Botón de play - solo visible cuando está pausado */}
+                          {!isPlaying && (
                             <Box
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayVideo();
+                              }}
+                              sx={{
+                                position: "absolute",
+                                top: 12,
+                                left: 12,
+                                background:
+                                  "linear-gradient(135deg, #F0B92B 0%, #FFD666 100%)",
+                                borderRadius: "50%",
+                                p: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                cursor: "pointer",
+                                boxShadow: "0 3px 12px rgba(240, 185, 43, 0.4)",
+                                border: "2px solid rgba(255, 255, 255, 0.9)",
+                                zIndex: 10,
+                                transition:
+                                  "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                                "&:hover": {
+                                  transform: "scale(1.1)",
+                                  boxShadow:
+                                    "0 4px 16px rgba(240, 185, 43, 0.6)",
+                                },
+                              }}
+                            >
+                              <PlayArrowIcon
+                                sx={{
+                                  color: "#37474F",
+                                  fontSize: "1.5rem",
+                                  filter:
+                                    "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+                                  ml: 0.2,
+                                }}
+                              />
+                            </Box>
+                          )}
+
+                          {/* Botón de control de audio - solo visible cuando está reproduciéndose */}
+                          {isPlaying && (
+                            <IconButton
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleMute();
                               }}
                               sx={{
                                 position: "absolute",
-                                top: 8,
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
-                                backgroundColor: "rgba(255, 193, 7, 0.95)",
-                                borderRadius: 2,
-                                padding: "4px 8px",
-                                color: "#000",
-                                zIndex: 1000,
-                                boxShadow: "0 2px 12px rgba(255, 193, 7, 0.4)",
-                                cursor: "pointer",
-                                animation: "bounce 1s infinite",
-                                "@keyframes bounce": {
-                                  "0%, 20%, 50%, 80%, 100%": {
-                                    transform: "translateX(-50%) translateY(0)",
-                                  },
-                                  "40%": {
-                                    transform:
-                                      "translateX(-50%) translateY(-6px)",
-                                  },
-                                  "60%": {
-                                    transform:
-                                      "translateX(-50%) translateY(-3px)",
-                                  },
-                                },
+                                bottom: 6,
+                                right: 6,
+                                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                color: "white",
+                                zIndex: 999,
+                                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+                                width: 28,
+                                height: 28,
                                 "&:hover": {
-                                  backgroundColor: "rgba(255, 193, 7, 1)",
-                                  transform: "translateX(-50%) scale(1.05)",
+                                  backgroundColor: "rgba(0, 0, 0, 0.9)",
+                                  transform: "scale(1.1)",
                                 },
+                                transition: "all 0.2s ease-in-out",
                               }}
                             >
-                              <VolumeOff sx={{ fontSize: 14 }} />
-                              <Typography
-                                variant="caption"
-                                sx={{ fontSize: "0.6rem", fontWeight: 700 }}
-                              >
-                                Audio
-                              </Typography>
-                            </Box>
+                              {isMuted ? (
+                                <VolumeOff sx={{ fontSize: 16 }} />
+                              ) : (
+                                <VolumeUp sx={{ fontSize: 16 }} />
+                              )}
+                            </IconButton>
                           )}
-
-                          {/* Botón de control de audio siempre visible */}
-                          <IconButton
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleMute();
-                            }}
-                            sx={{
-                              position: "absolute",
-                              bottom: 6,
-                              right: 6,
-                              backgroundColor: "rgba(0, 0, 0, 0.7)",
-                              color: "white",
-                              zIndex: 999,
-                              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
-                              width: 28,
-                              height: 28,
-                              "&:hover": {
-                                backgroundColor: "rgba(0, 0, 0, 0.9)",
-                                transform: "scale(1.1)",
-                              },
-                              transition: "all 0.2s ease-in-out",
-                            }}
-                          >
-                            {isMuted ? (
-                              <VolumeOff sx={{ fontSize: 16 }} />
-                            ) : (
-                              <VolumeUp sx={{ fontSize: 16 }} />
-                            )}
-                          </IconButton>
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              top: "50%",
-                              left: "50%",
-                              transform: "translate(-50%, -50%)",
-                              bgcolor: "rgba(0, 0, 0, 0.6)",
-                              borderRadius: "50%",
-                              p: 1,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              opacity: 0,
-                              transition: "opacity 0.3s ease",
-                              "&:hover": {
-                                opacity: 1,
-                              },
-                            }}
-                          >
-                            <PlayArrowIcon
-                              sx={{ color: "white", fontSize: "1.5rem" }}
-                            />
-                          </Box>
                         </>
                       )}
                     </Box>

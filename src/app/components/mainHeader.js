@@ -11,7 +11,7 @@ export default function MainHeader() {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("xs"));
   const imagen = [
-    "/mainBanner/logo.png",
+    "/mainBanner/minkaasa.png",
     // Add more image paths as needed
   ];
   const slogan = "Donde los sueños se encuentran hogar";

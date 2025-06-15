@@ -46,7 +46,11 @@ export default function LoginPage() {
     <Box className={styles.container}>
       <Paper elevation={3} className={styles.paper}>
         <Box className={styles.logoContainer}>
-          <img src="/mainBanner/logo.png" alt="Logo" className={styles.logo} />
+          <img
+            src="/mainBanner/minkaasa.png"
+            alt="Logo"
+            className={styles.logo}
+          />
         </Box>
         <Typography variant="h5" className={styles.title}>
           Iniciar Sesión
