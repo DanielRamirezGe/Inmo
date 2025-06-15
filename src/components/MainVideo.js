@@ -14,6 +14,25 @@ export const MainVideo = () => {
   const videoRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
+  const [hasTriedAutoplay, setHasTriedAutoplay] = useState(false);
+
+  // Verificar si el usuario ya experimentó autoplay con audio
+  const hasUserHeardAutoplay = () => {
+    try {
+      return localStorage.getItem("video-autoplay-heard") === "true";
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // Marcar que el usuario ya escuchó autoplay
+  const markUserHeardAutoplay = () => {
+    try {
+      localStorage.setItem("video-autoplay-heard", "true");
+    } catch (error) {
+      console.log("Could not save to localStorage:", error);
+    }
+  };
 
   // Manejar reproducción automática una sola vez
   useEffect(() => {
@@ -37,13 +56,65 @@ export const MainVideo = () => {
     }
   }, [videoUrl]);
 
-  // Configurar volumen cuando el video se carga
+  // Intentar autoplay con audio, si falla usar silenciado
   useEffect(() => {
     const video = videoRef.current;
-    if (video && videoUrl) {
+    if (video && videoUrl && !hasTriedAutoplay) {
+      const tryPlayWithAudio = async () => {
+        // Marcar que ya intentamos autoplay
+        setHasTriedAutoplay(true);
+
+        // Pausar cualquier reproducción previa
+        video.pause();
+        video.currentTime = 0;
+
+        // Pausar otros videos en la página
+        const allVideos = document.querySelectorAll("video");
+        allVideos.forEach((v) => {
+          if (v !== video && !v.paused) {
+            v.pause();
+          }
+        });
+
+        // Verificar si el usuario ya escuchó autoplay antes
+        const userAlreadyHeard = hasUserHeardAutoplay();
+
+        if (!userAlreadyHeard) {
+          // Primera vez: intentar con audio
+          try {
+            video.muted = false;
+            video.volume = 0.7;
+            await video.play();
+
+            // Si funciona, marcar que el usuario ya escuchó y actualizar estados
+            markUserHeardAutoplay();
+            setIsMuted(false);
+            setShowUnmutePrompt(false);
+            console.log("First-time autoplay with audio successful!");
+            return;
+          } catch (error) {
+            console.log(
+              "First-time autoplay with audio failed, trying muted:",
+              error
+            );
+          }
+        } else {
+          console.log("User already heard autoplay before, playing muted");
+        }
+
+        // Si ya escuchó antes O si falló el autoplay con audio, reproducir silenciado
+        try {
+          video.muted = true;
+          await video.play();
+          console.log("Autoplay muted successful!");
+        } catch (mutedError) {
+          console.log("All autoplay attempts failed:", mutedError);
+        }
+      };
+
       const handleLoadedData = () => {
-        video.volume = 0.7; // Volumen al 70%
-        video.muted = isMuted; // Usar el estado de muted
+        // Intentar reproducir con audio cuando el video esté listo
+        tryPlayWithAudio();
       };
 
       video.addEventListener("loadeddata", handleLoadedData);
@@ -60,7 +131,7 @@ export const MainVideo = () => {
         }
       };
     }
-  }, [videoUrl, isMuted]);
+  }, [videoUrl, hasTriedAutoplay]);
 
   // Función para activar/desactivar audio
   const toggleMute = () => {
@@ -73,6 +144,10 @@ export const MainVideo = () => {
       // Ocultar el prompt después del primer clic
       if (showUnmutePrompt) {
         setShowUnmutePrompt(false);
+        // Si el usuario activa el audio manualmente, marcar como escuchado
+        if (!newMutedState) {
+          markUserHeardAutoplay();
+        }
       }
     }
   };
@@ -138,8 +213,7 @@ export const MainVideo = () => {
           autoPlay
           playsInline
           controls
-          muted={true}
-          volume={0.7}
+          muted
           crossOrigin="anonymous"
           onError={() => {
             // Si hay error de reproducción, el componente padre se re-renderizará
