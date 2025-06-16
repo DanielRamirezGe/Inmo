@@ -226,10 +226,18 @@ export const PropertyHeroCard = ({
 
     if (totalImages === 0) return { count: 0, height: 0, gap: 0 };
 
-    // Configuración simple y fija que no depende del tamaño de pantalla
-    const imageHeight = 90; // Altura fija para cada imagen
-    const gap = 8; // Gap fijo entre imágenes
-    const maxVisible = Math.min(4, totalImages); // Máximo 4 imágenes visibles
+    // Configuración ULTRA AGRESIVA para mantenerse dentro de 400px
+    const containerHeight = 400; // Altura total del contenedor
+    const padding = 16; // Padding del contenedor de imágenes (p: 1 = 8px * 2)
+    const availableHeight = containerHeight - padding;
+
+    // Calcular cuántas imágenes caben sin exceder la altura
+    const imageHeight = 85; // Altura fija más pequeña
+    const gap = 6; // Gap más pequeño
+    const maxPossibleImages = Math.floor(
+      (availableHeight + gap) / (imageHeight + gap)
+    );
+    const maxVisible = Math.min(maxPossibleImages, totalImages, 4); // Máximo 4 o lo que quepa
 
     return {
       count: maxVisible,
@@ -256,7 +264,11 @@ export const PropertyHeroCard = ({
         <Box
           sx={{
             height: { xs: "250px", sm: "400px" },
+            maxHeight: { xs: "250px", sm: "400px" }, // Forzar altura máxima
             minHeight: "200px",
+            overflow: "hidden", // Evitar que el contenido se desborde
+            paddingTop: 2,
+            paddingLeft: 1,
           }}
         >
           {/* Mobile: Solo imagen principal */}
@@ -501,12 +513,14 @@ export const PropertyHeroCard = ({
                 <Box
                   sx={{
                     height: "100%",
+                    maxHeight: "400px", // Forzar altura máxima absoluta
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "flex-start",
                     gap: `${imageLayout.gap}px`,
                     p: 1,
-                    overflowY: "hidden", // Evitar scroll, mantener contenido dentro del contenedor
+                    overflow: "hidden", // Ocultar cualquier desbordamiento
+                    boxSizing: "border-box", // Incluir padding en el cálculo de altura
                   }}
                 >
                   {secondaryImages
@@ -518,9 +532,12 @@ export const PropertyHeroCard = ({
                         sx={{
                           position: "relative",
                           height: `${imageLayout.height}px`,
+                          maxHeight: `${imageLayout.height}px`, // Forzar altura máxima
+                          minHeight: `${imageLayout.height}px`, // Forzar altura mínima
                           borderRadius: 1,
                           overflow: "hidden",
                           cursor: "pointer",
+                          flexShrink: 0, // No permitir que se encoja
                           "&:hover": {
                             transform: "scale(1.02)",
                             boxShadow: 2,
