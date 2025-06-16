@@ -220,24 +220,19 @@ export const PropertyHeroCard = ({
     return null;
   }
 
-  // Función para calcular layout de imágenes secundarias
+  // Función simplificada para calcular layout de imágenes secundarias
   const calculateSecondaryImageLayout = () => {
     const totalImages = secondaryImages.length;
-
     if (totalImages === 0) return { count: 0, height: 0, gap: 0 };
 
-    // Configuración ULTRA AGRESIVA para mantenerse dentro de 400px
-    const containerHeight = 400; // Altura total del contenedor
-    const padding = 16; // Padding del contenedor de imágenes (p: 1 = 8px * 2)
-    const availableHeight = containerHeight - padding;
-
-    // Calcular cuántas imágenes caben sin exceder la altura
-    const imageHeight = 85; // Altura fija más pequeña
-    const gap = 6; // Gap más pequeño
+    // Configuración simplificada basada en altura disponible
+    const containerHeight = 384; // Altura disponible (400px - padding)
+    const imageHeight = 90;
+    const gap = 8;
     const maxPossibleImages = Math.floor(
-      (availableHeight + gap) / (imageHeight + gap)
+      (containerHeight + gap) / (imageHeight + gap)
     );
-    const maxVisible = Math.min(maxPossibleImages, totalImages, 4); // Máximo 4 o lo que quepa
+    const maxVisible = Math.min(maxPossibleImages, totalImages, 4);
 
     return {
       count: maxVisible,
@@ -261,14 +256,13 @@ export const PropertyHeroCard = ({
           position: "relative",
         }}
       >
+        {/* Contenedor principal con altura fija */}
         <Box
           sx={{
             height: { xs: "250px", sm: "400px" },
-            maxHeight: { xs: "250px", sm: "400px" }, // Forzar altura máxima
-            minHeight: "200px",
-            overflow: "hidden", // Evitar que el contenido se desborde
-            paddingTop: 2,
-            paddingLeft: 1,
+            position: "relative",
+            overflow: "hidden",
+            p: 1, // Padding uniforme para todas las pantallas
           }}
         >
           {/* Mobile: Solo imagen principal */}
@@ -278,6 +272,7 @@ export const PropertyHeroCard = ({
               position: "relative",
               width: "100%",
               height: "100%",
+              borderRadius: 1,
               overflow: "hidden",
               cursor: "pointer",
               "&:hover": {
@@ -325,22 +320,44 @@ export const PropertyHeroCard = ({
             </Box>
           </Box>
 
-          {/* Tablet+: Grid simétrico 8:4 con subdivisión 6:2 */}
+          {/* Desktop/Tablet: Grid layout */}
           <Grid
             container
             spacing={1}
-            sx={{ height: "100%", display: { xs: "none", sm: "flex" } }}
+            sx={{
+              height: "100%",
+              display: { xs: "none", sm: "flex" },
+              m: 0, // Eliminar margin del Grid
+              width: "100%", // Asegurar ancho completo
+            }}
           >
-            {/* Bloque principal (8/12) - Imagen principal + Video */}
-            <Grid item xs={secondaryImages.length > 0 ? 8 : 12}>
-              <Grid container spacing={1} sx={{ height: "100%" }}>
-                {/* Imagen principal (6/8 del bloque principal) */}
-                <Grid item xs={showVideo && videoUrl && !videoError ? 9 : 12}>
+            {/* Bloque principal */}
+            <Grid
+              item
+              xs={secondaryImages.length > 0 ? 8 : 12}
+              sx={{ p: "4px !important" }} // Override del padding del Grid item
+            >
+              <Grid
+                container
+                spacing={1}
+                sx={{
+                  height: "100%",
+                  m: 0,
+                  width: "100%",
+                }}
+              >
+                {/* Imagen principal */}
+                <Grid
+                  item
+                  xs={showVideo && videoUrl && !videoError ? 9 : 12}
+                  sx={{ p: "4px !important" }}
+                >
                   <Box
                     sx={{
                       position: "relative",
                       width: "100%",
                       height: "100%",
+                      borderRadius: 1,
                       overflow: "hidden",
                       cursor: "pointer",
                       "&:hover": {
@@ -378,7 +395,7 @@ export const PropertyHeroCard = ({
                         background:
                           "linear-gradient(transparent, rgba(0,0,0,0.8))",
                         color: "white",
-                        p: 3,
+                        p: 2,
                         opacity: 0,
                         transition: "opacity 0.3s ease",
                       }}
@@ -390,9 +407,9 @@ export const PropertyHeroCard = ({
                   </Box>
                 </Grid>
 
-                {/* Video (3/12 del bloque principal = 2/8) */}
+                {/* Video */}
                 {showVideo && videoUrl && !videoError && (
-                  <Grid item xs={3}>
+                  <Grid item xs={3} sx={{ p: "4px !important" }}>
                     <Box
                       sx={{
                         height: "100%",
@@ -417,9 +434,9 @@ export const PropertyHeroCard = ({
                             muted
                             playsInline
                             sx={{
-                              height: "100%",
                               width: "100%",
-                              objectFit: "contain",
+                              height: "100%",
+                              objectFit: "cover", // Cambiar de contain a cover para mejor fit
                             }}
                           >
                             <source src={videoUrl} type="video/mp4" />
@@ -507,20 +524,16 @@ export const PropertyHeroCard = ({
               </Grid>
             </Grid>
 
-            {/* Imágenes secundarias (4/12) */}
+            {/* Imágenes secundarias */}
             {secondaryImages.length > 0 && (
-              <Grid item xs={4}>
+              <Grid item xs={4} sx={{ p: "4px !important" }}>
                 <Box
                   sx={{
                     height: "100%",
-                    maxHeight: "400px", // Forzar altura máxima absoluta
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "flex-start",
                     gap: `${imageLayout.gap}px`,
-                    p: 1,
-                    overflow: "hidden", // Ocultar cualquier desbordamiento
-                    boxSizing: "border-box", // Incluir padding en el cálculo de altura
+                    overflow: "hidden",
                   }}
                 >
                   {secondaryImages
@@ -532,12 +545,10 @@ export const PropertyHeroCard = ({
                         sx={{
                           position: "relative",
                           height: `${imageLayout.height}px`,
-                          maxHeight: `${imageLayout.height}px`, // Forzar altura máxima
-                          minHeight: `${imageLayout.height}px`, // Forzar altura mínima
                           borderRadius: 1,
                           overflow: "hidden",
                           cursor: "pointer",
-                          flexShrink: 0, // No permitir que se encoja
+                          flexShrink: 0,
                           "&:hover": {
                             transform: "scale(1.02)",
                             boxShadow: 2,

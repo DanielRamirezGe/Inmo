@@ -51,6 +51,8 @@ import {
 } from "@/utils/contactHelpers";
 import { MediaCard } from "./MediaCard";
 import { PropertyHeroCard } from "./PropertyHeroCard";
+import ContactCard from "./ContactCard";
+import { AppointmentButton } from "./appointments";
 
 /**
  * Shared Property Detail View component
@@ -727,6 +729,83 @@ export default function PropertyDetailView({
                   />
                 </Grid>
               </Grid>
+
+              {/* Sección de visita */}
+              <Divider sx={{ mt: 3, mb: 2.5 }} />
+
+              <Box sx={{ textAlign: "center" }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontSize: { xs: "1rem", md: "1.1rem" },
+                    fontWeight: 600,
+                    color: "secondary.main",
+                    mb: 1.5,
+                  }}
+                >
+                  ¿Te gustó esta propiedad y te gustaría conocerla en persona?
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "text.secondary",
+                    fontSize: { xs: "0.85rem", md: "0.9rem" },
+                    mb: 2.5,
+                  }}
+                >
+                  Agenda una visita personalizada y conoce todos los detalles de
+                  tu futuro hogar
+                </Typography>
+
+                <AppointmentButton
+                  prototypeId={propertyId}
+                  propertyName={`${displayProperty?.prototypeName}${
+                    displayProperty?.developmentName ||
+                    displayProperty?.condominium
+                      ? ` - ${
+                          displayProperty.developmentName ||
+                          displayProperty.condominium
+                        }`
+                      : ""
+                  }`}
+                  propertyData={{
+                    name: displayProperty?.prototypeName,
+                    development:
+                      displayProperty?.developmentName ||
+                      displayProperty?.condominium,
+                    location:
+                      displayProperty?.zone || displayProperty?.location,
+                    city: displayProperty?.city,
+                    state: displayProperty?.state,
+                    price: displayProperty?.price,
+                    bedroom: displayProperty?.bedroom,
+                    bathroom: displayProperty?.bathroom,
+                    parking: displayProperty?.parking,
+                    size: displayProperty?.size,
+                  }}
+                  onSuccess={() => {
+                    console.log(
+                      "Visita agendada exitosamente desde PropertyDetailView"
+                    );
+                  }}
+                  size="large"
+                  sx={{
+                    minWidth: { xs: "100%", sm: "280px" },
+                    py: { xs: 1.5, md: 1.8 },
+                    fontSize: { xs: "0.9rem", md: "1rem" },
+                    fontWeight: 600,
+                    boxShadow: 3,
+                    "&:hover": {
+                      boxShadow: 6,
+                      transform: "translateY(-2px)",
+                    },
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Agendar Visita Personalizada
+                </AppointmentButton>
+              </Box>
             </CardContent>
           </Card>
 
@@ -740,156 +819,16 @@ export default function PropertyDetailView({
           </Box>
 
           {/* Contact card for WhatsApp and Messenger */}
-          <Card
+          <ContactCard
+            onWhatsAppClick={handleWhatsAppClick}
+            onMessengerClick={handleFacebookClick}
+            showAppointmentButton={false}
+            description="Selecciona tu método de contacto preferido para recibir información sobre esta propiedad:"
+            footer="Respuesta rápida • Atención personalizada • Asistencia inmediata"
             sx={{
               mb: { xs: 3, md: 4 },
-              boxShadow: 3,
-              p: { xs: 1.5, md: 2 },
-              background:
-                "linear-gradient(135deg, #FFFFFF 0%, rgba(255, 207, 64, 0.15) 100%)",
-              position: "relative",
-              borderRadius: 2,
-              overflow: "hidden",
             }}
-          >
-            <CardContent
-              sx={{
-                px: { xs: 2, md: 3 },
-                py: { xs: 2, md: 3 },
-                color: "white",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  mb: 2.5,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontSize: { xs: "1.1rem", md: "1.25rem" },
-                    fontWeight: 600,
-                    flex: 1,
-                    color: "secondary.main",
-                  }}
-                >
-                  ¿Te interesa esta propiedad?
-                </Typography>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{ alignItems: "center" }}
-                >
-                  <ForumIcon
-                    sx={{
-                      fontSize: { xs: "1.8rem", md: "2rem" },
-                      color: "custom.facebookBlue",
-                    }}
-                  />
-                  <WhatsAppIcon
-                    sx={{
-                      fontSize: { xs: "1.8rem", md: "2rem" },
-                      color: "success.main",
-                    }}
-                  />
-                </Stack>
-              </Box>
-
-              <Typography
-                variant="body2"
-                sx={{
-                  mb: 2.5,
-                  color: "text.secondary",
-                  fontSize: { xs: "0.85rem", md: "0.9rem" },
-                }}
-              >
-                Selecciona tu método de contacto preferido para recibir
-                información sobre esta propiedad:
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    startIcon={
-                      <ForumIcon
-                        sx={{
-                          fontSize: { xs: "1.1rem", md: "1.25rem" },
-                          color: "white",
-                        }}
-                      />
-                    }
-                    onClick={handleFacebookClick}
-                    sx={{
-                      py: { xs: 1, md: 1.3 },
-                      fontSize: { xs: "0.8rem", md: "0.9rem" },
-                      fontWeight: 500,
-                      boxShadow: 2,
-                      bgcolor: "custom.facebookBlue",
-                      color: "white",
-                      "&:hover": {
-                        bgcolor: "#0b5fcc",
-                        boxShadow: 4,
-                        transform: "translateY(-2px)",
-                      },
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                  >
-                    Messenger
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    fullWidth
-                    startIcon={
-                      <WhatsAppIcon
-                        sx={{
-                          fontSize: { xs: "1.1rem", md: "1.25rem" },
-                          color: "white",
-                        }}
-                      />
-                    }
-                    onClick={handleWhatsAppClick}
-                    sx={{
-                      py: { xs: 1, md: 1.3 },
-                      fontSize: { xs: "0.8rem", md: "0.9rem" },
-                      fontWeight: 500,
-                      boxShadow: 2,
-                      bgcolor: "custom.whatsappGreen",
-                      color: "white",
-                      "&:hover": {
-                        bgcolor: "#128C7E",
-                        boxShadow: 4,
-                        transform: "translateY(-2px)",
-                      },
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                  >
-                    WhatsApp
-                  </Button>
-                </Grid>
-              </Grid>
-
-              <Typography
-                variant="caption"
-                align="center"
-                sx={{
-                  display: "block",
-                  mt: 2,
-                  fontSize: { xs: "0.75rem", md: "0.8rem" },
-                  color: "text.secondary",
-                }}
-              >
-                Respuesta rápida • Atención personalizada • Asistencia inmediata
-              </Typography>
-            </CardContent>
-          </Card>
+          />
 
           {/* Descriptions */}
           {displayProperty.descriptions && (

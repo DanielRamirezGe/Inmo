@@ -10,9 +10,10 @@ import {
 } from "@mui/material";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ForumIcon from "@mui/icons-material/Forum";
+import { AppointmentButton } from "./appointments";
 
 /**
- * Componente de tarjeta de contacto con botones para WhatsApp y Messenger
+ * Componente de tarjeta de contacto con botones para WhatsApp, Messenger y agendar visita
  *
  * @param {Object} props - Propiedades del componente
  * @param {Function} props.onWhatsAppClick - Función para manejar clic en WhatsApp
@@ -21,14 +22,22 @@ import ForumIcon from "@mui/icons-material/Forum";
  * @param {string} [props.description] - Descripción personalizada
  * @param {string} [props.footer] - Texto de pie de página personalizado
  * @param {Object} [props.sx] - Estilos adicionales para la tarjeta
+ * @param {number} [props.prototypeId] - ID del prototipo de la propiedad para las visitas
+ * @param {string} [props.propertyName] - Nombre de la propiedad para las visitas
+ * @param {Function} [props.onAppointmentSuccess] - Función llamada cuando se agenda una visita exitosamente
+ * @param {boolean} [props.showAppointmentButton] - Si mostrar el botón de agendar cita (default: true)
  */
 const ContactCard = ({
   onWhatsAppClick,
   onMessengerClick,
   title = "¿Te interesa esta propiedad?",
-  description = "Selecciona tu método de contacto preferido para recibir información sobre esta propiedad:",
-  footer = "Respuesta rápida • Atención personalizada • Asistencia inmediata",
+  description = "Contacta con nosotros a través de tu canal preferido o agenda una visita personalizada:",
+  footer = "Respuesta rápida • Visitas personalizadas • Atención inmediata",
   sx = {},
+  prototypeId = null,
+  propertyName = "",
+  onAppointmentSuccess = () => {},
+  showAppointmentButton = true,
 }) => {
   return (
     <Card
@@ -96,6 +105,7 @@ const ContactCard = ({
         </Typography>
 
         <Grid container spacing={2}>
+          {/* Primera fila: Messenger y WhatsApp */}
           <Grid item xs={6}>
             <Button
               variant="contained"
@@ -159,6 +169,26 @@ const ContactCard = ({
               WhatsApp
             </Button>
           </Grid>
+
+          {/* Segunda fila: Botón de Agendar Visita (ancho completo) */}
+          {showAppointmentButton && (
+            <Grid item xs={12}>
+              <AppointmentButton
+                prototypeId={prototypeId}
+                propertyName={propertyName}
+                onSuccess={onAppointmentSuccess}
+                fullWidth
+                sx={{
+                  py: { xs: 1, md: 1.3 },
+                  fontSize: { xs: "0.8rem", md: "0.9rem" },
+                  fontWeight: 500,
+                  boxShadow: 2,
+                }}
+              >
+                Agendar Visita
+              </AppointmentButton>
+            </Grid>
+          )}
         </Grid>
 
         <Typography
