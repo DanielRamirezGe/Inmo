@@ -15,18 +15,21 @@ const PersonalInfoStep = ({ formData, onInputChange, isValid }) => {
       icon: <Person sx={{ mr: 1, color: "primary.main" }} />,
       required: true,
       gridSize: { xs: 12, md: 6 },
+      showOnMobile: true,
     },
     {
       key: "userLastNameP",
       label: "Apellido Paterno*",
       required: true,
       gridSize: { xs: 12, md: 6 },
+      showOnMobile: false,
     },
     {
       key: "userLastNameM",
       label: "Apellido Materno",
       required: false,
       gridSize: { xs: 12, md: 6 },
+      showOnMobile: false,
     },
     {
       key: "phone",
@@ -34,6 +37,7 @@ const PersonalInfoStep = ({ formData, onInputChange, isValid }) => {
       icon: <Phone sx={{ mr: 1, color: "primary.main" }} />,
       required: true,
       gridSize: { xs: 12, md: 6 },
+      showOnMobile: true,
     },
     {
       key: "email",
@@ -42,6 +46,7 @@ const PersonalInfoStep = ({ formData, onInputChange, isValid }) => {
       icon: <Email sx={{ mr: 1, color: "primary.main" }} />,
       required: true,
       gridSize: { xs: 12 },
+      showOnMobile: true,
     },
     {
       key: "comment",
@@ -56,6 +61,7 @@ const PersonalInfoStep = ({ formData, onInputChange, isValid }) => {
       placeholder:
         "¿Hay algo específico que te gustaría conocer durante la visita? (opcional)",
       gridSize: { xs: 12 },
+      showOnMobile: false,
     },
   ];
 
@@ -87,13 +93,23 @@ const PersonalInfoStep = ({ formData, onInputChange, isValid }) => {
                 rows,
                 placeholder,
                 gridSize,
+                showOnMobile,
               }) => {
                 const fieldValue = formData[key];
                 const hasValue = !!fieldValue;
                 const isFieldCompleted = hasValue; // Verde para cualquier campo con valor
 
                 return (
-                  <Grid item {...gridSize} key={key}>
+                  <Grid
+                    item
+                    {...gridSize}
+                    key={key}
+                    sx={{
+                      display: showOnMobile
+                        ? "block"
+                        : { xs: "none", md: "block" },
+                    }}
+                  >
                     <TextField
                       fullWidth
                       label={label}
