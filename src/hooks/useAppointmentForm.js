@@ -14,13 +14,24 @@ export const useAppointmentForm = () => {
   });
   const [appointmentCreated, setAppointmentCreated] = useState(null);
 
+  // Detectar si estamos en mobile
+  const isMobile = () => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 900; // md breakpoint de MUI
+    }
+    return false;
+  };
+
   // Validaciones
   const isStep1Valid = selectedDate && selectedTime;
-  const isStep2Valid =
-    formData.userName &&
-    formData.userLastNameP &&
-    formData.email &&
-    formData.phone;
+
+  // Validación condicional según el dispositivo
+  const isStep2Valid = isMobile()
+    ? formData.userName && formData.email && formData.phone // Solo campos esenciales en mobile
+    : formData.userName &&
+      formData.userLastNameP &&
+      formData.email &&
+      formData.phone; // Todos los campos en desktop
 
   // Handlers
   const handleNext = () => {
@@ -70,15 +81,15 @@ export const useAppointmentForm = () => {
   const generatePropertyComment = (propertyName, propertyData) => {
     if (!propertyName && !propertyData) return "";
 
-    const lines = ["📋 INFORMACIÓN DE LA PROPIEDAD DE INTERÉS:", ""];
+    const lines = ["INFORMACIÓN DE LA PROPIEDAD DE INTERÉS:", ""];
 
     // Información básica
     if (propertyData?.name || propertyName) {
-      lines.push(`🏠 Propiedad: ${propertyData?.name || propertyName}`);
+      lines.push(`Propiedad: ${propertyData?.name || propertyName}`);
     }
 
     if (propertyData?.development) {
-      lines.push(`🏗️ Desarrollo: ${propertyData.development}`);
+      lines.push(`Desarrollo: ${propertyData.development}`);
     }
 
     // Ubicación
@@ -88,7 +99,7 @@ export const useAppointmentForm = () => {
     if (propertyData?.state) locationParts.push(propertyData.state);
 
     if (locationParts.length > 0) {
-      lines.push(`📍 Ubicación: ${locationParts.join(", ")}`);
+      lines.push(`Ubicación: ${locationParts.join(", ")}`);
     }
 
     // Características
@@ -98,7 +109,7 @@ export const useAppointmentForm = () => {
         currency: "MXN",
         maximumFractionDigits: 0,
       });
-      lines.push(`💰 Precio: ${formatter.format(propertyData.price)}`);
+      lines.push(`Precio: ${formatter.format(propertyData.price)}`);
     }
 
     const features = [];
@@ -110,10 +121,10 @@ export const useAppointmentForm = () => {
     if (propertyData?.size) features.push(`${propertyData.size} m²`);
 
     if (features.length > 0) {
-      lines.push(`🏡 Características: ${features.join(", ")}`);
+      lines.push(`Características: ${features.join(", ")}`);
     }
 
-    lines.push("", "💬 Comentarios adicionales del cliente:");
+    lines.push("", "Comentarios adicionales del cliente:");
     return lines.join("\n");
   };
 
@@ -132,24 +143,32 @@ export const useAppointmentForm = () => {
       finalComment = propertyInfo;
       if (userComments) {
         finalComment = propertyInfo.replace(
-          "💬 Comentarios adicionales del cliente:",
-          `💬 Comentarios adicionales del cliente:\n${userComments}`
+          "Comentarios adicionales del cliente:",
+          `Comentarios adicionales del cliente:\n${userComments}`
         );
       }
     } else if (userComments) {
       finalComment = userComments;
     }
 
-    return {
+    // En mobile, enviar apellidos como strings vacíos si no se proporcionaron
+    const appointmentData = {
       prototypeId,
       date: appointmentDateTime.toISOString(),
       userName: formData.userName,
-      userLastNameP: formData.userLastNameP,
-      userLastNameM: formData.userLastNameM || undefined,
+      userLastNameP: formData.userLastNameP || "", // Vacío en mobile si no se llenó
+      userLastNameM: formData.userLastNameM || "", // Vacío en mobile si no se llenó
       email: formData.email,
       phone: formData.phone,
       comment: finalComment || undefined,
     };
+
+    // Eliminar userLastNameM si está vacío para mantener la API limpia
+    if (!appointmentData.userLastNameM) {
+      delete appointmentData.userLastNameM;
+    }
+
+    return appointmentData;
   };
 
   return {
