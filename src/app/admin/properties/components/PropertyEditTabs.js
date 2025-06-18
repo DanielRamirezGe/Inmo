@@ -16,6 +16,7 @@ import { FORM_TYPES } from "../constants";
 import { getBasicPropertySections } from "./fieldsConfig";
 import Step2Descriptions from "./Step2Descriptions";
 import Step3Images from "./Step3Images";
+import Step4Video from "./Step4Video";
 
 // Componente TabPanel
 function TabPanel({ children, value, index, ...other }) {
@@ -48,6 +49,7 @@ const PropertyEditTabs = ({
   onUpdateBasic,
   onUpdateDescriptions,
   onUpdateImages,
+  onUpdateVideo,
   loading,
   error,
   setError,
@@ -152,6 +154,30 @@ const PropertyEditTabs = ({
     }
   };
 
+  // Manejar guardado del tab 4 (video)
+  const handleSaveVideo = async (videoFile) => {
+    try {
+      setTabLoading((prev) => ({ ...prev, 3: true }));
+      setTabErrors((prev) => ({ ...prev, 3: null }));
+
+      const result = await onUpdateVideo(videoFile);
+
+      if (result.success) {
+        console.log("Video actualizado exitosamente");
+
+        // Usar el mensaje del resultado si está disponible, o uno por defecto
+        const message = result.message || "✅ Video actualizado correctamente";
+        showSuccessAndClose(message);
+      } else {
+        setTabErrors((prev) => ({ ...prev, 3: result.error }));
+      }
+    } catch (error) {
+      setTabErrors((prev) => ({ ...prev, 3: error.message }));
+    } finally {
+      setTabLoading((prev) => ({ ...prev, 3: false }));
+    }
+  };
+
   // Componente skeleton para campos de formulario
   const FieldSkeleton = () => (
     <Box>
@@ -210,6 +236,78 @@ const PropertyEditTabs = ({
     </Box>
   );
 
+  // Componente skeleton para video
+  const VideoSkeleton = () => (
+    <Box>
+      <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
+      <Skeleton variant="text" width="70%" height={20} sx={{ mb: 3 }} />
+
+      {/* Skeleton para video actual */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Skeleton
+              variant="circular"
+              width={24}
+              height={24}
+              sx={{ mr: 1 }}
+            />
+            <Skeleton variant="text" width="30%" height={24} />
+          </Box>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Skeleton variant="rectangular" width={100} height={36} />
+            <Skeleton variant="rectangular" width={120} height={36} />
+            <Skeleton variant="rectangular" width={80} height={24} />
+          </Box>
+        </CardContent>
+      </Card>
+
+      {/* Skeleton para upload */}
+      <Card>
+        <CardContent>
+          <Skeleton variant="text" width="30%" height={24} sx={{ mb: 2 }} />
+          <Box
+            sx={{
+              border: "2px dashed #ccc",
+              borderRadius: 2,
+              p: 4,
+              textAlign: "center",
+              mb: 3,
+            }}
+          >
+            <Skeleton
+              variant="circular"
+              width={48}
+              height={48}
+              sx={{ mx: "auto", mb: 2 }}
+            />
+            <Skeleton
+              variant="text"
+              width="40%"
+              height={24}
+              sx={{ mx: "auto", mb: 1 }}
+            />
+            <Skeleton
+              variant="text"
+              width="60%"
+              height={20}
+              sx={{ mx: "auto", mb: 2 }}
+            />
+            <Skeleton
+              variant="rectangular"
+              width={150}
+              height={36}
+              sx={{ mx: "auto" }}
+            />
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Skeleton variant="rectangular" width={150} height={36} />
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -222,6 +320,7 @@ const PropertyEditTabs = ({
           <Tab label="Datos Básicos" {...a11yProps(0)} />
           <Tab label="Descripciones" {...a11yProps(1)} />
           <Tab label="Imágenes" {...a11yProps(2)} />
+          <Tab label="Video" {...a11yProps(3)} />
         </Tabs>
       </Box>
 
@@ -364,6 +463,36 @@ const PropertyEditTabs = ({
             showButtons={true}
             buttonText="Guardar Imágenes"
             prototypeId={prototypeId}
+          />
+        )}
+      </TabPanel>
+
+      {/* Tab 4: Video */}
+      <TabPanel value={currentTab} index={3}>
+        <Typography variant="h6" sx={{ mb: 3 }}>
+          Video de la propiedad
+        </Typography>
+
+        {tabErrors[3] && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => setTabErrors((prev) => ({ ...prev, 3: null }))}
+          >
+            {tabErrors[3]}
+          </Alert>
+        )}
+
+        {initialDataLoading ? (
+          <VideoSkeleton />
+        ) : (
+          <Step4Video
+            prototypeId={prototypeId}
+            onSubmit={handleSaveVideo}
+            loading={tabLoading[3]}
+            error={tabErrors[3]}
+            showButtons={true}
+            buttonText="Guardar Video"
           />
         )}
       </TabPanel>

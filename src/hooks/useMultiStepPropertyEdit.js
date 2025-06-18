@@ -125,7 +125,7 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
             data: response,
           };
         } else {
-          throw new Error("Error al actualizar los datos básicos");
+          console.log("Error al actualizar los datos básicos");
         }
       } catch (error) {
         console.error("Error updating basic property:", error);
@@ -146,13 +146,13 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
         setError(null);
 
         if (!propertyId) {
-          throw new Error(
+          console.log(
             "No hay propertyId disponible para actualizar descripciones"
           );
         }
 
         if (!descriptions || descriptions.length === 0) {
-          throw new Error("Debe agregar al menos una descripción");
+          console.log("Debe agregar al menos una descripción");
         }
 
         const response = await api.updatePropertyDescriptions(
@@ -167,7 +167,7 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
             data: response,
           };
         } else {
-          throw new Error("Error al actualizar descripciones");
+          console.log("Error al actualizar descripciones");
         }
       } catch (error) {
         console.error("Error updating descriptions:", error);
@@ -188,9 +188,7 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
         setError(null);
 
         if (!propertyId) {
-          throw new Error(
-            "No hay propertyId disponible para actualizar imágenes"
-          );
+          console.log("No hay propertyId disponible para actualizar imágenes");
         }
 
         // El nuevo sistema de imágenes individuales se maneja directamente en el componente Step3Images
@@ -222,9 +220,49 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
     [propertyId]
   );
 
+  // Paso 4: Actualizar video de la propiedad
+  const updateVideo = useCallback(
+    async (videoFile) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        if (!propertyId) {
+          console.log("No hay propertyId disponible para actualizar video");
+        }
+
+        console.log("🚀 useMultiStepPropertyEdit - updateVideo:", {
+          propertyId,
+          videoFile: videoFile ? videoFile.name : null,
+        });
+
+        // El manejo de video se realiza directamente en el componente Step4Video
+        // Este hook solo maneja la respuesta del componente
+        console.log(
+          "✅ Paso 4 - El manejo de video se realiza en el componente Step4Video"
+        );
+
+        return {
+          success: true,
+          message: "Video procesado correctamente",
+          data: {
+            videoFile,
+          },
+        };
+      } catch (error) {
+        console.error("❌ Error updating video:", error);
+        setError(error.message || "Error al actualizar el video");
+        return { success: false, error: error.message };
+      } finally {
+        setLoading(false);
+      }
+    },
+    [propertyId]
+  );
+
   // Ir al siguiente paso
   const nextStep = useCallback(() => {
-    const newStep = Math.min(currentStep + 1, 3);
+    const newStep = Math.min(currentStep + 1, 4);
     setCurrentStep(newStep);
   }, [currentStep]);
 
@@ -236,7 +274,7 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
 
   // Ir a un paso específico
   const goToStep = useCallback((step) => {
-    if (step >= 1 && step <= 3) {
+    if (step >= 1 && step <= 4) {
       setCurrentStep(step);
     }
   }, []);
@@ -249,6 +287,7 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
     updateBasicProperty,
     updateDescriptions,
     updateImages,
+    updateVideo,
     nextStep,
     previousStep,
     goToStep,

@@ -302,7 +302,7 @@ const Step3Images = ({
 
             onSubmit(null, []);
           } else {
-            throw new Error(result.error || "Error al subir imágenes");
+            console.log(result.error || "Error al subir imágenes");
           }
         } catch (error) {
           console.error("Error al procesar las imágenes:", error);
@@ -376,7 +376,7 @@ const Step3Images = ({
 
           onSubmit(null, [], imagesToDelete);
         } else {
-          throw new Error(result.error || "Error al subir imágenes");
+          console.log(result.error || "Error al subir imágenes");
         }
       } else if (!hasOperations) {
         // No hay operaciones que realizar

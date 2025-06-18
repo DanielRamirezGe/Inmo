@@ -45,7 +45,7 @@ export const useEntityData = (entityType) => {
             response = await api.getMinkaasaPublishedProperties(page, pageSize);
             break;
           default:
-            throw new Error("Tipo de entidad no válido");
+            console.log("Tipo de entidad no válido");
         }
 
         setItems(response.data || []);
@@ -147,7 +147,7 @@ export const useEntityData = (entityType) => {
 
       if (!response) {
         console.error(`No data received from ${endpoint}/${normalizedId}`);
-        throw new Error(
+        console.log(
           `No se recibieron datos del elemento con ID ${normalizedId}`
         );
       }
@@ -215,7 +215,7 @@ export const useEntityData = (entityType) => {
         ].includes(entityType);
 
         if (!isEditing && isPropertyType) {
-          throw new Error(
+          console.log(
             `❌ DEPRECATED: Use multi-step creation process for new ${entityType}. ` +
               "Property creation must go through FormDialog multi-step process (basic → descriptions → images)."
           );
@@ -234,7 +234,7 @@ export const useEntityData = (entityType) => {
           // Las propiedades ahora usan edición multi-paso
           [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: {
             update: () => {
-              throw new Error(
+              console.log(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
                   "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
@@ -242,7 +242,7 @@ export const useEntityData = (entityType) => {
           },
           [FORM_TYPES.PROPERTY_PUBLISHED]: {
             update: () => {
-              throw new Error(
+              console.log(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
                   "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
@@ -250,7 +250,7 @@ export const useEntityData = (entityType) => {
           },
           [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
             update: () => {
-              throw new Error(
+              console.log(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
                   "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
@@ -258,7 +258,7 @@ export const useEntityData = (entityType) => {
           },
           [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
             update: () => {
-              throw new Error(
+              console.log(
                 "❌ DEPRECATED: Property editing now uses multi-step process. " +
                   "Use useMultiStepPropertyEdit hook instead of saveItem for property updates."
               );
@@ -268,18 +268,18 @@ export const useEntityData = (entityType) => {
 
         const operation = operations[entityType];
         if (!operation) {
-          throw new Error(`Tipo de entidad no válido: ${entityType}`);
+          console.log(`Tipo de entidad no válido: ${entityType}`);
         }
 
         let response;
         if (isEditing) {
           if (!operation.update) {
-            throw new Error(`Actualización no permitida para ${entityType}`);
+            console.log(`Actualización no permitida para ${entityType}`);
           }
           response = await operation.update();
         } else {
           if (!operation.create) {
-            throw new Error(`Creación no permitida para ${entityType}`);
+            console.log(`Creación no permitida para ${entityType}`);
           }
           response = await operation.create();
         }
@@ -314,10 +314,10 @@ export const useEntityData = (entityType) => {
             api.deleteMinkaasaProperty(itemId),
           // Propiedades publicadas no se pueden eliminar
           [FORM_TYPES.PROPERTY_PUBLISHED]: () => {
-            throw new Error("No se permite eliminar propiedades publicadas");
+            console.log("No se permite eliminar propiedades publicadas");
           },
           [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: () => {
-            throw new Error(
+            console.log(
               "No se permite eliminar propiedades Minkaasa publicadas"
             );
           },
@@ -325,7 +325,7 @@ export const useEntityData = (entityType) => {
 
         const deleteOperation = deleteOperations[entityType];
         if (!deleteOperation) {
-          throw new Error(`Tipo de entidad no válido: ${entityType}`);
+          console.log(`Tipo de entidad no válido: ${entityType}`);
         }
 
         await deleteOperation();

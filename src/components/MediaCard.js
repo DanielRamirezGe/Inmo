@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Card,
@@ -8,15 +8,14 @@ import {
   Backdrop,
   IconButton,
   Typography,
-  CircularProgress,
   Chip,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ExploreIcon from "@mui/icons-material/Explore";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
-import { VolumeOff, VolumeUp } from "@mui/icons-material";
-import { useMainVideo } from "../hooks/useMainVideo";
+import { usePropertyVideo } from "../hooks/usePropertyVideo";
+import VideoPlayer from "./VideoPlayer";
 
 // Constantes de configuración
 const BREAKPOINTS = {
@@ -332,73 +331,65 @@ const VideoSection = ({
   videoLoading,
   videoUrl,
   videoError,
-  videoRef,
   onVideoClick,
   secondaryImages,
   propertyName,
-  isMuted,
-  onToggleMute,
-  isPlaying,
-  onPlayVideo,
-}) => (
-  <Grid item xs={GRID_CONFIG.videoColumns} paddingBottom={1}>
-    <Box
-      sx={{
-        height: "100%",
-        display: "flex",
-        position: "relative",
-        cursor: videoUrl && !videoError ? "pointer" : "default",
-        backgroundColor: "#000",
-        borderRadius: 2,
-        overflow: "hidden",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-        transition: "all 0.3s ease",
-        "&:hover": {
-          transform: videoUrl && !videoError ? "scale(1.02)" : "none",
-          boxShadow:
-            videoUrl && !videoError
-              ? "0 6px 24px rgba(240,185,43,0.2)"
-              : "0 4px 16px rgba(0,0,0,0.15)",
-        },
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            "linear-gradient(135deg, rgba(240,185,43,0.1) 0%, transparent 30%)",
-          pointerEvents: "none",
-          zIndex: 1,
-          opacity: videoUrl && !videoError ? 1 : 0,
-        },
-      }}
-      onClick={videoUrl && !videoError ? onVideoClick : undefined}
-    >
-      {videoLoading ? (
-        <LoadingSpinner />
-      ) : videoUrl && !videoError ? (
-        <VideoContent
-          videoUrl={videoUrl}
-          videoRef={videoRef}
-          onVideoClick={onVideoClick}
-          isMuted={isMuted}
-          onToggleMute={onToggleMute}
-          isPlaying={isPlaying}
-          onPlayVideo={onPlayVideo}
-        />
-      ) : (
-        secondaryImages.length > 0 && (
-          <FallbackImage
-            imageSrc={secondaryImages[0]}
-            propertyName={propertyName}
-          />
-        )
-      )}
-    </Box>
-  </Grid>
-);
+}) => {
+  // Debug: Log de VideoSection
+  console.log("🎬 VideoSection - Rendering with:", {
+    videoLoading,
+    videoUrl,
+    videoError,
+    propertyName,
+  });
+
+  return (
+    <Grid item xs={GRID_CONFIG.videoColumns} paddingBottom={1}>
+      <VideoPlayer
+        videoUrl={videoUrl}
+        loading={videoLoading}
+        error={videoError}
+        autoplay={true}
+        muted={true}
+        onClick={onVideoClick}
+        fallbackComponent={
+          secondaryImages.length > 0 ? (
+            <FallbackImage
+              imageSrc={secondaryImages[0]}
+              propertyName={propertyName}
+            />
+          ) : null
+        }
+        sx={{
+          height: "100%",
+          borderRadius: 2,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            transform: videoUrl && !videoError ? "scale(1.02)" : "none",
+            boxShadow:
+              videoUrl && !videoError
+                ? "0 6px 24px rgba(240,185,43,0.2)"
+                : "0 4px 16px rgba(0,0,0,0.15)",
+          },
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              "linear-gradient(135deg, rgba(240,185,43,0.1) 0%, transparent 30%)",
+            pointerEvents: "none",
+            zIndex: 1,
+            opacity: videoUrl && !videoError ? 1 : 0,
+          },
+        }}
+      />
+    </Grid>
+  );
+};
 
 const ImageOverlay = ({ remainingCount }) => (
   <Box
@@ -599,27 +590,24 @@ const VideoModal = ({ open, onClose, videoUrl, propertyName }) => (
             p: 2,
           }}
         >
-          {videoUrl && (
-            <Box
-              component="video"
-              controls
-              autoPlay
-              sx={{
-                // Simular dimensiones de celular para videos verticales
-                width: { xs: "100%", sm: "390px" }, // Ancho típico de iPhone/Android
-                height: { xs: "auto", sm: "844px" }, // Altura típica de celular moderno
-                maxWidth: { xs: "100%", sm: "390px" },
-                maxHeight: { xs: "auto", sm: "844px" },
-                objectFit: "contain",
-                // Centrar el video horizontalmente
-                margin: "0 auto",
-                display: "block",
-              }}
-            >
-              <source src={videoUrl} type="video/mp4" />
-              Tu navegador no soporta el elemento video.
-            </Box>
-          )}
+          <VideoPlayer
+            videoUrl={videoUrl}
+            loading={false}
+            error={null}
+            autoplay={true}
+            muted={false}
+            controls={true}
+            sx={{
+              // Simular dimensiones de celular para videos verticales
+              width: { xs: "100%", sm: "390px" }, // Ancho típico de iPhone/Android
+              height: { xs: "auto", sm: "844px" }, // Altura típica de celular moderno
+              maxWidth: { xs: "100%", sm: "390px" },
+              maxHeight: { xs: "auto", sm: "844px" },
+              // Centrar el video horizontalmente
+              margin: "0 auto",
+              display: "block",
+            }}
+          />
         </Box>
       </Box>
     </Fade>
@@ -628,236 +616,54 @@ const VideoModal = ({ open, onClose, videoUrl, propertyName }) => (
 
 // Componente principal
 export const MediaCard = ({
+  prototypeId,
   secondaryImages = [],
   propertyName = "",
   onOpenGallery,
 }) => {
-  const { videoUrl, loading: videoLoading, error: videoError } = useMainVideo();
+  const {
+    videoUrl,
+    loading: videoLoading,
+    error: videoError,
+  } = usePropertyVideo(prototypeId);
+
   const [expandedVideo, setExpandedVideo] = useState(false);
-  const [dimensions, setDimensions] = useState({
-    cardHeight: 320,
-    imageLayout: { count: 0, height: 0, gap: 0 },
-  });
-  const [isMuted, setIsMuted] = useState(true);
-  const [showUnmutePrompt, setShowUnmutePrompt] = useState(true);
-  const [hasTriedAutoplay, setHasTriedAutoplay] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const videoRef = useRef(null);
+  const [screenWidth, setScreenWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 375
+  );
 
-  // Verificar si el usuario ya experimentó autoplay
-  const hasUserExperiencedAutoplay = () => {
-    try {
-      return localStorage.getItem("video-autoplay-experienced") === "true";
-    } catch (error) {
-      return false;
-    }
-  };
+  // Calcular dimensiones con useMemo para optimizar
+  const dimensions = useMemo(() => {
+    const totalImages = secondaryImages.length;
+    const cardHeight = calculateCardHeight(screenWidth, totalImages);
+    const imageLayout = calculateImageLayout(
+      screenWidth,
+      totalImages,
+      cardHeight
+    );
 
-  // Marcar que el usuario ya experimentó autoplay
-  const markUserExperiencedAutoplay = () => {
-    try {
-      localStorage.setItem("video-autoplay-experienced", "true");
-    } catch (error) {
-      console.log("Could not save to localStorage:", error);
-    }
-  };
+    return { cardHeight, imageLayout };
+  }, [screenWidth, secondaryImages.length]);
 
-  // Calcular dimensiones
+  // Detectar cambios de tamaño de pantalla
   useEffect(() => {
-    const calculateDimensions = () => {
-      const screenWidth = window.innerWidth;
-      const totalImages = secondaryImages.length;
-
-      const cardHeight = calculateCardHeight(screenWidth, totalImages);
-      const imageLayout = calculateImageLayout(
-        screenWidth,
-        totalImages,
-        cardHeight
-      );
-
-      setDimensions({ cardHeight, imageLayout });
+    const handleResize = () => {
+      setScreenWidth(window.innerWidth);
     };
 
-    calculateDimensions();
-
-    const handleResize = () => calculateDimensions();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [secondaryImages.length]);
-
-  // Manejar video
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && videoUrl) {
-      const handleEnded = () => {
-        video.pause();
-        video.removeAttribute("autoplay");
-      };
-      const handleLoadedData = () => {
-        video.volume = 0.7;
-        // Asegurar que el video esté silenciado para autoplay
-        video.muted = true;
-        // Solo cambiar muted si el usuario ya interactuó
-        if (!showUnmutePrompt) {
-          video.muted = isMuted;
-        }
-      };
-
-      video.addEventListener("ended", handleEnded);
-      video.addEventListener("loadeddata", handleLoadedData);
-
-      if (video.readyState >= 2) {
-        handleLoadedData();
-      }
-
-      return () => {
-        video.removeEventListener("ended", handleEnded);
-        video.removeEventListener("loadeddata", handleLoadedData);
-      };
-    }
-  }, [videoUrl, isMuted, showUnmutePrompt]);
-
-  // Intentar autoplay con audio, si falla usar silenciado
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && videoUrl && !hasTriedAutoplay) {
-      const tryPlayWithAudio = async () => {
-        // Marcar que ya intentamos autoplay
-        setHasTriedAutoplay(true);
-
-        // Pausar cualquier reproducción previa
-        video.pause();
-        video.currentTime = 0;
-
-        // Pausar otros videos en la página
-        const allVideos = document.querySelectorAll("video");
-        allVideos.forEach((v) => {
-          if (v !== video && !v.paused) {
-            v.pause();
-          }
-        });
-
-        // Verificar si el usuario ya experimentó autoplay antes
-        const userAlreadyExperienced = hasUserExperiencedAutoplay();
-
-        if (!userAlreadyExperienced) {
-          // Primera vez: intentar autoplay con audio
-          try {
-            video.muted = false;
-            video.volume = 0.7;
-            await video.play();
-
-            // Si funciona, marcar como experimentado y actualizar estados
-            markUserExperiencedAutoplay();
-            setIsMuted(false);
-            setShowUnmutePrompt(false);
-            setIsPlaying(true);
-            console.log("First-time autoplay with audio successful!");
-            return;
-          } catch (error) {
-            console.log(
-              "First-time autoplay with audio failed, trying muted:",
-              error
-            );
-
-            // Si falla con audio, intentar silenciado solo esta vez
-            try {
-              video.muted = true;
-              await video.play();
-              markUserExperiencedAutoplay(); // Marcar como experimentado aunque haya sido silenciado
-              setIsPlaying(true);
-              console.log("First-time autoplay muted successful!");
-              return;
-            } catch (mutedError) {
-              console.log("First-time autoplay completely failed:", mutedError);
-              markUserExperiencedAutoplay(); // Marcar como experimentado para evitar futuros intentos
-            }
-          }
-        } else {
-          // Usuario ya experimentó autoplay antes - NO reproducir automáticamente
-          console.log(
-            "User already experienced autoplay before, waiting for user interaction"
-          );
-          // El video permanece pausado hasta que el usuario interactúe
-        }
-      };
-
-      // Intentar reproducir después de un pequeño delay
-      const timer = setTimeout(tryPlayWithAudio, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [videoUrl, hasTriedAutoplay]);
+  }, []);
 
   // Handlers
   const handleVideoClick = () => {
-    // Pausar el video original antes de abrir el modal
-    const video = videoRef.current;
-    if (video && !video.paused) {
-      video.pause();
-    }
     setExpandedVideo(true);
   };
+
   const handleImageClick = () => onOpenGallery?.();
+
   const handleCloseVideo = () => {
     setExpandedVideo(false);
-    // Resetear el estado del video original cuando se cierra el modal
-    setIsPlaying(false);
-  };
-
-  const handleToggleMute = () => {
-    const video = videoRef.current;
-    if (video) {
-      const newMutedState = !isMuted;
-      video.muted = newMutedState;
-      setIsMuted(newMutedState);
-
-      if (showUnmutePrompt) {
-        setShowUnmutePrompt(false);
-        // Si el usuario activa el audio manualmente, marcar como experimentado
-        if (!newMutedState) {
-          markUserExperiencedAutoplay();
-        }
-      }
-    }
-  };
-
-  const handlePlayVideo = async () => {
-    const video = videoRef.current;
-    if (video) {
-      try {
-        // Pausar otros videos
-        const allVideos = document.querySelectorAll("video");
-        allVideos.forEach((v) => {
-          if (v !== video && !v.paused) {
-            v.pause();
-          }
-        });
-
-        // Intentar reproducir con audio primero
-        video.muted = false;
-        setIsMuted(false);
-        await video.play();
-        setIsPlaying(true);
-        setShowUnmutePrompt(false); // Ocultar prompt ya que está con audio
-        markUserExperiencedAutoplay(); // Marcar como experimentado
-        console.log("Manual video play with audio successful!");
-      } catch (error) {
-        console.log(
-          "Manual video play with audio failed, trying muted:",
-          error
-        );
-        try {
-          // Si falla con audio, intentar silenciado
-          video.muted = true;
-          setIsMuted(true);
-          await video.play();
-          setIsPlaying(true);
-          console.log("Manual video play muted successful!");
-        } catch (mutedError) {
-          console.log("Manual video play completely failed:", mutedError);
-        }
-      }
-    }
   };
 
   // Early return si no hay contenido
@@ -974,14 +780,9 @@ export const MediaCard = ({
               videoLoading={videoLoading}
               videoUrl={videoUrl}
               videoError={videoError}
-              videoRef={videoRef}
               onVideoClick={handleVideoClick}
               secondaryImages={secondaryImages}
               propertyName={propertyName}
-              isMuted={isMuted}
-              onToggleMute={handleToggleMute}
-              isPlaying={isPlaying}
-              onPlayVideo={handlePlayVideo}
             />
             <ImagesSection
               secondaryImages={secondaryImages}

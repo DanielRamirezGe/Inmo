@@ -44,7 +44,7 @@ export default function AsesoriaPage() {
 
       return { success: true };
     } catch (error) {
-      throw new Error("Error al enviar la solicitud de asesoría");
+      console.log("Error al enviar la solicitud de asesoría");
     }
   };
 

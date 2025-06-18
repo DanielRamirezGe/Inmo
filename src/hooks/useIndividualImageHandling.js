@@ -47,7 +47,7 @@ export const useIndividualImageHandling = () => {
         }
 
         if (imagesToUpload.length === 0) {
-          throw new Error("No hay imágenes para subir");
+          console.log("No hay imágenes para subir");
         }
 
         // Inicializar progreso

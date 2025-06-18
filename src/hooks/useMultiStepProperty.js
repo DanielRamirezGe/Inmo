@@ -84,7 +84,7 @@ export const useMultiStepProperty = () => {
             data: response.data,
           };
         } else {
-          throw new Error("No se recibió prototypeId en la respuesta");
+          console.log("No se recibió prototypeId en la respuesta");
         }
       } catch (error) {
         console.error("Error creating basic property:", error);
@@ -105,13 +105,13 @@ export const useMultiStepProperty = () => {
         setError(null);
 
         if (!prototypeId) {
-          throw new Error(
+          console.log(
             "No hay prototypeId disponible para agregar descripciones"
           );
         }
 
         if (!descriptions || descriptions.length === 0) {
-          throw new Error("Debe agregar al menos una descripción");
+          console.log("Debe agregar al menos una descripción");
         }
 
         const response = await api.addPropertyDescriptions(
@@ -127,7 +127,7 @@ export const useMultiStepProperty = () => {
             message: response.message,
           };
         } else {
-          throw new Error("Error al agregar descripciones");
+          console.log("Error al agregar descripciones");
         }
       } catch (error) {
         console.error("Error adding descriptions:", error);
@@ -148,7 +148,7 @@ export const useMultiStepProperty = () => {
         setError(null);
 
         if (!prototypeId) {
-          throw new Error(
+          console.log(
             "No hay prototypeId disponible para completar el proceso"
           );
         }

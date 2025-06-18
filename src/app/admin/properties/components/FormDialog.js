@@ -129,6 +129,7 @@ const FormDialog = ({
     updateBasicProperty,
     updateDescriptions,
     updateImages,
+    updateVideo,
   } = useMultiStepPropertyEdit(currentItem ? currentItemId : null, formType);
 
   // Definir isLoading después de inicializar todos los hooks
@@ -989,6 +990,7 @@ const FormDialog = ({
                   onUpdateBasic={updateBasicProperty}
                   onUpdateDescriptions={updateDescriptions}
                   onUpdateImages={updateImages}
+                  onUpdateVideo={updateVideo}
                   loading={editLoading}
                   error={editError}
                   setError={setEditError}

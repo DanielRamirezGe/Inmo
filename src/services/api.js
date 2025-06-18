@@ -1047,19 +1047,4 @@ export const api = {
       handleApiError(error);
     }
   },
-  // Get main video endpoint - returns direct video URL
-  getMainVideoUrl: async () => {
-    try {
-      const axiosInstance = getPublicAxiosInstance();
-      // Construir la URL directa del video
-      const baseURL = axiosInstance.defaults.baseURL;
-      const videoUrl = `${baseURL}/public/media/video-principal`;
-
-      // Simplemente retornar la URL sin verificar existencia
-      // El elemento <video> manejará los errores automáticamente
-      return { url: videoUrl };
-    } catch (error) {
-      handleApiError(error);
-    }
-  },
 };

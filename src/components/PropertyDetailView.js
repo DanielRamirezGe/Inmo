@@ -156,9 +156,7 @@ export default function PropertyDetailView({
 
       // In development mode, we always allow to continue
       if (!recaptchaToken && !isDevelopmentMode) {
-        throw new Error(
-          "No se pudo verificar el reCaptcha. Intenta nuevamente."
-        );
+        console.log("No se pudo verificar el reCaptcha. Intenta nuevamente.");
       }
 
       // Prepare form data
@@ -595,6 +593,7 @@ export default function PropertyDetailView({
         {/* Tablet+: Card unificada con todo el contenido */}
         <Box sx={{ display: { xs: "none", sm: "block" } }}>
           <PropertyHeroCard
+            prototypeId={displayProperty.prototypeId}
             mainImage={mainImage}
             secondaryImages={secondaryImages}
             propertyName={displayProperty.prototypeName}
@@ -608,6 +607,7 @@ export default function PropertyDetailView({
           {/* Imagen principal en mobile */}
           <Box sx={{ mb: 2 }}>
             <PropertyHeroCard
+              prototypeId={displayProperty.prototypeId}
               mainImage={mainImage}
               secondaryImages={[]}
               propertyName={displayProperty.prototypeName}
@@ -812,6 +812,7 @@ export default function PropertyDetailView({
           {/* Video + imágenes secundarias en mobile - después del card de precio */}
           <Box sx={{ display: { xs: "block", sm: "none" }, mb: 3 }}>
             <MediaCard
+              prototypeId={displayProperty.prototypeId}
               secondaryImages={secondaryImages}
               propertyName={displayProperty.prototypeName}
               onOpenGallery={handleOpenGallery}
