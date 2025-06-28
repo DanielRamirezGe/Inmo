@@ -626,6 +626,9 @@ export const MediaCard = ({
     loading: videoLoading,
     error: videoError,
   } = usePropertyVideo(prototypeId);
+  useEffect(() => {
+    console.log("videoUrl", videoUrl);
+  }, [videoUrl]);
 
   const [expandedVideo, setExpandedVideo] = useState(false);
   const [screenWidth, setScreenWidth] = useState(

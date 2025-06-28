@@ -222,7 +222,7 @@ export const videoService = {
     const axiosInstance = getPublicAxiosInstance();
     const baseURL = axiosInstance.defaults.baseURL;
     const videoUrl = `${baseURL}/public/media/video/${prototypeId}`;
-
+    console.log("videoUrl", videoUrl);
     return {
       success: true,
       videoUrl: videoUrl,
