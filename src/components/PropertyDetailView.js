@@ -600,6 +600,7 @@ export default function PropertyDetailView({
             propertyName={displayProperty.prototypeName}
             onImageClick={handleOpenGallery}
             showVideo={true}
+            videoPath={displayProperty.videoPath}
           />
         </Box>
 
@@ -815,6 +816,7 @@ export default function PropertyDetailView({
               secondaryImages={secondaryImages}
               propertyName={displayProperty.prototypeName}
               onOpenGallery={handleOpenGallery}
+              videoPath={displayProperty.videoPath}
             />
           </Box>
 

@@ -1047,18 +1047,139 @@ export const api = {
       handleApiError(error);
     }
   },
-  // Get main video endpoint - returns direct video URL
-  getMainVideoUrl: async () => {
+
+  // Property video endpoints
+  uploadPropertyVideo: async (prototypeId, videoFile, onProgress = null) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      
+      if (!videoFile) {
+        throw new Error('Se requiere un archivo de video');
+      }
+
+      if (!prototypeId) {
+        throw new Error('Se requiere un ID de prototipo válido');
+      }
+
+      const formData = new FormData();
+      formData.append('video', videoFile);
+
+      console.log(
+        "🚀 API uploadPropertyVideo - prototypeId:",
+        prototypeId,
+        "videoFile:",
+        videoFile.name
+      );
+
+      const response = await axiosInstance.post(
+        `/video/upload/${prototypeId}`,
+        formData,
+        {
+          headers: { 
+            "Content-Type": "multipart/form-data" 
+          },
+          onUploadProgress: onProgress ? (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            onProgress(percentCompleted);
+          } : undefined
+        }
+      );
+
+      console.log("✅ API uploadPropertyVideo - respuesta:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ API uploadPropertyVideo - error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  removePropertyVideo: async (prototypeId) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+
+      if (!prototypeId) {
+        throw new Error('Se requiere un ID de prototipo válido');
+      }
+
+      console.log("🚀 API removePropertyVideo - prototypeId:", prototypeId);
+
+      const response = await axiosInstance.delete(`/public/video/remove/${prototypeId}`);
+
+      console.log("✅ API removePropertyVideo - respuesta:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ API removePropertyVideo - error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  // Video streaming endpoints
+  getVideoStreamUrl: (videoPath) => {
     try {
       const axiosInstance = getPublicAxiosInstance();
-      // Construir la URL directa del video
       const baseURL = axiosInstance.defaults.baseURL;
-      const videoUrl = `${baseURL}/public/media/video-principal`;
+      
+      if (!videoPath) {
+        throw new Error('Se requiere la ruta del video');
+      }
 
-      // Simplemente retornar la URL sin verificar existencia
-      // El elemento <video> manejará los errores automáticamente
-      return { url: videoUrl };
+      // Construir URL del endpoint optimizado para videos cortos
+      const encodedPath = encodeURIComponent(videoPath);
+      const streamUrl = `${baseURL}/public/video/short?file=${encodedPath}`;
+      
+      return streamUrl;
     } catch (error) {
+      console.error("❌ API getVideoStreamUrl - error:", error);
+      throw error;
+    }
+  },
+
+  // Helper function para validar si un video es elegible para el endpoint optimizado
+  isVideoEligibleForOptimizedStreaming: (videoPath, fileSize = null, duration = null) => {
+    try {
+      if (!videoPath) return false;
+      
+      // Verificar extensión
+      const extension = videoPath.toLowerCase().substring(videoPath.lastIndexOf('.'));
+      const supportedExtensions = ['.mp4', '.webm', '.ogg'];
+      
+      if (!supportedExtensions.includes(extension)) return false;
+      
+      // Verificar tamaño si está disponible (100MB límite)
+      if (fileSize && fileSize > 100 * 1024 * 1024) return false;
+      
+      // Verificar duración si está disponible (2 minutos límite)
+      if (duration && duration > 120) return false;
+      
+      return true;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  getVideoInfo: async (videoPath) => {
+    try {
+      const axiosInstance = getPublicAxiosInstance();
+      
+      if (!videoPath) {
+        throw new Error('Se requiere la ruta del video');
+      }
+
+      console.log("🚀 API getVideoInfo - videoPath:", videoPath);
+
+      const response = await axiosInstance.get('/public/video/info', {
+        params: { file: videoPath }
+      });
+
+      console.log("✅ API getVideoInfo - respuesta:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ API getVideoInfo - error:", error);
+      console.error("❌ Error response:", error.response?.data);
       handleApiError(error);
     }
   },

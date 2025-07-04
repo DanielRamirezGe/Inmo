@@ -129,6 +129,7 @@ const FormDialog = ({
     updateBasicProperty,
     updateDescriptions,
     updateImages,
+    updateVideo,
   } = useMultiStepPropertyEdit(currentItem ? currentItemId : null, formType);
 
   // Definir isLoading después de inicializar todos los hooks
@@ -293,6 +294,7 @@ const FormDialog = ({
               agent: externalAgreementData.agent || "",
               commission: externalAgreementData.commission || 0,
               descriptions: descriptionsData,
+              videoPath: details.videoPath || null,
             };
 
             setFormData((prev) => ({
@@ -306,6 +308,7 @@ const FormDialog = ({
               ...prev,
               ...details,
               descriptions: propertyDescriptionsData,
+              videoPath: details.videoPath || null,
             }));
           }
 
@@ -320,6 +323,7 @@ const FormDialog = ({
             setFormData((prev) => ({
               ...prev,
               ...updatedDetails,
+              videoPath: details.videoPath || null,
             }));
           } else if (formType === FORM_TYPES.DEVELOPMENT) {
             await loadDevelopmentImages(details);
@@ -989,6 +993,7 @@ const FormDialog = ({
                   onUpdateBasic={updateBasicProperty}
                   onUpdateDescriptions={updateDescriptions}
                   onUpdateImages={updateImages}
+                  onUpdateVideo={updateVideo}
                   loading={editLoading}
                   error={editError}
                   setError={setEditError}

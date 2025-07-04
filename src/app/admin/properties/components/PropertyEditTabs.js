@@ -16,6 +16,7 @@ import { FORM_TYPES } from "../constants";
 import { getBasicPropertySections } from "./fieldsConfig";
 import Step2Descriptions from "./Step2Descriptions";
 import Step3Images from "./Step3Images";
+import Step4Video from "./Step4Video";
 
 // Componente TabPanel
 function TabPanel({ children, value, index, ...other }) {
@@ -48,6 +49,7 @@ const PropertyEditTabs = ({
   onUpdateBasic,
   onUpdateDescriptions,
   onUpdateImages,
+  onUpdateVideo,
   loading,
   error,
   setError,
@@ -152,6 +154,37 @@ const PropertyEditTabs = ({
     }
   };
 
+  // Manejar guardado del tab 4 (video)
+  const handleSaveVideo = async (videoData) => {
+    try {
+      setTabLoading((prev) => ({ ...prev, 3: true }));
+      setTabErrors((prev) => ({ ...prev, 3: null }));
+
+      const result = await onUpdateVideo(videoData);
+
+      if (result.success) {
+        console.log("Video actualizado exitosamente");
+        
+        // Actualizar formData con el nuevo video si es necesario
+        if (videoData) {
+          setFormData((prev) => ({ ...prev, videoPath: videoData.videoPath }));
+        } else {
+          // Video eliminado
+          setFormData((prev) => ({ ...prev, videoPath: null }));
+        }
+
+        const message = result.message || "✅ Video actualizado correctamente";
+        showSuccessAndClose(message);
+      } else {
+        setTabErrors((prev) => ({ ...prev, 3: result.error }));
+      }
+    } catch (error) {
+      setTabErrors((prev) => ({ ...prev, 3: error.message }));
+    } finally {
+      setTabLoading((prev) => ({ ...prev, 3: false }));
+    }
+  };
+
   // Componente skeleton para campos de formulario
   const FieldSkeleton = () => (
     <Box>
@@ -210,6 +243,24 @@ const PropertyEditTabs = ({
     </Box>
   );
 
+  // Componente skeleton para video
+  const VideoSkeleton = () => (
+    <Box>
+      <Skeleton variant="text" width="40%" height={32} sx={{ mb: 2 }} />
+      <Skeleton variant="text" width="70%" height={20} sx={{ mb: 3 }} />
+
+      {/* Skeleton para controles de carga */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -222,6 +273,7 @@ const PropertyEditTabs = ({
           <Tab label="Datos Básicos" {...a11yProps(0)} />
           <Tab label="Descripciones" {...a11yProps(1)} />
           <Tab label="Imágenes" {...a11yProps(2)} />
+          <Tab label="Video" {...a11yProps(3)} />
         </Tabs>
       </Box>
 
@@ -364,6 +416,37 @@ const PropertyEditTabs = ({
             showButtons={true}
             buttonText="Guardar Imágenes"
             prototypeId={prototypeId}
+          />
+        )}
+      </TabPanel>
+
+      {/* Tab 4: Video */}
+      <TabPanel value={currentTab} index={3}>
+        <Typography variant="h6" sx={{ mb: 3 }}>
+          Video de la propiedad
+        </Typography>
+
+        {tabErrors[3] && (
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => setTabErrors((prev) => ({ ...prev, 3: null }))}
+          >
+            {tabErrors[3]}
+          </Alert>
+        )}
+
+        {initialDataLoading ? (
+          <VideoSkeleton />
+        ) : (
+          <Step4Video
+            onSubmit={handleSaveVideo}
+            loading={tabLoading[3]}
+            error={tabErrors[3]}
+            prototypeId={prototypeId}
+            currentVideo={formData?.videoPath}
+            showButtons={true}
+            buttonText="Guardar Video"
           />
         )}
       </TabPanel>
