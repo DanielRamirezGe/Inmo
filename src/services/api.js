@@ -1052,17 +1052,17 @@ export const api = {
   uploadPropertyVideo: async (prototypeId, videoFile, onProgress = null) => {
     try {
       const axiosInstance = getAxiosInstance();
-      
+
       if (!videoFile) {
-        throw new Error('Se requiere un archivo de video');
+        throw new Error("Se requiere un archivo de video");
       }
 
       if (!prototypeId) {
-        throw new Error('Se requiere un ID de prototipo válido');
+        throw new Error("Se requiere un ID de prototipo válido");
       }
 
       const formData = new FormData();
-      formData.append('video', videoFile);
+      formData.append("video", videoFile);
 
       console.log(
         "🚀 API uploadPropertyVideo - prototypeId:",
@@ -1075,15 +1075,17 @@ export const api = {
         `/video/upload/${prototypeId}`,
         formData,
         {
-          headers: { 
-            "Content-Type": "multipart/form-data" 
+          headers: {
+            "Content-Type": "multipart/form-data",
           },
-          onUploadProgress: onProgress ? (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            onProgress(percentCompleted);
-          } : undefined
+          onUploadProgress: onProgress
+            ? (progressEvent) => {
+                const percentCompleted = Math.round(
+                  (progressEvent.loaded * 100) / progressEvent.total
+                );
+                onProgress(percentCompleted);
+              }
+            : undefined,
         }
       );
 
@@ -1101,12 +1103,14 @@ export const api = {
       const axiosInstance = getAxiosInstance();
 
       if (!prototypeId) {
-        throw new Error('Se requiere un ID de prototipo válido');
+        throw new Error("Se requiere un ID de prototipo válido");
       }
 
       console.log("🚀 API removePropertyVideo - prototypeId:", prototypeId);
 
-      const response = await axiosInstance.delete(`/public/video/remove/${prototypeId}`);
+      const response = await axiosInstance.delete(
+        `/public/video/remove/${prototypeId}`
+      );
 
       console.log("✅ API removePropertyVideo - respuesta:", response.data);
       return response.data;
@@ -1122,15 +1126,15 @@ export const api = {
     try {
       const axiosInstance = getPublicAxiosInstance();
       const baseURL = axiosInstance.defaults.baseURL;
-      
+
       if (!videoPath) {
-        throw new Error('Se requiere la ruta del video');
+        throw new Error("Se requiere la ruta del video");
       }
 
       // Construir URL del endpoint optimizado para videos cortos
       const encodedPath = encodeURIComponent(videoPath);
       const streamUrl = `${baseURL}/public/video/short?file=${encodedPath}`;
-      
+
       return streamUrl;
     } catch (error) {
       console.error("❌ API getVideoStreamUrl - error:", error);
@@ -1139,22 +1143,28 @@ export const api = {
   },
 
   // Helper function para validar si un video es elegible para el endpoint optimizado
-  isVideoEligibleForOptimizedStreaming: (videoPath, fileSize = null, duration = null) => {
+  isVideoEligibleForOptimizedStreaming: (
+    videoPath,
+    fileSize = null,
+    duration = null
+  ) => {
     try {
       if (!videoPath) return false;
-      
+
       // Verificar extensión
-      const extension = videoPath.toLowerCase().substring(videoPath.lastIndexOf('.'));
-      const supportedExtensions = ['.mp4', '.webm', '.ogg'];
-      
+      const extension = videoPath
+        .toLowerCase()
+        .substring(videoPath.lastIndexOf("."));
+      const supportedExtensions = [".mp4", ".webm", ".ogg"];
+
       if (!supportedExtensions.includes(extension)) return false;
-      
+
       // Verificar tamaño si está disponible (100MB límite)
       if (fileSize && fileSize > 100 * 1024 * 1024) return false;
-      
+
       // Verificar duración si está disponible (2 minutos límite)
       if (duration && duration > 120) return false;
-      
+
       return true;
     } catch (error) {
       return false;
@@ -1164,15 +1174,15 @@ export const api = {
   getVideoInfo: async (videoPath) => {
     try {
       const axiosInstance = getPublicAxiosInstance();
-      
+
       if (!videoPath) {
-        throw new Error('Se requiere la ruta del video');
+        throw new Error("Se requiere la ruta del video");
       }
 
       console.log("🚀 API getVideoInfo - videoPath:", videoPath);
 
-      const response = await axiosInstance.get('/public/video/info', {
-        params: { file: videoPath }
+      const response = await axiosInstance.get("/public/video/info", {
+        params: { file: videoPath },
       });
 
       console.log("✅ API getVideoInfo - respuesta:", response.data);
@@ -1180,6 +1190,124 @@ export const api = {
     } catch (error) {
       console.error("❌ API getVideoInfo - error:", error);
       console.error("❌ Error response:", error.response?.data);
+      handleApiError(error);
+    }
+  },
+
+  // Bot Performance endpoints
+  getBotPerformanceOverview: async (period = "30d") => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.get(
+        `/bot-performance/overview?period=${period}`
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceUsers: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        period: params.period || "30d",
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        sortBy: params.sortBy || "last_interaction",
+        sortOrder: params.sortOrder || "desc",
+        ...params,
+      });
+
+      const response = await axiosInstance.get(
+        `/bot-performance/users?${queryParams}`
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceConversations: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        period: params.period || "30d",
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        ...params,
+      });
+
+      const response = await axiosInstance.get(
+        `/bot-performance/conversations?${queryParams}`
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceInteractions: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        period: params.period || "30d",
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        ...params,
+      });
+
+      const response = await axiosInstance.get(
+        `/bot-performance/interactions?${queryParams}`
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceConversions: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        period: params.period || "30d",
+        ...params,
+      });
+
+      const response = await axiosInstance.get(
+        `/bot-performance/conversions?${queryParams}`
+      );
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceHealth: async () => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.get("/bot-performance/health");
+      return response.data;
+    } catch (error) {
+      handleApiError(error);
+    }
+  },
+
+  getBotPerformanceInventory: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        period: params.period || "30d",
+        page: params.page || 1,
+        pageSize: params.pageSize || 20,
+        ...params,
+      });
+
+      const response = await axiosInstance.get(
+        `/bot-performance/inventory?${queryParams}`
+      );
+      return response.data;
+    } catch (error) {
       handleApiError(error);
     }
   },

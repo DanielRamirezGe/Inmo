@@ -4,6 +4,7 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 
 import { Roboto } from "next/font/google";
 import { ThemeProvider } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
 import theme from "../theme";
 import Footer from "./components/footer";
 
@@ -34,10 +35,15 @@ const navItems = ["Home", "About", "Contact"];
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light">
+      <head>
+        <meta name="color-scheme" content="light" />
+        <meta name="theme-color" content="#F0B92B" />
+      </head>
       <body className={roboto.variable}>
         <AppRouterCacheProvider>
           <ThemeProvider theme={theme}>
+            <CssBaseline />
             <div className="layout-container">
               <main className="main-content">{children}</main>
               <Footer />
