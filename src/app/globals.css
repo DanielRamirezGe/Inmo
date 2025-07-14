@@ -9,11 +9,29 @@
   --bottom-nav-height: 70px; /* Height of bottom navigation on mobile */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Forzar tema claro - ignorar preferencias del sistema */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Asegurar que Material-UI use siempre el tema claro */
+.MuiCssBaseline {
+  color-scheme: light !important;
+}
+
+/* Forzar colores de fondo y texto para el tema claro */
+body {
+  background-color: #ffffff !important;
+  color: #171717 !important;
+}
+
+/* Asegurar que los elementos de Material-UI mantengan el tema claro */
+.MuiPaper-root {
+  background-color: #ffffff !important;
+}
+
+.MuiCard-root {
+  background-color: #ffffff !important;
 }
 
 html {
@@ -77,11 +95,7 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
+/* Tema claro forzado - no se aplican preferencias del sistema */
 
 /* Estilos para los círculos de iconos */
 .icon-circle-primary {
