@@ -76,6 +76,7 @@ export const developmentFields = [
     options: ESTADOS_MEXICO,
   },
   { name: "city", label: "Ciudad o Municipio" },
+  { name: "suburb", label: "Colonia" },
   {
     name: "zipCode",
     label: "Código Postal",
