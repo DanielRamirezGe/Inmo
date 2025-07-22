@@ -15,6 +15,7 @@ const adminNavItems = [
   "Perfiladores",
   "Datos Web",
   "Propiedades",
+  "Brokers",
   "Bot Performance",
 ];
 
@@ -32,6 +33,8 @@ export default function AdminNavBar() {
       router.push("/admin/addUser");
     } else if (item === "Propiedades") {
       router.push("/admin/properties");
+    } else if (item === "Brokers") {
+      router.push("/admin/broker");
     } else if (item === "Bot Performance") {
       router.push("/admin/botPerformance");
     }
