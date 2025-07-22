@@ -1323,4 +1323,23 @@ export const api = {
       throw error;
     }
   },
+
+  // Get all brokers with pagination and filtering
+  getBrokers: async (params = {}) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const queryParams = new URLSearchParams({
+        page: params.page || 1,
+        limit: params.limit || 10,
+        ...(params.search && { search: params.search }),
+        ...(params.active !== undefined && { active: params.active }),
+      });
+
+      const response = await axiosInstance.get(`/brokerSales?${queryParams}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching brokers:", error);
+      throw error;
+    }
+  },
 };
