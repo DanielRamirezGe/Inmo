@@ -1311,4 +1311,16 @@ export const api = {
       handleApiError(error);
     }
   },
+
+  // Broker registration endpoint
+  registerBroker: async (brokerData) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+      const response = await axiosInstance.post("/brokerSales", brokerData);
+      return response.data;
+    } catch (error) {
+      console.error("Error registering broker:", error);
+      throw error;
+    }
+  },
 };
