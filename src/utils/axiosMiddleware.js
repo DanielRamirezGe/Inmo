@@ -77,6 +77,11 @@ export const usePublicAxios = () => {
 export const createAxiosInstance = () => {
   const instance = axios.create({
     baseURL: apiConfig.baseURL + "/api/v1",
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
   });
 
   // Add a request interceptor
@@ -89,6 +94,15 @@ export const createAxiosInstance = () => {
         return Promise.reject(new Error("No token found"));
       }
       config.headers.Authorization = `Bearer ${token}`;
+      
+      // Agregar cache-busting para peticiones GET
+      if (config.method === 'get') {
+        config.params = {
+          ...config.params,
+          _t: Date.now(),
+        };
+      }
+      
       return config;
     },
     (error) => {
@@ -119,6 +133,11 @@ export const createAxiosInstance = () => {
 export const createPublicAxiosInstance = () => {
   const instance = axios.create({
     baseURL: apiConfig.baseURL + "/api/v1",
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
   });
 
   // No authentication interceptors for public endpoints

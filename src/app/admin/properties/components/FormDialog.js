@@ -275,7 +275,7 @@ const FormDialog = ({
             }
           }
 
-          // Si es una propiedad Minkaasa, extraer los datos del externalAgreement
+          // Si es una propiedad Minkaasa, extraer los datos del externalAgreement y body principal
           if (
             (formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
               formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED) &&
@@ -286,6 +286,7 @@ const FormDialog = ({
 
             const flattenedData = {
               ...details,
+              // Datos de contacto desde externalAgreement
               name: externalAgreementData.name || "",
               lastNameP: externalAgreementData.lastNameP || "",
               lastNameM: externalAgreementData.lastNameM || "",
@@ -293,6 +294,15 @@ const FormDialog = ({
               mainPhone: externalAgreementData.mainPhone || "",
               agent: externalAgreementData.agent || "",
               commission: externalAgreementData.commission || 0,
+              // Campos de ubicación desde el body principal
+              condominium: details.condominium || "",
+              street: details.street || "",
+              exteriorNumber: details.exteriorNumber || "",
+              interiorNumber: details.interiorNumber || "",
+              suburb: details.suburb || "",
+              city: details.city || "",
+              state: details.state || "",
+              zipCode: details.zipCode || "",
               descriptions: descriptionsData,
               videoPath: details.videoPath || null,
             };
@@ -640,8 +650,19 @@ const FormDialog = ({
       basicData.developmentId = Number(formData.developmentId);
     }
 
-    // Para propiedades Minkaasa, agregar externalAgreement
+    // Para propiedades Minkaasa, agregar campos de ubicación directamente en el body
     if (isMinkaasa) {
+      // Campos de ubicación en el body principal
+      basicData.condominium = formData.condominium || "";
+      basicData.street = formData.street || "";
+      basicData.exteriorNumber = formData.exteriorNumber || "";
+      basicData.interiorNumber = formData.interiorNumber || "";
+      basicData.suburb = formData.suburb || "";
+      basicData.city = formData.city || "";
+      basicData.state = formData.state || "";
+      basicData.zipCode = formData.zipCode ? Number(formData.zipCode) : null;
+
+      // externalAgreement solo con datos de contacto
       const externalAgreement = {
         name: formData.name || "",
         lastNameP: formData.lastNameP || "",
@@ -710,7 +731,10 @@ const FormDialog = ({
       formData?.propertyTypeId ||
       formData?.developmentId ||
       formData?.name?.trim() || // Para Minkaasa
-      formData?.mainEmail?.trim(); // Para Minkaasa
+      formData?.mainEmail?.trim() || // Para Minkaasa
+      formData?.street?.trim() || // Para Minkaasa - ubicación
+      formData?.city?.trim() || // Para Minkaasa - ubicación
+      formData?.state?.trim(); // Para Minkaasa - ubicación
 
     if (hasImportantData) {
       setShowConfirmClose(true);

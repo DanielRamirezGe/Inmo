@@ -14,7 +14,8 @@ export const useEntityData = (entityType) => {
   const fetchItems = useCallback(
     async (
       page = 1,
-      pageSize = createInitialPagination("PROPERTIES").pageSize
+      pageSize = createInitialPagination("PROPERTIES").pageSize,
+      forceRefresh = false
     ) => {
       if (!entityType) return;
 
@@ -48,12 +49,16 @@ export const useEntityData = (entityType) => {
             throw new Error("Tipo de entidad no válido");
         }
 
-        setItems(response.data || []);
-        setPagination({
-          page: response.page || page,
-          pageSize: response.pageSize || pageSize,
-          total: response.total || 0,
-        });
+        // Forzar actualización del estado para evitar problemas de cache
+        setItems([]); // Limpiar primero
+        setTimeout(() => {
+          setItems(response.data || []);
+          setPagination({
+            page: response.page || page,
+            pageSize: response.pageSize || pageSize,
+            total: response.total || 0,
+          });
+        }, forceRefresh ? 100 : 0); // Pequeño delay para forzar re-render
       } catch (error) {
         console.error("Error al obtener items:", error);
         setError("Error al cargar los datos");
@@ -344,6 +349,12 @@ export const useEntityData = (entityType) => {
     [entityType, fetchItems]
   );
 
+  // Función para forzar refrescar datos (útil para después de operaciones)
+  const forceRefresh = useCallback(async () => {
+    console.log(`🔄 Force refreshing data for ${entityType}`);
+    await fetchItems(1, pagination.pageSize, true);
+  }, [fetchItems, pagination.pageSize, entityType]);
+
   return {
     items,
     loading,
@@ -353,6 +364,7 @@ export const useEntityData = (entityType) => {
     getItemDetails,
     saveItem,
     deleteItem,
+    forceRefresh, // Nueva función para forzar refrescar
     // Funciones para actualizar estado directamente (útil para búsquedas)
     setItems,
     setPagination,

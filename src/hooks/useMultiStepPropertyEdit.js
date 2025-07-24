@@ -96,8 +96,19 @@ export const useMultiStepPropertyEdit = (propertyId, formType) => {
             );
           }
 
-          // Para propiedades Minkaasa, agregar externalAgreement
+          // Para propiedades Minkaasa, agregar campos de ubicación directamente en el body
           if (isMinkaasa) {
+            // Campos de ubicación en el body principal
+            basicData.condominium = formData.condominium || "";
+            basicData.street = formData.street || "";
+            basicData.exteriorNumber = formData.exteriorNumber || "";
+            basicData.interiorNumber = formData.interiorNumber || "";
+            basicData.suburb = formData.suburb || "";
+            basicData.city = formData.city || "";
+            basicData.state = formData.state || "";
+            basicData.zipCode = formData.zipCode ? Number(formData.zipCode) : null;
+
+            // externalAgreement solo con datos de contacto
             const externalAgreement = {
               name: formData.name || "",
               lastNameP: formData.lastNameP || "",

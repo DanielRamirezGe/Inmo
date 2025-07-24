@@ -346,7 +346,10 @@ export default function PropertiesPage() {
   const handleRefreshData = async (successMessage = null) => {
     try {
       const entityHook = getCurrentEntityHook();
-      await entityHook.fetchItems();
+      
+      // Forzar refrescar datos para evitar problemas de cache
+      console.log('🔄 Refreshing data after operation...');
+      await entityHook.forceRefresh();
       
       // Mostrar notificación de éxito si se proporciona
       if (successMessage) {
@@ -456,18 +459,20 @@ export default function PropertiesPage() {
       if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED) {
         success = await api.unpublishMinkaasaProperty(propertyId);
         if (success) {
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED
-          ].fetchItems();
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED
-          ].fetchItems();
+          // Forzar refrescar ambas listas para evitar problemas de cache
+          await Promise.all([
+            entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED].forceRefresh(),
+            entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED].forceRefresh()
+          ]);
         }
       } else {
         success = await api.unpublishProperty(propertyId);
         if (success) {
-          await entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems();
-          await entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems();
+          // Forzar refrescar ambas listas para evitar problemas de cache
+          await Promise.all([
+            entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].forceRefresh(),
+            entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].forceRefresh()
+          ]);
         }
       }
 
@@ -488,18 +493,20 @@ export default function PropertiesPage() {
       if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED) {
         success = await api.publishMinkaasaProperty(propertyId);
         if (success) {
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED
-          ].fetchItems();
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED
-          ].fetchItems();
+          // Forzar refrescar ambas listas para evitar problemas de cache
+          await Promise.all([
+            entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED].forceRefresh(),
+            entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED].forceRefresh()
+          ]);
         }
       } else {
         success = await api.publishProperty(propertyId);
         if (success) {
-          await entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems();
-          await entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems();
+          // Forzar refrescar ambas listas para evitar problemas de cache
+          await Promise.all([
+            entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].forceRefresh(),
+            entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].forceRefresh()
+          ]);
         }
       }
 

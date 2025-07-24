@@ -217,7 +217,10 @@ export const api = {
       );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype", {
-        params: validParams,
+        params: {
+          ...validParams,
+          _t: Date.now(), // Cache-busting parameter
+        },
       });
       return {
         data: response.data.data || [],
@@ -242,7 +245,10 @@ export const api = {
       );
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.get("/prototype/published", {
-        params: validParams,
+        params: {
+          ...validParams,
+          _t: Date.now(), // Cache-busting parameter
+        },
       });
       return {
         data: response.data.data || [],
@@ -498,7 +504,10 @@ export const api = {
       const response = await axiosInstance.get(
         "/prototype/minkaasa-not-published",
         {
-          params: validParams,
+          params: {
+            ...validParams,
+            _t: Date.now(), // Cache-busting parameter
+          },
         }
       );
       return {
@@ -526,7 +535,10 @@ export const api = {
       const response = await axiosInstance.get(
         "/prototype/minkaasa-published",
         {
-          params: validParams,
+          params: {
+            ...validParams,
+            _t: Date.now(), // Cache-busting parameter
+          },
         }
       );
       return {
