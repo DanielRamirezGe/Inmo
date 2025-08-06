@@ -243,6 +243,10 @@ export const getFieldSectionsForFormType = (formType) => {
           ),
         },
         {
+          title: "Información de Ubicación",
+          fields: minkaasaLocationFields,
+        },
+        {
           title: "Información del Contacto Externo",
           fields: minkaasaContactFields,
         },
@@ -441,6 +445,26 @@ export const getBasicPropertyFields = (formType) => {
     formType === "propertyMinkaasaPublished"
   ) {
     basicFields.push(
+      { name: "condominium", label: "Condominio" },
+      { name: "street", label: "Calle" },
+      { name: "exteriorNumber", label: "Número Exterior" },
+      { name: "interiorNumber", label: "Número Interior" },
+      { name: "suburb", label: "Colonia" },
+      { name: "city", label: "Ciudad o Municipio" },
+      {
+        name: "state",
+        label: "Estado",
+        type: "select",
+        options: ESTADOS_MEXICO,
+      },
+      {
+        name: "zipCode",
+        label: "Código Postal",
+        type: "number",
+        inputProps: { min: 0 },
+      }
+    );
+    basicFields.push(
       { name: "name", label: "Nombre", required: true },
       { name: "lastNameP", label: "Apellido Paterno", required: true },
       { name: "lastNameM", label: "Apellido Materno" },
@@ -482,12 +506,17 @@ export const getBasicPropertySections = (formType) => {
   ) {
     // Para Minkaasa, dividir en dos secciones
     const propertyFields = basicFields.slice(0, 10); // Campos de propiedad (incluyendo url y mapLocation)
-    const contactFields = basicFields.slice(10); // Campos de contacto
+    const locationFields = basicFields.slice(10, 18); // Campos de ubicación (8 campos)
+    const contactFields = basicFields.slice(18); // Campos de contacto
 
     return [
       {
         title: "Datos Básicos de la Propiedad",
         fields: propertyFields,
+      },
+      {
+        title: "Información de Ubicación",
+        fields: locationFields,
       },
       {
         title: "Información del Contacto Externo",
