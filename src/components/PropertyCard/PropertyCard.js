@@ -44,6 +44,7 @@ const PropertyCard = ({ property, onDetailClick }) => {
     images = [],
     developmentName,
     condominium,
+    developmentId,
   } = property;
 
   // Asegurarse de que mainImage esté primero en el array de imágenes
@@ -152,6 +153,8 @@ const PropertyCard = ({ property, onDetailClick }) => {
           },
         }}
       >
+        
+
         {/* Header */}
         <Box
           sx={{
@@ -251,6 +254,42 @@ const PropertyCard = ({ property, onDetailClick }) => {
                     Ver galería
                   </Typography>
                 </Box>
+                
+                {/* Etiqueta de Casa Usada en footer de imagen */}
+                {developmentId === null && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "linear-gradient(135deg, rgba(240, 185, 43, 0.95) 0%, rgba(230, 168, 32, 0.98) 100%)",
+                      backdropFilter: "blur(8px)",
+                      borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+                      py: { xs: 0.5, md: 0.75 },
+                      px: 1,
+                      zIndex: 5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "#1B2631",
+                        fontSize: { xs: "0.7rem", md: "0.75rem" },
+                        fontWeight: 700,
+                        textAlign: "center",
+                        display: "block",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        textShadow: "0 1px 2px rgba(255, 255, 255, 0.3)",
+                        lineHeight: 1,
+                      }}
+                    >
+                      Compra inmediata - Casa Usada
+                    </Typography>
+                  </Box>
+                )}
+
               </>
             ) : (
               <Box
@@ -314,6 +353,8 @@ const PropertyCard = ({ property, onDetailClick }) => {
               }}
               onClick={onDetailClick}
             >
+
+
               {/* Precio destacado */}
               <Box
                 sx={{
