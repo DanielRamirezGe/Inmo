@@ -293,6 +293,15 @@ const FormDialog = ({
               mainPhone: externalAgreementData.mainPhone || "",
               agent: externalAgreementData.agent || "",
               commission: externalAgreementData.commission || 0,
+               // Campos de ubicación desde el body principal
+               condominium: details.condominium || "",
+               street: details.street || "",
+               exteriorNumber: details.exteriorNumber || "",
+               interiorNumber: details.interiorNumber || "",
+               suburb: details.suburb || "",
+               city: details.city || "",
+               state: details.state || "",
+               zipCode: details.zipCode || "",
               descriptions: descriptionsData,
               videoPath: details.videoPath || null,
             };
@@ -642,6 +651,15 @@ const FormDialog = ({
 
     // Para propiedades Minkaasa, agregar externalAgreement
     if (isMinkaasa) {
+      // Campos de ubicación en el body principal
+      basicData.condominium = formData.condominium || "";
+      basicData.street = formData.street || "";
+      basicData.exteriorNumber = formData.exteriorNumber || "";
+      basicData.interiorNumber = formData.interiorNumber || "";
+      basicData.suburb = formData.suburb || "";
+      basicData.city = formData.city || "";
+      basicData.state = formData.state || "";
+      basicData.zipCode = formData.zipCode ? Number(formData.zipCode) : null;
       const externalAgreement = {
         name: formData.name || "",
         lastNameP: formData.lastNameP || "",
