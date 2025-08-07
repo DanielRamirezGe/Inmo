@@ -23,7 +23,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import ImageGallery from "./ImageGallery";
 import { FORM_TYPES } from "../constants";
-import { useEntityData } from "../../../../hooks/useEntityData";
+import { useEntityData, useGlobalEntityState } from "../../../../hooks/useGlobalEntityState";
 import { useImageHandling } from "../../../../hooks/useImageHandling";
 import { api } from "../../../../services/api";
 import {

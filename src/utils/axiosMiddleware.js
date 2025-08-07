@@ -89,6 +89,13 @@ export const createAxiosInstance = () => {
         return Promise.reject(new Error("No token found"));
       }
       config.headers.Authorization = `Bearer ${token}`;
+      
+      // 🔧 FIX: Solo usar timestamp para cache busting (sin headers problemáticos de CORS)
+      if (config.method === 'get') {
+        const separator = config.url.includes('?') ? '&' : '?';
+        config.url = `${config.url}${separator}_t=${Date.now()}`;
+      }
+      
       return config;
     },
     (error) => {
