@@ -10,7 +10,7 @@ import DeleteDialog from "./components/DeleteDialog";
 import PropertyFiltersBar from "../../../components/PropertyFiltersBar";
 
 // Hooks personalizados
-import { useEntityData } from "../../../hooks/useEntityData";
+import { useEntityData, useGlobalEntityState, GlobalEntityStateProvider } from "../../../hooks/useGlobalEntityState";
 import { useImageHandling } from "../../../hooks/useImageHandling";
 import { api } from "../../../services/api";
 
@@ -150,7 +150,7 @@ const createDevelopmentFormData = (formData) => {
   return formDataToSend;
 };
 
-export default function PropertiesPage() {
+function PropertiesPageContent() {
   const [tabValue, setTabValue] = useState(TAB_INDICES.DEVELOPER);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
@@ -171,7 +171,10 @@ export default function PropertiesPage() {
   // Estado para notificaciones de éxito
   const [successNotification, setSuccessNotification] = useState(null);
 
-  // Hooks consolidados para todas las entidades
+  // 🔧 FIX: Hook global para sincronización de estado
+  const { refreshRelatedEntities } = useGlobalEntityState();
+
+  // Hooks consolidados para todas las entidades usando el estado global
   const entityHooks = {
     [ENTITY_TYPES.DEVELOPER]: useEntityData(ENTITY_TYPES.DEVELOPER),
     [ENTITY_TYPES.DEVELOPMENT]: useEntityData(ENTITY_TYPES.DEVELOPMENT),
@@ -342,11 +345,14 @@ export default function PropertiesPage() {
     }
   };
 
-  // Función específica para refrescar datos después de edición exitosa
+  // 🔧 FIX: Función mejorada para refrescar datos después de edición exitosa
   const handleRefreshData = async (successMessage = null) => {
     try {
       const entityHook = getCurrentEntityHook();
-      await entityHook.fetchItems();
+      const entityType = TAB_FORM_TYPE_MAP[tabValue];
+      
+      // Usar el sistema global para refrescar entidades relacionadas
+      await refreshRelatedEntities(entityType, 'UPDATE');
       
       // Mostrar notificación de éxito si se proporciona
       if (successMessage) {
@@ -445,30 +451,27 @@ export default function PropertiesPage() {
     }
   };
 
-  // Función para despublicar una propiedad
+  // 🔧 FIX: Función mejorada para despublicar una propiedad
   const handleUnpublishProperty = async (propertyId) => {
     if (unpublishing) return false;
 
     try {
       setUnpublishing(true);
       let success;
+      let entityType;
 
       if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED) {
         success = await api.unpublishMinkaasaProperty(propertyId);
-        if (success) {
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED
-          ].fetchItems();
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED
-          ].fetchItems();
-        }
+        entityType = ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED;
       } else {
         success = await api.unpublishProperty(propertyId);
-        if (success) {
-          await entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems();
-          await entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems();
-        }
+        entityType = ENTITY_TYPES.PROPERTY_PUBLISHED;
+      }
+
+      if (success) {
+        // 🔧 FIX: Usar el sistema global para refrescar entidades relacionadas
+        await refreshRelatedEntities(entityType, 'UNPUBLISH');
+        setSuccessNotification('Propiedad despublicada exitosamente');
       }
 
       return success;
@@ -480,27 +483,24 @@ export default function PropertiesPage() {
     }
   };
 
-  // Función para publicar una propiedad
+  // 🔧 FIX: Función mejorada para publicar una propiedad
   const handlePublishProperty = async (propertyId) => {
     try {
       let success;
+      let entityType;
 
       if (tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED) {
         success = await api.publishMinkaasaProperty(propertyId);
-        if (success) {
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED
-          ].fetchItems();
-          await entityHooks[
-            ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED
-          ].fetchItems();
-        }
+        entityType = ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED;
       } else {
         success = await api.publishProperty(propertyId);
-        if (success) {
-          await entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems();
-          await entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems();
-        }
+        entityType = ENTITY_TYPES.PROPERTY_NOT_PUBLISHED;
+      }
+
+      if (success) {
+        // 🔧 FIX: Usar el sistema global para refrescar entidades relacionadas
+        await refreshRelatedEntities(entityType, 'PUBLISH');
+        setSuccessNotification('Propiedad publicada exitosamente');
       }
 
       return success;
@@ -632,5 +632,14 @@ export default function PropertiesPage() {
         </Snackbar>
       </Container>
     </>
+  );
+}
+
+// 🔧 FIX: Componente principal con Provider de estado global
+export default function PropertiesPage() {
+  return (
+    <GlobalEntityStateProvider>
+      <PropertiesPageContent />
+    </GlobalEntityStateProvider>
   );
 }
