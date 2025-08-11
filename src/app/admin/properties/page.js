@@ -172,7 +172,35 @@ function PropertiesPageContent() {
   const [successNotification, setSuccessNotification] = useState(null);
 
   // 🔧 FIX: Hook global para sincronización de estado
-  const { refreshRelatedEntities } = useGlobalEntityState();
+  const { refreshRelatedEntities, debugGlobalState, invalidateAllCache } = useGlobalEntityState();
+
+  // 🔧 DEBUG: Función para diagnosticar problemas
+  const handleDebugState = () => {
+    debugGlobalState();
+    console.log('Current tab:', tabValue);
+    console.log('Current entity hooks:', Object.keys(entityHooks).map(key => ({
+      type: key,
+      itemsCount: entityHooks[key].items.length,
+    })));
+  };
+
+  // 🔧 FIX: Función para forzar refresh completo
+  const handleForceRefresh = async () => {
+    console.log('🔄 Forcing complete refresh of all entities');
+    invalidateAllCache();
+    
+    // Refrescar todas las entidades
+    await Promise.all([
+      entityHooks[ENTITY_TYPES.DEVELOPER].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.DEVELOPMENT].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED].fetchItems(1, undefined, true),
+    ]);
+    
+    setSuccessNotification('Datos refrescados completamente');
+  };
 
   // Hooks consolidados para todas las entidades usando el estado global
   const entityHooks = {
@@ -223,6 +251,19 @@ function PropertiesPageContent() {
     };
     loadInitialData();
   }, []);
+
+  // 🔧 DEBUG: Exponer funciones para debugging (temporal)
+  useEffect(() => {
+    window.debugAdminState = handleDebugState;
+    window.forceRefreshAdmin = handleForceRefresh;
+    window.entityHooks = entityHooks;
+    
+    return () => {
+      delete window.debugAdminState;
+      delete window.forceRefreshAdmin;
+      delete window.entityHooks;
+    };
+  }, [handleDebugState, handleForceRefresh, entityHooks]);
 
   // Cargar datos específicos cuando cambia la pestaña
   useEffect(() => {
@@ -320,16 +361,32 @@ function PropertiesPageContent() {
     setDeleteDialogOpen(true);
   };
 
-  // Función para eliminar elementos
+  // 🔧 FIX: Función mejorada para eliminar elementos
   const handleDelete = async () => {
     try {
       const entityHook = getCurrentEntityHook();
       const idField = getIdField(tabValue);
-      await entityHook.deleteItem(itemToDelete[idField]);
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
+      const itemId = itemToDelete[idField];
+      
+      console.log(`🗑️ Attempting to delete item with ID: ${itemId}`);
+      
+      const success = await entityHook.deleteItem(itemId);
+      
+      if (success) {
+        setDeleteDialogOpen(false);
+        setItemToDelete(null);
+        
+        // Mostrar notificación de éxito
+        const entityLabel = ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
+        setSuccessNotification(`${entityLabel} eliminado exitosamente`);
+        
+        console.log(`✅ Successfully deleted ${entityLabel} with ID: ${itemId}`);
+      } else {
+        console.error(`❌ Failed to delete item with ID: ${itemId}`);
+      }
     } catch (error) {
       console.error("Error al eliminar:", error);
+      // El error ya se maneja en el hook global, aquí solo logueamos
     }
   };
 
@@ -442,6 +499,16 @@ function PropertiesPageContent() {
         setDialogOpen(false);
         setCurrentItem(null);
         setFormData({});
+        
+        // 🔧 FIX: Mostrar notificación específica y asegurar refresh
+        const entityLabel = ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
+        const isEditing = !!currentItem;
+        const successMessage = isEditing 
+          ? `${entityLabel} actualizado exitosamente`
+          : `${entityLabel} creado exitosamente`;
+        
+        setSuccessNotification(successMessage);
+        console.log(`✅ ${successMessage}`);
       }
     } catch (error) {
       console.error("Error al guardar:", error);

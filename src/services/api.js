@@ -88,8 +88,11 @@ export const api = {
   createDeveloper: async (data) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.post("/realEstateDevelopment", data);
+      const response = await axiosInstance.post("/realEstateDevelopment", data);
+      console.log(`✅ API: Developer created successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error creating developer:`, error);
       handleApiError(error);
     }
   },
@@ -97,8 +100,11 @@ export const api = {
   updateDeveloper: async (id, data) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/realEstateDevelopment/${id}`, data);
+      const response = await axiosInstance.put(`/realEstateDevelopment/${id}`, data);
+      console.log(`✅ API: Developer ${id} updated successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error updating developer ${id}:`, error);
       handleApiError(error);
     }
   },
@@ -151,10 +157,13 @@ export const api = {
   createDevelopment: async (formData) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.post("/development", formData, {
+      const response = await axiosInstance.post("/development", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log(`✅ API: Development created successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error creating development:`, error);
       handleApiError(error);
     }
   },
@@ -162,10 +171,13 @@ export const api = {
   updateDevelopment: async (id, formData) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.put(`/development/${id}`, formData, {
+      const response = await axiosInstance.put(`/development/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+      console.log(`✅ API: Development ${id} updated successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error updating development ${id}:`, error);
       handleApiError(error);
     }
   },
@@ -383,8 +395,11 @@ export const api = {
   deleteProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.delete(`/prototype/${id}`);
+      const response = await axiosInstance.delete(`/prototype/${id}`);
+      console.log(`✅ API: Property ${id} deleted successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error deleting property ${id}:`, error);
       handleApiError(error);
     }
   },
@@ -567,8 +582,11 @@ export const api = {
   deleteMinkaasaProperty: async (id) => {
     try {
       const axiosInstance = getAxiosInstance();
-      await axiosInstance.delete(`/prototype/${id}`);
+      const response = await axiosInstance.delete(`/prototype/${id}`);
+      console.log(`✅ API: Minkaasa property ${id} deleted successfully`, response.data);
+      return { success: true, data: response.data };
     } catch (error) {
+      console.error(`❌ API: Error deleting Minkaasa property ${id}:`, error);
       handleApiError(error);
     }
   },
