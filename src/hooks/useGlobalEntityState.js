@@ -8,49 +8,91 @@ const GlobalEntityStateContext = createContext();
 
 // Provider component
 export const GlobalEntityStateProvider = ({ children }) => {
-  const [globalState, setGlobalState] = useState({
-    [FORM_TYPES.DEVELOPER]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
-    [FORM_TYPES.DEVELOPMENT]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
-    [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
-    [FORM_TYPES.PROPERTY_PUBLISHED]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
-    [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
-    [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
-      items: [],
-      loading: false,
-      error: null,
-      pagination: createInitialPagination("PROPERTIES"),
-      lastUpdated: null,
-    },
+  // 🔧 FIX: Función para limpiar localStorage residual al inicializar
+  const cleanupResidualStorage = useCallback(() => {
+    const keysToClean = [
+      "creatingPropertyId",
+      "creatingPropertyStep", 
+      "creatingPropertyType",
+      "searchFilters" // Si existe en admin también
+    ];
+    
+    keysToClean.forEach(key => {
+      if (localStorage.getItem(key) || sessionStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+        console.log(`🧹 Cleaned residual storage: ${key}`);
+      }
+    });
+  }, []);
+
+  // 🔧 FIX: Estado de inicialización global para evitar mostrar datos viejos
+  const [isGlobalInitialized, setIsGlobalInitialized] = useState(false);
+
+  // 🔧 FIX: Estado inicial que fuerza invalidación de cache
+  const [globalState, setGlobalState] = useState(() => {
+    // Limpiar localStorage al inicializar (función directa para evitar problemas de referencias)
+    const keysToClean = [
+      "creatingPropertyId",
+      "creatingPropertyStep", 
+      "creatingPropertyType",
+      "searchFilters"
+    ];
+    
+    keysToClean.forEach(key => {
+      if (localStorage.getItem(key) || sessionStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+        console.log(`🧹 Cleaned residual storage on init: ${key}`);
+      }
+    });
+    
+    console.log('🚀 Initializing GlobalEntityState with fresh state');
+    
+    return {
+      [FORM_TYPES.DEVELOPER]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+      [FORM_TYPES.DEVELOPMENT]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+      [FORM_TYPES.PROPERTY_NOT_PUBLISHED]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+      [FORM_TYPES.PROPERTY_PUBLISHED]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+      [FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+      [FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED]: {
+        items: [],
+        loading: false,
+        error: null,
+        pagination: createInitialPagination("PROPERTIES"),
+        lastUpdated: 0, // 🔧 FIX: 0 = forzar fetch inmediato
+      },
+    };
   });
 
   // Función para actualizar estado de una entidad específica
@@ -196,12 +238,39 @@ export const GlobalEntityStateProvider = ({ children }) => {
     });
   }, [globalState, updateEntityState]);
 
+  // 🔧 FIX: Función simplificada para limpiar localStorage solamente (sin bucles)
+  const cleanResidualStorage = useCallback(() => {
+    console.log('🧹 Cleaning residual localStorage...');
+    
+    let cleaned = false;
+    ['creatingPropertyId', 'creatingPropertyStep', 'creatingPropertyType'].forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`🧹 Removed residual localStorage: ${key}`);
+        cleaned = true;
+      }
+    });
+    
+    return cleaned;
+  }, []);
+
+  // 🔧 FIX: Función para marcar como inicializado después de la primera carga
+  const markAsInitialized = useCallback(() => {
+    if (!isGlobalInitialized) {
+      console.log('✅ Global state marked as initialized');
+      setIsGlobalInitialized(true);
+    }
+  }, [isGlobalInitialized]);
+
   const contextValue = {
     globalState,
     updateEntityState,
     refreshRelatedEntities,
     debugGlobalState,
     invalidateAllCache,
+    cleanResidualStorage,
+    isGlobalInitialized,
+    markAsInitialized,
   };
 
   return (
@@ -222,7 +291,7 @@ export const useGlobalEntityState = () => {
 
 // Hook mejorado que usa el estado global
 export const useEntityData = (entityType) => {
-  const { globalState, updateEntityState, refreshRelatedEntities } = useGlobalEntityState();
+  const { globalState, updateEntityState, refreshRelatedEntities, markAsInitialized } = useGlobalEntityState();
   
   const entityState = globalState[entityType];
 
@@ -286,6 +355,9 @@ export const useEntityData = (entityType) => {
           loading: false,
           error: null,
         });
+
+        // 🔧 FIX: Marcar como inicializado después de la primera carga exitosa
+        markAsInitialized();
       } catch (error) {
         console.error("Error al obtener items:", error);
         updateEntityState(entityType, {
