@@ -172,7 +172,7 @@ function PropertiesPageContent() {
   const [successNotification, setSuccessNotification] = useState(null);
 
   // 🔧 FIX: Hook global para sincronización de estado
-  const { refreshRelatedEntities, debugGlobalState, invalidateAllCache } = useGlobalEntityState();
+  const { refreshRelatedEntities, debugGlobalState, invalidateAllCache, cleanResidualStorage, isGlobalInitialized } = useGlobalEntityState();
 
   // 🔧 DEBUG: Función para diagnosticar problemas
   const handleDebugState = () => {
@@ -243,11 +243,24 @@ function PropertiesPageContent() {
     [tabValue]
   );
 
-  // Cargar datos iniciales
+  // 🔧 FIX: Limpiar localStorage residual al montar el componente (solo una vez)
+  useEffect(() => {
+    const cleaned = cleanResidualStorage();
+    if (cleaned) {
+      console.log('🔄 Cleaned residual localStorage, forcing fresh data load');
+    }
+  }, []); // ✅ Sin dependencias para ejecutar solo una vez
+
+  // 🔧 FIX: Cargar datos iniciales con invalidación forzada de cache
   useEffect(() => {
     const loadInitialData = async () => {
-      await entityHooks[ENTITY_TYPES.DEVELOPER].fetchItems();
+      console.log('🚀 Starting initial data load...');
+      
+      // Forzar fetch de desarrolladores (entidad base)
+      await entityHooks[ENTITY_TYPES.DEVELOPER].fetchItems(1, undefined, true);
       setInitialLoadDone(true);
+      
+      console.log('✅ Initial data load completed');
     };
     loadInitialData();
   }, []);
@@ -257,27 +270,41 @@ function PropertiesPageContent() {
     window.debugAdminState = handleDebugState;
     window.forceRefreshAdmin = handleForceRefresh;
     window.entityHooks = entityHooks;
+    window.cleanStorage = cleanResidualStorage;
+    window.checkLocalStorage = () => {
+      console.log('🔍 LOCALSTORAGE CHECK:', {
+        creatingPropertyId: localStorage.getItem('creatingPropertyId'),
+        creatingPropertyStep: localStorage.getItem('creatingPropertyStep'),
+        creatingPropertyType: localStorage.getItem('creatingPropertyType'),
+        token: localStorage.getItem('token') ? 'exists' : 'missing',
+        allKeys: Object.keys(localStorage)
+      });
+    };
     
     return () => {
       delete window.debugAdminState;
       delete window.forceRefreshAdmin;
       delete window.entityHooks;
+      delete window.cleanStorage;
+      delete window.checkLocalStorage;
     };
-  }, [handleDebugState, handleForceRefresh, entityHooks]);
+  }, [handleDebugState, handleForceRefresh, entityHooks, cleanResidualStorage]);
 
-  // Cargar datos específicos cuando cambia la pestaña
+  // 🔧 FIX: Cargar datos específicos cuando cambia la pestaña (con cache forzado)
   useEffect(() => {
-    if (!initialLoadDone) return;
+    if (!initialLoadDone || !isGlobalInitialized) return;
 
     const loadTabData = async () => {
       const entityType = TAB_FORM_TYPE_MAP[tabValue];
       if (entityType !== ENTITY_TYPES.DEVELOPER) {
-        await entityHooks[entityType].fetchItems();
+        console.log(`🔄 Loading fresh data for tab: ${entityType}`);
+        // Forzar fetch para evitar datos viejos
+        await entityHooks[entityType].fetchItems(1, undefined, true);
       }
     };
 
     loadTabData();
-  }, [tabValue, initialLoadDone]);
+  }, [tabValue, initialLoadDone, isGlobalInitialized]);
 
   // Manejo de cambio de pestaña
   const handleTabChange = (event, newValue) => {
@@ -598,6 +625,49 @@ function PropertiesPageContent() {
     type,
     pagination,
   } = getCurrentEntityData();
+
+  // 🔧 FIX: Mostrar loading mientras se inicializa el estado global
+  if (!isGlobalInitialized || !initialLoadDone) {
+    return (
+      <>
+        <AdminNavbar />
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+          <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="400px">
+            <Typography variant="h5" gutterBottom>
+              Cargando datos actualizados...
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Invalidando cache y obteniendo información fresca del servidor
+            </Typography>
+            <Box sx={{ width: '100%', maxWidth: 400 }}>
+              <div style={{ 
+                width: '100%', 
+                height: '4px', 
+                backgroundColor: '#f0f0f0', 
+                borderRadius: '2px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#25D366',
+                  animation: 'loading 1.5s ease-in-out infinite',
+                  transformOrigin: 'left'
+                }} />
+              </div>
+            </Box>
+          </Box>
+        </Container>
+        <style jsx>{`
+          @keyframes loading {
+            0% { transform: scaleX(0); }
+            50% { transform: scaleX(1); }
+            100% { transform: scaleX(0); }
+          }
+        `}</style>
+      </>
+    );
+  }
 
   return (
     <>
