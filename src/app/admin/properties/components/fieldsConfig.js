@@ -174,27 +174,33 @@ export const propertyFields = [
 // Campos específicos para propiedades Minkaasa
 export const minkaasaLocationFields = [
   { name: "condominium", label: "Condominio" },
-  { name: "street", label: "Calle" },
+  { name: "street", label: "Calle", required: true },
   { name: "exteriorNumber", label: "Número Exterior" },
   { name: "interiorNumber", label: "Número Interior" },
   { name: "suburb", label: "Colonia" },
-  { name: "city", label: "Ciudad" },
+  { name: "city", label: "Ciudad", required: true },
   {
     name: "state",
     label: "Estado",
     type: "select",
     options: ESTADOS_MEXICO,
+    required: true,
   },
   { name: "zipCode", label: "Código Postal" },
 ];
 
 export const minkaasaContactFields = [
-  { name: "name", label: "Nombre" },
-  { name: "lastNameP", label: "Apellido Paterno" },
+  { name: "name", label: "Nombre", required: true },
+  { name: "lastNameP", label: "Apellido Paterno", required: true },
   { name: "lastNameM", label: "Apellido Materno" },
-  { name: "mainEmail", label: "Email Principal", type: "email" },
-  { name: "mainPhone", label: "Teléfono Principal" },
-  { name: "agent", label: "Agente" },
+  {
+    name: "mainEmail",
+    label: "Email Principal",
+    type: "email",
+    required: true,
+  },
+  { name: "mainPhone", label: "Teléfono Principal", required: true },
+  { name: "agent", label: "Agente", required: true },
   {
     name: "commission",
     label: "Comisión %",
