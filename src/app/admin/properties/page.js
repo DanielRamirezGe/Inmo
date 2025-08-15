@@ -1,6 +1,14 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Container, Typography, Tabs, Tab, Alert, Snackbar } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  Tabs,
+  Tab,
+  Alert,
+  Snackbar,
+} from "@mui/material";
 
 // Componentes
 import AdminNavbar from "../components/AdminNavbar";
@@ -10,7 +18,11 @@ import DeleteDialog from "./components/DeleteDialog";
 import PropertyFiltersBar from "../../../components/PropertyFiltersBar";
 
 // Hooks personalizados
-import { useEntityData, useGlobalEntityState, GlobalEntityStateProvider } from "../../../hooks/useGlobalEntityState";
+import {
+  useEntityData,
+  useGlobalEntityState,
+  GlobalEntityStateProvider,
+} from "../../../hooks/useGlobalEntityState";
 import { useImageHandling } from "../../../hooks/useImageHandling";
 import { api } from "../../../services/api";
 
@@ -172,34 +184,54 @@ function PropertiesPageContent() {
   const [successNotification, setSuccessNotification] = useState(null);
 
   // 🔧 FIX: Hook global para sincronización de estado
-  const { refreshRelatedEntities, debugGlobalState, invalidateAllCache } = useGlobalEntityState();
+  const { refreshRelatedEntities, debugGlobalState, invalidateAllCache } =
+    useGlobalEntityState();
 
   // 🔧 DEBUG: Función para diagnosticar problemas
   const handleDebugState = () => {
     debugGlobalState();
-    console.log('Current tab:', tabValue);
-    console.log('Current entity hooks:', Object.keys(entityHooks).map(key => ({
-      type: key,
-      itemsCount: entityHooks[key].items.length,
-    })));
+    console.log("Current tab:", tabValue);
+    console.log(
+      "Current entity hooks:",
+      Object.keys(entityHooks).map((key) => ({
+        type: key,
+        itemsCount: entityHooks[key].items.length,
+      }))
+    );
   };
 
   // 🔧 FIX: Función para forzar refresh completo
   const handleForceRefresh = async () => {
-    console.log('🔄 Forcing complete refresh of all entities');
+    console.log("🔄 Forcing complete refresh of all entities");
     invalidateAllCache();
-    
+
     // Refrescar todas las entidades
     await Promise.all([
       entityHooks[ENTITY_TYPES.DEVELOPER].fetchItems(1, undefined, true),
       entityHooks[ENTITY_TYPES.DEVELOPMENT].fetchItems(1, undefined, true),
-      entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems(1, undefined, true),
-      entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems(1, undefined, true),
-      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED].fetchItems(1, undefined, true),
-      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED].fetchItems(1, undefined, true),
+      entityHooks[ENTITY_TYPES.PROPERTY_NOT_PUBLISHED].fetchItems(
+        1,
+        undefined,
+        true
+      ),
+      entityHooks[ENTITY_TYPES.PROPERTY_PUBLISHED].fetchItems(
+        1,
+        undefined,
+        true
+      ),
+      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_UNPUBLISHED].fetchItems(
+        1,
+        undefined,
+        true
+      ),
+      entityHooks[ENTITY_TYPES.PROPERTY_MINKAASA_PUBLISHED].fetchItems(
+        1,
+        undefined,
+        true
+      ),
     ]);
-    
-    setSuccessNotification('Datos refrescados completamente');
+
+    setSuccessNotification("Datos refrescados completamente");
   };
 
   // Hooks consolidados para todas las entidades usando el estado global
@@ -257,7 +289,7 @@ function PropertiesPageContent() {
     window.debugAdminState = handleDebugState;
     window.forceRefreshAdmin = handleForceRefresh;
     window.entityHooks = entityHooks;
-    
+
     return () => {
       delete window.debugAdminState;
       delete window.forceRefreshAdmin;
@@ -367,20 +399,23 @@ function PropertiesPageContent() {
       const entityHook = getCurrentEntityHook();
       const idField = getIdField(tabValue);
       const itemId = itemToDelete[idField];
-      
+
       console.log(`🗑️ Attempting to delete item with ID: ${itemId}`);
-      
+
       const success = await entityHook.deleteItem(itemId);
-      
+
       if (success) {
         setDeleteDialogOpen(false);
         setItemToDelete(null);
-        
+
         // Mostrar notificación de éxito
-        const entityLabel = ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
+        const entityLabel =
+          ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
         setSuccessNotification(`${entityLabel} eliminado exitosamente`);
-        
-        console.log(`✅ Successfully deleted ${entityLabel} with ID: ${itemId}`);
+
+        console.log(
+          `✅ Successfully deleted ${entityLabel} with ID: ${itemId}`
+        );
       } else {
         console.error(`❌ Failed to delete item with ID: ${itemId}`);
       }
@@ -407,16 +442,19 @@ function PropertiesPageContent() {
     try {
       const entityHook = getCurrentEntityHook();
       const entityType = TAB_FORM_TYPE_MAP[tabValue];
-      
+
       // Usar el sistema global para refrescar entidades relacionadas
-      await refreshRelatedEntities(entityType, 'UPDATE');
-      
+      await refreshRelatedEntities(entityType, "UPDATE");
+
+      // ✅ SOLUCIÓN: Refrescar datos inmediatamente después de editar
+      await entityHook.fetchItems(1, undefined, true);
+
       // Mostrar notificación de éxito si se proporciona
       if (successMessage) {
         setSuccessNotification(successMessage);
       }
     } catch (error) {
-      console.error('Error al refrescar datos:', error);
+      console.error("Error al refrescar datos:", error);
     }
   };
 
@@ -431,13 +469,16 @@ function PropertiesPageContent() {
 
       // Para creación nueva de propiedades, no hacer nada aquí
       // El FormDialog maneja el proceso multi-paso internamente
-      if (!isEditing && (
-        tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
-        tabValue === TAB_INDICES.PROPERTY_PUBLISHED ||
-        tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED ||
-        tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED
-      )) {
-        console.log('🔄 Creación nueva de propiedades: delegando al proceso multi-paso de FormDialog');
+      if (
+        !isEditing &&
+        (tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
+          tabValue === TAB_INDICES.PROPERTY_PUBLISHED ||
+          tabValue === TAB_INDICES.PROPERTY_MINKAASA_UNPUBLISHED ||
+          tabValue === TAB_INDICES.PROPERTY_MINKAASA_PUBLISHED)
+      ) {
+        console.log(
+          "🔄 Creación nueva de propiedades: delegando al proceso multi-paso de FormDialog"
+        );
         // Refrescar listas después del proceso multi-paso
         await entityHook.fetchItems();
         setDialogOpen(false);
@@ -499,14 +540,15 @@ function PropertiesPageContent() {
         setDialogOpen(false);
         setCurrentItem(null);
         setFormData({});
-        
+
         // 🔧 FIX: Mostrar notificación específica y asegurar refresh
-        const entityLabel = ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
+        const entityLabel =
+          ENTITY_LABELS[TAB_FORM_TYPE_MAP[tabValue]]?.singular || "elemento";
         const isEditing = !!currentItem;
-        const successMessage = isEditing 
+        const successMessage = isEditing
           ? `${entityLabel} actualizado exitosamente`
           : `${entityLabel} creado exitosamente`;
-        
+
         setSuccessNotification(successMessage);
         console.log(`✅ ${successMessage}`);
       }
@@ -537,8 +579,12 @@ function PropertiesPageContent() {
 
       if (success) {
         // 🔧 FIX: Usar el sistema global para refrescar entidades relacionadas
-        await refreshRelatedEntities(entityType, 'UNPUBLISH');
-        setSuccessNotification('Propiedad despublicada exitosamente');
+        await refreshRelatedEntities(entityType, "UNPUBLISH");
+
+        // ✅ SOLUCIÓN: Refrescar datos inmediatamente después de despublicar
+        await getCurrentEntityHook().fetchItems(1, undefined, true);
+
+        setSuccessNotification("Propiedad despublicada exitosamente");
       }
 
       return success;
@@ -566,8 +612,12 @@ function PropertiesPageContent() {
 
       if (success) {
         // 🔧 FIX: Usar el sistema global para refrescar entidades relacionadas
-        await refreshRelatedEntities(entityType, 'PUBLISH');
-        setSuccessNotification('Propiedad publicada exitosamente');
+        await refreshRelatedEntities(entityType, "PUBLISH");
+
+        // ✅ SOLUCIÓN: Refrescar datos inmediatamente después de publicar
+        await getCurrentEntityHook().fetchItems(1, undefined, true);
+
+        setSuccessNotification("Propiedad publicada exitosamente");
       }
 
       return success;
@@ -687,12 +737,12 @@ function PropertiesPageContent() {
           open={!!successNotification}
           autoHideDuration={3000}
           onClose={() => setSuccessNotification(null)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert 
-            onClose={() => setSuccessNotification(null)} 
-            severity="success" 
-            sx={{ width: '100%' }}
+          <Alert
+            onClose={() => setSuccessNotification(null)}
+            severity="success"
+            sx={{ width: "100%" }}
           >
             {successNotification}
           </Alert>

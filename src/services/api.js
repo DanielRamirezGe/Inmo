@@ -100,8 +100,14 @@ export const api = {
   updateDeveloper: async (id, data) => {
     try {
       const axiosInstance = getAxiosInstance();
-      const response = await axiosInstance.put(`/realEstateDevelopment/${id}`, data);
-      console.log(`✅ API: Developer ${id} updated successfully`, response.data);
+      const response = await axiosInstance.put(
+        `/realEstateDevelopment/${id}`,
+        data
+      );
+      console.log(
+        `✅ API: Developer ${id} updated successfully`,
+        response.data
+      );
       return { success: true, data: response.data };
     } catch (error) {
       console.error(`❌ API: Error updating developer ${id}:`, error);
@@ -174,7 +180,10 @@ export const api = {
       const response = await axiosInstance.put(`/development/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log(`✅ API: Development ${id} updated successfully`, response.data);
+      console.log(
+        `✅ API: Development ${id} updated successfully`,
+        response.data
+      );
       return { success: true, data: response.data };
     } catch (error) {
       console.error(`❌ API: Error updating development ${id}:`, error);
@@ -583,7 +592,10 @@ export const api = {
     try {
       const axiosInstance = getAxiosInstance();
       const response = await axiosInstance.delete(`/prototype/${id}`);
-      console.log(`✅ API: Minkaasa property ${id} deleted successfully`, response.data);
+      console.log(
+        `✅ API: Minkaasa property ${id} deleted successfully`,
+        response.data
+      );
       return { success: true, data: response.data };
     } catch (error) {
       console.error(`❌ API: Error deleting Minkaasa property ${id}:`, error);
@@ -946,11 +958,14 @@ export const api = {
       );
 
       console.log("✅ API updatePropertyBasic - respuesta:", response.data);
-      return response.data;
+      return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ API updatePropertyBasic - error:", error);
       console.error("❌ Error response:", error.response?.data);
-      handleApiError(error);
+      return {
+        success: false,
+        error: error.message || "Error al actualizar datos básicos",
+      };
     }
   },
 
@@ -978,11 +993,14 @@ export const api = {
         "✅ API updatePropertyDescriptions - respuesta:",
         response.data
       );
-      return response.data;
+      return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ API updatePropertyDescriptions - error:", error);
       console.error("❌ Error response:", error.response?.data);
-      handleApiError(error);
+      return {
+        success: false,
+        error: error.message || "Error al actualizar descripciones",
+      };
     }
   },
 
