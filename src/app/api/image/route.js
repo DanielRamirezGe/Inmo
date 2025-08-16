@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import apiConfig from "@/config/apiConfig";
 
 export async function GET(request) {
   try {
@@ -9,11 +10,8 @@ export async function GET(request) {
       return new NextResponse("Image path is required", { status: 400 });
     }
 
-    // Determinar la URL base del servidor según el entorno
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const baseURL = isDevelopment
-      ? "http://localhost:3010"
-      : "https://adonaipayment.com/minkaasa";
+    // Usar la configuración centralizada
+    const baseURL = apiConfig.baseURL;
 
     // Construir la URL completa de la imagen
     const imageUrl = `${baseURL}/api/v1/image?path=${encodeURIComponent(
