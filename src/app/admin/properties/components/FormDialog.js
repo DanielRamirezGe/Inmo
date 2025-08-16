@@ -60,6 +60,9 @@ const FormDialog = ({
   currentItem,
   onRefreshData,
 }) => {
+  // ✅ Estado local para forzar re-renders
+  const [forceRender, setForceRender] = React.useState(0);
+
   // ✅ Usar el hook personalizado para toda la lógica compleja
   const {
     // Estado del formulario
@@ -130,6 +133,12 @@ const FormDialog = ({
       },
     },
   });
+
+  // ✅ Track multiStepCreate.currentStep changes and force re-render
+  React.useEffect(() => {
+    // Forzar re-render cuando el step cambie
+    setForceRender((prev) => prev + 1);
+  }, [multiStepCreate.currentStep]);
 
   // ✅ Handler personalizado para campos que sincroniza ambos estados
   const handleCustomFieldChange = useCallback(
@@ -333,6 +342,7 @@ const FormDialog = ({
           formData,
           formCharacteristics.isMinkaasaForm
         );
+
         const result = await multiStepCreate.createBasicProperty(
           basicData,
           formType
@@ -340,6 +350,11 @@ const FormDialog = ({
 
         if (result.success) {
           console.log("Basic property created, advancing to step 2");
+
+          // Esperar un poco para que el estado se actualice y luego forzar re-render
+          setTimeout(() => {
+            setForceRender((prev) => prev + 1);
+          }, 200);
         } else {
           setError(result.error || "Error al crear la propiedad básica");
         }
@@ -350,13 +365,31 @@ const FormDialog = ({
       await onSubmit();
     } catch (error) {
       console.error("Error in form submission:", error);
-      setError("Error al guardar los datos. Por favor, inténtalo de nuevo.");
+      // ✅ Mostrar el mensaje específico del error en lugar del genérico
+      setError(
+        error.message ||
+          "Error al guardar los datos. Por favor, inténtalo de nuevo."
+      );
     }
   };
 
   // ✅ Helper para crear datos básicos de propiedad
   const createBasicPropertyData = (formData, isMinkaasa) => {
     const basicData = {};
+
+    // ✅ Validar campos requeridos
+    if (!formData.prototypeName || formData.prototypeName.trim() === "") {
+      throw new Error("El nombre del prototipo es obligatorio");
+    }
+
+    // ✅ Para propiedades no-Minkaasa, validar que el desarrollo esté seleccionado
+    if (
+      !isMinkaasa &&
+      (!formData.developmentId ||
+        formData.developmentId.toString().trim() === "")
+    ) {
+      throw new Error("Debe seleccionar un desarrollo para la propiedad");
+    }
 
     // Campos básicos comunes
     const basicFields = [
