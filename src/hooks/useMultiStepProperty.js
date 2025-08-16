@@ -136,15 +136,34 @@ export const useMultiStepProperty = () => {
     loadPersistedState();
   }, []);
 
+  // ✅ Track currentStep changes
+  useEffect(() => {
+    // console.log("currentStep changed to:", currentStep);
+  }, [currentStep]);
+
   // ✅ Función para validar el paso actual
-  const validateStep = useCallback((step, data = null) => {
+  const validateStep = useCallback((step, data = null, formType = null) => {
     const validationRules = {
-      1: (data) => {
+      1: (data, formType) => {
         // BASIC_DATA
-        const required = ["prototypeName", "propertyTypeId", "price"];
-        return required.every(
-          (field) => data && data[field] && data[field].toString().trim() !== ""
-        );
+        let required = ["prototypeName"];
+
+        // Para propiedades no-Minkaasa, también requerir developmentId
+        const isMinkaasa =
+          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+
+        if (!isMinkaasa) {
+          required.push("developmentId");
+        }
+
+        const isValid = required.every((field) => {
+          const value =
+            data && data[field] && data[field].toString().trim() !== "";
+          return value;
+        });
+
+        return isValid;
       },
       2: (data) => {
         // DESCRIPTIONS
@@ -158,7 +177,9 @@ export const useMultiStepProperty = () => {
       3: () => true, // IMAGES - validación se hace en el componente
     };
 
-    const isValid = validationRules[step] ? validationRules[step](data) : false;
+    const isValid = validationRules[step]
+      ? validationRules[step](data, formType)
+      : false;
     stepValidationRef.current.set(step, isValid);
 
     console.log(`🔍 Step ${step} validation:`, { isValid, data: !!data });
@@ -202,6 +223,7 @@ export const useMultiStepProperty = () => {
 
   // ✅ Función para limpiar datos del proceso de creación
   const clearCreationData = useCallback(() => {
+    console.log("🧹 Creation data cleared");
     setPrototypeId(null);
     setCurrentStep(1);
     setError(null);
@@ -209,14 +231,12 @@ export const useMultiStepProperty = () => {
     stepValidationRef.current.clear();
 
     StorageUtils.clearAll();
-
-    console.log("🧹 Creation data cleared");
   }, []);
 
   // ✅ Función para inicializar nueva creación (resetear al paso 1)
   const initializeNewCreation = useCallback(() => {
-    clearCreationData();
     console.log("🚀 New creation initialized");
+    clearCreationData();
   }, [clearCreationData]);
 
   // ✅ Función para cancelar operación actual
@@ -235,9 +255,34 @@ export const useMultiStepProperty = () => {
         return { success: false, error: "Component unmounted" };
 
       // Validar datos del paso 1
-      if (!validateStep(1, basicFormData)) {
+      if (!validateStep(1, basicFormData, formType)) {
+        // Determinar qué campos faltan para un mensaje más específico
+        const isMinkaasa =
+          formType === FORM_TYPES.PROPERTY_MINKAASA_UNPUBLISHED ||
+          formType === FORM_TYPES.PROPERTY_MINKAASA_PUBLISHED;
+
+        let missingFields = [];
+        if (
+          !basicFormData.prototypeName ||
+          basicFormData.prototypeName.trim() === ""
+        ) {
+          missingFields.push("Nombre del Prototipo");
+        }
+        if (
+          !isMinkaasa &&
+          (!basicFormData.developmentId ||
+            basicFormData.developmentId.toString().trim() === "")
+        ) {
+          missingFields.push("Desarrollo");
+        }
+
         const error =
-          "Datos básicos incompletos. Verifique todos los campos obligatorios.";
+          missingFields.length > 0
+            ? `Los siguientes campos son obligatorios: ${missingFields.join(
+                ", "
+              )}`
+            : "Datos básicos incompletos. Verifique todos los campos obligatorios.";
+
         setError(error);
         return { success: false, error };
       }
@@ -254,7 +299,7 @@ export const useMultiStepProperty = () => {
 
         console.log(`🔧 Creating basic property (${formType}):`, {
           prototypeName: basicFormData.prototypeName,
-          hasRequiredFields: validateStep(1, basicFormData),
+          hasRequiredFields: validateStep(1, basicFormData, formType),
         });
 
         // Determinar endpoint según el tipo
@@ -274,35 +319,52 @@ export const useMultiStepProperty = () => {
           return { success: false, error: "Operation cancelled" };
         }
 
+        // Buscar prototypeId en diferentes posibles ubicaciones
+        let prototypeId = null;
         if (response?.data?.prototypeId) {
-          const newPrototypeId = response.data.prototypeId;
+          prototypeId = response.data.prototypeId;
+        } else if (response?.data?.data?.prototypeId) {
+          prototypeId = response.data.data.prototypeId;
+        } else if (response?.prototypeId) {
+          prototypeId = response.prototypeId;
+        } else if (response?.data?.id) {
+          prototypeId = response.data.id;
+        } else if (response?.data?.data?.id) {
+          prototypeId = response.data.data.id;
+        }
 
+        if (prototypeId) {
           // Actualizar estados
-          setPrototypeId(newPrototypeId);
+          setPrototypeId(prototypeId);
           setCurrentStep(2);
           setFormData(basicFormData);
 
           // Persistir estado
           persistState({
-            prototypeId: newPrototypeId,
+            prototypeId: prototypeId,
             currentStep: 2,
             formType,
             formData: basicFormData,
           });
 
           console.log(`✅ Basic property created successfully:`, {
-            prototypeId: newPrototypeId,
+            prototypeId: prototypeId,
             nextStep: 2,
           });
 
           return {
             success: true,
-            prototypeId: newPrototypeId,
+            prototypeId: prototypeId,
             data: response.data,
           };
         } else {
+          console.error("❌ No prototypeId found in response structure:", {
+            response: response,
+            responseData: response?.data,
+            responseDataData: response?.data?.data,
+          });
           throw new Error(
-            "No se recibió prototypeId en la respuesta del servidor"
+            "No se recibió prototypeId en la respuesta del servidor. Verifique la conexión con el backend."
           );
         }
       } catch (error) {
