@@ -220,9 +220,19 @@ export const useFormDialog = ({
     if (!open || currentItem) return;
 
     if (formCharacteristics.isPropertyForm) {
-      multiStepCreate.initializeNewCreation();
+      // ✅ CRITICAL: Solo inicializar si NO está ya en proceso de creación
+      if (!multiStepCreate.isInCreationProcess()) {
+        multiStepCreate.initializeNewCreation();
+      } else {
+        // console.log(
+        //   "🔄 DEBUG: Skipping initialization - already in creation process, currentStep:",
+        //   multiStepCreate.currentStep,
+        //   "prototypeId:",
+        //   multiStepCreate.prototypeId
+        // );
+      }
     }
-  }, [open, currentItem, formCharacteristics.isPropertyForm, multiStepCreate]);
+  }, [open, currentItem]); // ✅ SIMPLIFIED: Solo dependencias esenciales
 
   // ✅ Cargar opciones de campos cuando se abre el diálogo
   useEffect(() => {
@@ -536,13 +546,15 @@ export const useFormDialog = ({
       setShowConfirmClose(false);
       setIsLoadingInitialData(false);
 
-      // Limpiar errores de hooks multi-step sin dependencias circulares
-      if (multiStepCreate.setError) {
+      // ✅ FIXED: Solo limpiar multi-step si NO está en proceso de creación
+      if (multiStepCreate.setError && !multiStepCreate.isInCreationProcess()) {
         multiStepCreate.setError(null);
       }
       if (multiStepEdit.setError) {
         multiStepEdit.setError(null);
       }
+
+      // ✅ IMPORTANT: NO limpiar los datos de creación si está en proceso
     }
   }, [open]); // Solo depende de 'open', no de los objetos hook
 
