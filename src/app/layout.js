@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
             <CssBaseline />
             <div className="layout-container">
               <main className="main-content">{children}</main>
-              <Footer />
+             
             </div>
           </ThemeProvider>
         </AppRouterCacheProvider>
