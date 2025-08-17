@@ -186,7 +186,28 @@ export const minkaasaLocationFields = [
     options: ESTADOS_MEXICO,
     required: true,
   },
-  { name: "zipCode", label: "Código Postal" },
+  {
+    name: "zipCode",
+    label: "Código Postal",
+    type: "number",
+    inputProps: { min: 0 },
+  },
+];
+
+// ✅ ADDED: Campos de solo lectura para propiedades Minkaasa
+export const minkaasaReadOnlyFields = [
+  {
+    name: "completeAddress",
+    label: "Dirección Completa",
+    type: "readonly",
+    description: "Dirección completa de la propiedad",
+  },
+  {
+    name: "title",
+    label: "Título de la Propiedad",
+    type: "readonly",
+    description: "Título oficial de la propiedad",
+  },
 ];
 
 export const minkaasaContactFields = [
@@ -353,6 +374,9 @@ export const getInitialDataForFormType = (formType) => {
         mainPhone: "",
         agent: "",
         commission: "",
+        // ✅ ADDED: Campos de solo lectura para Minkaasa
+        completeAddress: "",
+        title: "",
       };
     default:
       return {};
@@ -503,19 +527,29 @@ export const getBasicPropertyFields = (formType) => {
 };
 
 // Secciones para el primer paso
-export const getBasicPropertySections = (formType) => {
+export const getBasicPropertySections = (formType, isEditMode = false) => {
   const basicFields = getBasicPropertyFields(formType);
 
   if (
     formType === "propertyMinkaasaUnpublished" ||
     formType === "propertyMinkaasaPublished"
   ) {
-    // Para Minkaasa, dividir en dos secciones
+    // Para Minkaasa, dividir en secciones
     const propertyFields = basicFields.slice(0, 10); // Campos de propiedad (incluyendo url y mapLocation)
     const locationFields = basicFields.slice(10, 18); // Campos de ubicación (8 campos)
     const contactFields = basicFields.slice(18); // Campos de contacto
 
-    return [
+    // ✅ MODIFIED: Solo mostrar campos de solo lectura en modo edición
+    const sections = [];
+
+    if (isEditMode) {
+      sections.push({
+        title: "Información del Sistema (Solo Lectura)",
+        fields: minkaasaReadOnlyFields,
+      });
+    }
+
+    sections.push(
       {
         title: "Datos Básicos de la Propiedad",
         fields: propertyFields,
@@ -527,8 +561,10 @@ export const getBasicPropertySections = (formType) => {
       {
         title: "Información del Contacto Externo",
         fields: contactFields,
-      },
-    ];
+      }
+    );
+
+    return sections;
   } else {
     // Para propiedades normales, dividir en secciones lógicas
     const mainPropertyFields = basicFields.slice(0, 9); // Desde prototypeName hasta size

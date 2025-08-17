@@ -149,14 +149,38 @@ export const useFormDialog = ({
       return getFieldSectionsForFormType(formType);
     }
 
-    // Para edición de propiedades: no mostrar campos individuales (se usan tabs)
+    // ✅ MODIFIED: Para propiedades Minkaasa en modo edición, mostrar campos de solo lectura
+    if (formCharacteristics.isEditMode && formCharacteristics.isMinkaasaForm) {
+      const readonlySection = {
+        title: "Información del Sistema (Solo Lectura)",
+        fields: [
+          {
+            name: "completeAddress",
+            label: "Dirección Completa",
+            type: "readonly",
+            description: "Dirección completa de la propiedad",
+          },
+          {
+            name: "title",
+            label: "Título de la Propiedad",
+            type: "readonly",
+            description: "Título oficial de la propiedad",
+          },
+        ],
+      };
+
+      return [readonlySection];
+    }
+
+    // Para edición de propiedades normales: no mostrar campos individuales (se usan tabs)
     if (formCharacteristics.isEditMode) {
       return [];
     }
 
     // Para creación de propiedades: mostrar campos según el paso de creación
     if (multiStepCreate.currentStep === 1) {
-      return getBasicPropertySections(formType);
+      // ✅ MODIFIED: Pasar isEditMode para controlar la visibilidad de campos de solo lectura
+      return getBasicPropertySections(formType, formCharacteristics.isEditMode);
     } else {
       // Pasos 2 y 3: sin campos (se manejan por separado)
       return [];
@@ -165,6 +189,7 @@ export const useFormDialog = ({
     formType,
     formCharacteristics.isPropertyForm,
     formCharacteristics.isEditMode,
+    formCharacteristics.isMinkaasaForm,
     multiStepCreate.currentStep,
   ]);
 
@@ -301,6 +326,9 @@ export const useFormDialog = ({
             mainPhone: externalAgreementData.mainPhone || "",
             agent: externalAgreementData.agent || "",
             commission: externalAgreementData.commission || 0,
+            // ✅ ADDED: Nuevos campos de solo lectura para Minkaasa
+            completeAddress: details.completeAddress || "",
+            title: details.title || "",
             // Campos de ubicación desde el body principal
             condominium: details.condominium || "",
             street: details.street || "",
