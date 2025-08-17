@@ -168,6 +168,45 @@ const FormDialog = ({
     )?.message;
 
     switch (field.type) {
+      case "readonly":
+        return (
+          <Box key={field.name} sx={{ minWidth: 240 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 0.5, fontWeight: 500 }}
+            >
+              {field.label}
+            </Typography>
+            <Box
+              sx={{
+                p: 2,
+                border: 1,
+                borderColor: "grey.300",
+                borderRadius: 1,
+                bgcolor: "grey.50",
+                minHeight: 56,
+                display: "flex",
+                alignItems: "center",
+                wordBreak: "break-word",
+              }}
+            >
+              <Typography variant="body1" color="text.primary">
+                {fieldValue || "No disponible"}
+              </Typography>
+            </Box>
+            {field.description && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: "block" }}
+              >
+                {field.description}
+              </Typography>
+            )}
+          </Box>
+        );
+
       case "select":
         let fieldOptions = [];
         if (field.options) {

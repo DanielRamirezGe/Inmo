@@ -153,8 +153,6 @@ const PropertyCard = ({ property, onDetailClick }) => {
           },
         }}
       >
-        
-
         {/* Header */}
         <Box
           sx={{
@@ -185,7 +183,10 @@ const PropertyCard = ({ property, onDetailClick }) => {
               letterSpacing: "0.02em",
             }}
           >
-            {prototypeName} - {developmentName || condominium}
+            {prototypeName}{" "}
+            {developmentName || condominium || city
+              ? ` - ${developmentName || condominium || city}`
+              : ""}
           </Typography>
         </Box>
 
@@ -254,7 +255,7 @@ const PropertyCard = ({ property, onDetailClick }) => {
                     Ver galería
                   </Typography>
                 </Box>
-                
+
                 {/* Etiqueta de Casa Usada en footer de imagen */}
                 {developmentId === null && (
                   <Box
@@ -263,7 +264,8 @@ const PropertyCard = ({ property, onDetailClick }) => {
                       bottom: 0,
                       left: 0,
                       right: 0,
-                      background: "linear-gradient(135deg, rgba(240, 185, 43, 0.95) 0%, rgba(230, 168, 32, 0.98) 100%)",
+                      background:
+                        "linear-gradient(135deg, rgba(240, 185, 43, 0.95) 0%, rgba(230, 168, 32, 0.98) 100%)",
                       backdropFilter: "blur(8px)",
                       borderTop: "1px solid rgba(255, 255, 255, 0.2)",
                       py: { xs: 0.5, md: 0.75 },
@@ -289,7 +291,6 @@ const PropertyCard = ({ property, onDetailClick }) => {
                     </Typography>
                   </Box>
                 )}
-
               </>
             ) : (
               <Box
@@ -353,8 +354,6 @@ const PropertyCard = ({ property, onDetailClick }) => {
               }}
               onClick={onDetailClick}
             >
-
-
               {/* Precio destacado */}
               <Box
                 sx={{
