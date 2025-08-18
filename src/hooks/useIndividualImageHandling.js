@@ -243,6 +243,26 @@ export const useIndividualImageHandling = () => {
     setError(null);
   }, []);
 
+  // Establecer una imagen como principal
+  const setMainImage = useCallback(async (prototypeId, newMainImageId) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await api.setMainImage(prototypeId, newMainImageId);
+      return {
+        success: true,
+        result,
+      };
+    } catch (error) {
+      console.error("Error estableciendo imagen principal:", error);
+      setError(error.message || "Error al establecer la imagen principal");
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -250,6 +270,7 @@ export const useIndividualImageHandling = () => {
     uploadImages,
     deleteImage,
     deleteImages,
+    setMainImage,
     clearProgress,
     clearError,
   };
