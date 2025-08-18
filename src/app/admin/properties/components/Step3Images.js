@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useIndividualImageHandling } from "../../../../hooks/useIndividualImageHandling";
 import ImageUploadProgress from "../../../../components/ImageUploadProgress";
 
@@ -28,6 +29,8 @@ const Step3Images = ({
   showButtons = false,
   buttonText = "Finalizar",
   prototypeId = null, // ID de la propiedad para el nuevo sistema
+  onClose = null, // Función para cerrar el diálogo
+  onRefreshData = null, // Función para recargar datos
 }) => {
   // Estados para imágenes nuevas (archivos File)
   const [mainImage, setMainImage] = useState(null);
@@ -55,6 +58,7 @@ const Step3Images = ({
     uploadImages,
     deleteImage,
     deleteImages,
+    setMainImage: setMainImageHandler,
     clearProgress,
     clearError,
   } = useIndividualImageHandling();
@@ -261,6 +265,104 @@ const Step3Images = ({
     setSecondaryImagesPreview((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Función para establecer una imagen secundaria como principal
+  const handleSetAsMainImage = async (index) => {
+    if (!prototypeId || !showButtons) return;
+
+    const existingImagesCount = existingImages.secondaryImages.length;
+
+    if (index >= existingImagesCount) {
+      // No se puede establecer como principal una imagen nueva (archivo File)
+      alert(
+        "Solo se pueden establecer como principales las imágenes ya guardadas en el sistema"
+      );
+      return;
+    }
+
+    const imageToPromote = existingImages.secondaryImages[index];
+
+    if (!imageToPromote.prototypeImageId) {
+      alert("Error: No se pudo identificar la imagen");
+      return;
+    }
+
+    try {
+      // Confirmar la acción
+      if (
+        !confirm(
+          `¿Está seguro de que desea establecer esta imagen como principal?\n\nLa imagen principal actual pasará a ser secundaria.`
+        )
+      ) {
+        return;
+      }
+
+      const result = await setMainImageHandler(
+        prototypeId,
+        imageToPromote.prototypeImageId
+      );
+
+      if (result.success) {
+        // Intercambiar las imágenes en el estado local
+        const currentMainImage = existingImages.mainImage;
+        const newMainImage = imageToPromote;
+
+        // Crear nueva lista de imágenes secundarias
+        const newSecondaryImages = [
+          ...existingImages.secondaryImages.filter((_, i) => i !== index),
+        ];
+
+        // Si había una imagen principal, agregarla como secundaria
+        if (currentMainImage) {
+          newSecondaryImages.push({
+            ...currentMainImage,
+            id: `secondary-${Date.now()}`,
+            prototypeImageId:
+              currentMainImage.prototypeImageId || currentMainImage.id,
+          });
+        }
+
+        // Actualizar el estado
+        setExistingImages((prev) => ({
+          mainImage: {
+            ...newMainImage,
+            id: "main",
+          },
+          secondaryImages: newSecondaryImages,
+        }));
+
+        // Actualizar previews
+        setMainImagePreview(newMainImage.url);
+
+        // Limpiar previews de archivos File si existen
+        if (mainImagePreview && mainImage) {
+          URL.revokeObjectURL(mainImagePreview);
+        }
+        setMainImage(null);
+        setMainImagePreview(newMainImage.url);
+
+        // Mostrar mensaje de éxito
+        alert("✅ Imagen establecida como principal exitosamente");
+
+        // Cerrar el diálogo si está disponible
+        if (onClose) {
+          onClose();
+        }
+
+        // Recargar datos si está disponible
+        if (onRefreshData) {
+          onRefreshData("Imagen principal actualizada exitosamente");
+        }
+      } else {
+        throw new Error(
+          result.error || "Error al establecer la imagen como principal"
+        );
+      }
+    } catch (error) {
+      console.error("Error estableciendo imagen como principal:", error);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
   const handleSubmit = async () => {
     // Validar que hay imágenes para procesar
     const hasImages = mainImage || secondaryImages.length > 0;
@@ -431,7 +533,7 @@ const Step3Images = ({
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {showButtons
-          ? "Gestione las imágenes de la propiedad. Puede tener una imagen principal y múltiples imágenes secundarias."
+          ? "Gestione las imágenes de la propiedad. Puede tener una imagen principal y múltiples imágenes secundarias. 💡 Use el botón 'Elegir Principal' para establecer una imagen secundaria como principal."
           : "Agregue una imagen principal y múltiples imágenes secundarias para mostrar la propiedad."}
       </Typography>
 
@@ -490,14 +592,22 @@ const Step3Images = ({
                       position: "absolute",
                       top: 8,
                       right: 8,
-                      bgcolor: "rgba(0,0,0,0.7)",
+                      bgcolor: "rgba(0,0,0,0.8)",
                       borderRadius: 1,
                       px: 1,
                       py: 0.5,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      border: "1px solid #FFD700",
                     }}
                   >
-                    <Typography variant="caption" color="white">
-                      Principal
+                    <Typography
+                      variant="caption"
+                      color="#FFD700"
+                      fontWeight="bold"
+                    >
+                      ⭐ PRINCIPAL
                     </Typography>
                   </Box>
                 </Box>
@@ -708,59 +818,78 @@ const Step3Images = ({
                 existingImages.secondaryImages.length}
               ):
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
               {/* Mostrar imágenes existentes primero */}
               {existingImages.secondaryImages.map((img, index) => (
                 <Grid
                   item
                   key={`existing-${index}`}
-                  xs={6}
-                  sm={4}
-                  md={3}
-                  lg={2}
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  lg={3}
                 >
                   <Card sx={{ position: "relative" }}>
                     <Box
                       component="img"
                       src={img.url}
-                      sx={{ width: "100%", height: 120, objectFit: "cover" }}
+                      sx={{ width: "100%", height: 180, objectFit: "cover" }}
                     />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 4,
-                        right: 4,
-                        bgcolor: "rgba(255,255,255,0.9)",
-                        borderRadius: "50%",
-                        width: 28,
-                        height: 28,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => handleRemoveSecondaryImage(index)}
-                        disabled={isProcessing}
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          "&:hover": { bgcolor: "rgba(255,0,0,0.1)" },
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                    <Box sx={{ p: 1 }}>
+
+                    <Box sx={{ p: 2 }}>
                       <Typography
-                        variant="caption"
+                        variant="body2"
                         color="text.secondary"
-                        sx={{ display: "block", textAlign: "center" }}
+                        sx={{
+                          display: "block",
+                          textAlign: "center",
+                          mb: 2,
+                          fontWeight: "medium",
+                        }}
                       >
                         Imagen {index + 1} (existente)
                       </Typography>
+
+                      {/* Botones de acción */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1.5,
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => handleSetAsMainImage(index)}
+                          disabled={isProcessing}
+                          sx={{
+                            fontSize: "12px",
+                            py: 0.75,
+                            px: 1.5,
+                            minWidth: "auto",
+                          }}
+                        >
+                          Elegir Principal
+                        </Button>
+
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => handleRemoveSecondaryImage(index)}
+                          disabled={isProcessing}
+                          sx={{
+                            fontSize: "12px",
+                            py: 0.75,
+                            px: 1.5,
+                            minWidth: "auto",
+                          }}
+                        >
+                          Eliminar
+                        </Button>
+                      </Box>
                     </Box>
                   </Card>
                 </Grid>
@@ -770,12 +899,12 @@ const Step3Images = ({
               {secondaryImagesPreview
                 .slice(existingImages.secondaryImages.length)
                 .map((preview, index) => (
-                  <Grid item key={`new-${index}`} xs={6} sm={4} md={3} lg={2}>
+                  <Grid item key={`new-${index}`} xs={12} sm={6} md={4} lg={3}>
                     <Card sx={{ position: "relative" }}>
                       <Box
                         component="img"
                         src={preview}
-                        sx={{ width: "100%", height: 120, objectFit: "cover" }}
+                        sx={{ width: "100%", height: 180, objectFit: "cover" }}
                       />
                       <Box
                         sx={{
@@ -809,11 +938,15 @@ const Step3Images = ({
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Box>
-                      <Box sx={{ p: 1 }}>
+                      <Box sx={{ p: 2 }}>
                         <Typography
-                          variant="caption"
+                          variant="body2"
                           color="text.secondary"
-                          sx={{ display: "block", textAlign: "center" }}
+                          sx={{
+                            display: "block",
+                            textAlign: "center",
+                            fontWeight: "medium",
+                          }}
                         >
                           Imagen{" "}
                           {existingImages.secondaryImages.length + index + 1}{" "}

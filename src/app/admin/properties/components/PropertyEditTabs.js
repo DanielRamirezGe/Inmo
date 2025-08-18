@@ -266,6 +266,8 @@ const PropertyEditTabs = ({
               showButtons={true}
               buttonText="Guardar Imágenes"
               prototypeId={prototypeId}
+              onClose={onClose}
+              onRefreshData={onRefresh}
             />
           </>
         );
