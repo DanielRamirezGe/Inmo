@@ -8,7 +8,9 @@ import {
   Tab,
   Alert,
   Snackbar,
+  Button,
 } from "@mui/material";
+import { Clear as ClearIcon } from "@mui/icons-material";
 
 // Componentes
 import AdminNavbar from "../components/AdminNavbar";
@@ -260,20 +262,137 @@ function PropertiesPageContent() {
     return entityHooks[entityType];
   };
 
-  // Manejador genérico de paginación
+  // 🔧 FIX: Manejador de paginación que mantiene filtros
   const handlePageChange = useCallback(
     (newPage) => {
-      getCurrentEntityHook().fetchItems(newPage);
+      // Si hay filtros activos, usar búsqueda con filtros
+      if (Object.keys(activeFilters).length > 0) {
+        handlePageChangeWithFilters(newPage);
+      } else {
+        // Sin filtros, usar el comportamiento normal
+        getCurrentEntityHook().fetchItems(newPage);
+      }
     },
-    [tabValue]
+    [tabValue, activeFilters]
   );
 
+  // 🔧 NUEVA: Función para cambiar página manteniendo filtros
+  const handlePageChangeWithFilters = async (newPage) => {
+    try {
+      const entityHook = getCurrentEntityHook();
+      const filterType = getFilterType();
+
+      // Preparar filtros para la API
+      const searchFilters = { ...activeFilters, type: filterType };
+
+      // Mapear campos específicos
+      if (searchFilters.propertyType) {
+        searchFilters.propertyTypeId = searchFilters.propertyType;
+        delete searchFilters.propertyType;
+      }
+      if (searchFilters.development) {
+        searchFilters.developmentId = searchFilters.development;
+        delete searchFilters.development;
+      }
+
+      // Obtener pageSize actual
+      const currentPageSize = entityHook.pagination?.pageSize || 15;
+
+      // Buscar con filtros en la página específica
+      const results = await api.searchProperties(
+        searchFilters,
+        newPage,
+        currentPageSize
+      );
+
+      // ✅ ACTUALIZAR ESTADO GLOBAL CON RESULTADOS FILTRADOS
+      entityHook.setItems(results.data);
+      entityHook.setPagination({
+        page: results.page,
+        pageSize: results.pageSize,
+        total: results.total,
+      });
+
+      // 🔧 FORZAR invalidación del cache para mantener consistencia
+      entityHook.invalidateCache();
+
+      console.log(`✅ Página ${newPage} con filtros aplicados:`, {
+        resultados: results.data.length,
+        total: results.total,
+        filtros: activeFilters,
+      });
+    } catch (error) {
+      console.error("Error al cambiar página con filtros:", error);
+      // Fallback: recargar sin filtros
+      getCurrentEntityHook().fetchItems(newPage);
+    }
+  };
+
+  // 🔧 FIX: Manejador de cambio de tamaño de página que mantiene filtros
   const handlePageSizeChange = useCallback(
     (newPageSize) => {
-      getCurrentEntityHook().fetchItems(1, newPageSize);
+      // Si hay filtros activos, usar búsqueda con filtros
+      if (Object.keys(activeFilters).length > 0) {
+        handlePageSizeChangeWithFilters(newPageSize);
+      } else {
+        // Sin filtros, usar el comportamiento normal
+        getCurrentEntityHook().fetchItems(1, newPageSize);
+      }
     },
-    [tabValue]
+    [tabValue, activeFilters]
   );
+
+  // 🔧 NUEVA: Función para cambiar tamaño de página manteniendo filtros
+  const handlePageSizeChangeWithFilters = async (newPageSize) => {
+    try {
+      const entityHook = getCurrentEntityHook();
+      const filterType = getFilterType();
+
+      // Preparar filtros para la API
+      const searchFilters = { ...activeFilters, type: filterType };
+
+      // Mapear campos específicos
+      if (searchFilters.propertyType) {
+        searchFilters.propertyTypeId = searchFilters.propertyType;
+        delete searchFilters.propertyType;
+      }
+      if (searchFilters.development) {
+        searchFilters.developmentId = searchFilters.development;
+        delete searchFilters.development;
+      }
+
+      // Buscar con filtros en la primera página con nuevo tamaño
+      const results = await api.searchProperties(
+        searchFilters,
+        1, // Siempre empezar en página 1 al cambiar tamaño
+        newPageSize
+      );
+
+      // ✅ ACTUALIZAR ESTADO GLOBAL CON RESULTADOS FILTRADOS
+      entityHook.setItems(results.data);
+      entityHook.setPagination({
+        page: 1,
+        pageSize: newPageSize,
+        total: results.total,
+      });
+
+      // 🔧 FORZAR invalidación del cache
+      entityHook.invalidateCache();
+
+      console.log(
+        `✅ Tamaño de página cambiado a ${newPageSize} con filtros:`,
+        {
+          resultados: results.data.length,
+          total: results.total,
+          filtros: activeFilters,
+        }
+      );
+    } catch (error) {
+      console.error("Error al cambiar tamaño de página con filtros:", error);
+      // Fallback: recargar sin filtros
+      getCurrentEntityHook().fetchItems(1, newPageSize);
+    }
+  };
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -318,21 +437,30 @@ function PropertiesPageContent() {
     setActiveFilters({});
   };
 
-  // Función para manejar cambios en los filtros
+  // 🔧 FIX: Función mejorada para manejar cambios en los filtros
   const handleFiltersChange = (filters, searchResults = null) => {
     setActiveFilters(filters);
 
     // Si hay resultados de búsqueda, actualizar la lista
     if (searchResults) {
       const entityHook = getCurrentEntityHook();
-      // Actualizar los items con los resultados de búsqueda
+
+      // ✅ ACTUALIZAR ESTADO GLOBAL CON RESULTADOS FILTRADOS
       entityHook.setItems(searchResults.data);
       entityHook.setPagination({
-        page: searchResults.page,
+        page: 1, // 🔧 IMPORTANTE: Resetear a página 1 al aplicar filtros
         pageSize: searchResults.pageSize,
         total: searchResults.total,
       });
-      console.log("Resultados de búsqueda aplicados:", searchResults);
+
+      // 🔧 FORZAR invalidación del cache para mantener consistencia
+      entityHook.invalidateCache();
+
+      console.log("✅ Filtros aplicados y resultados actualizados:", {
+        resultados: searchResults.data.length,
+        total: searchResults.total,
+        filtros: filters,
+      });
     } else {
       console.log("Filtros aplicados:", filters);
     }
@@ -357,6 +485,21 @@ function PropertiesPageContent() {
   // Verificar si la pestaña actual es de propiedades
   const isPropertyTab = () => {
     return tabValue >= TAB_INDICES.PROPERTY_NOT_PUBLISHED;
+  };
+
+  // 🔧 NUEVA: Función para limpiar filtros y volver al estado normal
+  const handleClearFilters = async () => {
+    try {
+      setActiveFilters({});
+
+      // Recargar datos sin filtros
+      const entityHook = getCurrentEntityHook();
+      await entityHook.fetchItems(1, undefined, true); // Force refresh
+
+      console.log("✅ Filtros limpiados, datos recargados");
+    } catch (error) {
+      console.error("Error al limpiar filtros:", error);
+    }
   };
 
   // Función para abrir diálogo
@@ -672,16 +815,43 @@ function PropertiesPageContent() {
 
         {/* Barra de filtros - solo para pestañas de propiedades */}
         {isPropertyTab() && (
-          <PropertyFiltersBar
-            filterType={getFilterType()}
-            onFiltersChange={handleFiltersChange}
-            showDevelopments={
-              tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
-              tabValue === TAB_INDICES.PROPERTY_PUBLISHED
-            }
-            title={`Filtros - ${TAB_LABELS[tabValue]}`}
-            compact={false}
-          />
+          <>
+            <PropertyFiltersBar
+              filterType={getFilterType()}
+              onFiltersChange={handleFiltersChange}
+              showDevelopments={
+                tabValue === TAB_INDICES.PROPERTY_NOT_PUBLISHED ||
+                tabValue === TAB_INDICES.PROPERTY_PUBLISHED
+              }
+              title={`Filtros - ${TAB_LABELS[tabValue]}`}
+              compact={false}
+            />
+
+            {/* 🔧 INDICADOR DE FILTROS ACTIVOS */}
+            {Object.keys(activeFilters).length > 0 && (
+              <Box
+                sx={{ mb: 2, display: "flex", alignItems: "center", gap: 2 }}
+              >
+                <Alert
+                  severity="info"
+                  sx={{ flex: 1 }}
+                  action={
+                    <Button
+                      color="inherit"
+                      size="small"
+                      onClick={handleClearFilters}
+                      startIcon={<ClearIcon />}
+                    >
+                      Limpiar Filtros
+                    </Button>
+                  }
+                >
+                  Filtros activos: {Object.keys(activeFilters).length}{" "}
+                  criterio(s) aplicado(s)
+                </Alert>
+              </Box>
+            )}
+          </>
         )}
 
         {currentError && (
