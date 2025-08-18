@@ -1084,6 +1084,34 @@ export const api = {
     }
   },
 
+  // Nuevo endpoint para establecer una imagen como principal
+  setMainImage: async (prototypeId, newMainImageId) => {
+    try {
+      const axiosInstance = getAxiosInstance();
+
+      console.log(
+        "🚀 API setMainImage - prototypeId:",
+        prototypeId,
+        "newMainImageId:",
+        newMainImageId
+      );
+
+      const response = await axiosInstance.put(
+        `/createPrototype/image/main/${prototypeId}`,
+        {
+          newMainImageId: newMainImageId,
+        }
+      );
+
+      console.log("✅ API setMainImage - respuesta:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ API setMainImage - error:", error);
+      console.error("❌ Error response:", error.response?.data);
+      handleApiError(error);
+    }
+  },
+
   // Property video endpoints
   uploadPropertyVideo: async (prototypeId, videoFile, onProgress = null) => {
     try {
