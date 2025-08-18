@@ -177,6 +177,7 @@ const formatChipLabel = (key, value, filters) => {
       );
       return dev ? `Desarrollo: ${dev.developmentName}` : `${key}: ${value}`;
     },
+
     search: () => `Búsqueda: "${value}"`,
     minPrice: () => `Precio mín: $${value}`,
     maxPrice: () => `Precio máx: $${value}`,
