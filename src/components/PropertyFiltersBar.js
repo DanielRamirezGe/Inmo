@@ -149,6 +149,13 @@ const FILTER_CONFIG = [
     conditional: true,
   },
   {
+    key: "externalId",
+    label: "NID Habi",
+    size: { xs: 12, sm: 6, md: 3 },
+    type: "text",
+    placeholder: "Buscar por NID Habi...",
+  },
+  {
     key: "minPrice",
     label: "Precio mínimo",
     size: { xs: 6, sm: 6, md: 3 },
@@ -179,6 +186,7 @@ const formatChipLabel = (key, value, filters) => {
       );
       return dev ? `Desarrollo: ${dev.developmentName}` : `${key}: ${value}`;
     },
+    externalId: () => `NID Habi: ${value}`,
     search: () => `Búsqueda: "${value}"`,
     minPrice: () => `Precio mín: $${value}`,
     maxPrice: () => `Precio máx: $${value}`,
@@ -239,6 +247,33 @@ const FilterField = ({ config, value, onChange, filters, styles }) => {
         value={value || ""}
         onChange={onChange}
         InputProps={config.prefix ? { startAdornment: config.prefix } : {}}
+        InputLabelProps={{ sx: styles.inputLabel }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            color: THEME_COLORS.secondary,
+            bgcolor: "rgba(255, 255, 255, 0.8)",
+            "& fieldset": { borderColor: "rgba(55, 71, 79, 0.3)" },
+            "&:hover fieldset": { borderColor: THEME_COLORS.primary },
+            "&.Mui-focused fieldset": {
+              borderColor: THEME_COLORS.primary,
+              borderWidth: "2px",
+            },
+          },
+        }}
+      />
+    );
+  }
+
+  if (config.type === "text") {
+    return (
+      <TextField
+        fullWidth
+        size="small"
+        label={config.label}
+        type="text"
+        value={value || ""}
+        onChange={onChange}
+        placeholder={config.placeholder || ""}
         InputLabelProps={{ sx: styles.inputLabel }}
         sx={{
           "& .MuiOutlinedInput-root": {
