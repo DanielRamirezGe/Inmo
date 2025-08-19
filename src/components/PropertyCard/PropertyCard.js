@@ -24,6 +24,7 @@ import {
   generatePropertyMessage,
   openWhatsAppChat,
 } from "@/utils/contactHelpers";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 const PropertyCard = ({ property, onDetailClick }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -220,7 +221,7 @@ const PropertyCard = ({ property, onDetailClick }) => {
                     objectFit: "cover",
                     transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
-                  image={`/api/image?path=${encodeURIComponent(mainImage)}`}
+                  image={AWS_IMAGE_CONFIG.getImageUrl(mainImage)}
                   alt={prototypeName}
                 />
                 <Box

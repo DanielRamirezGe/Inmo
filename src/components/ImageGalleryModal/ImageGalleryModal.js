@@ -11,6 +11,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import apiConfig from "@/config/apiConfig";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 const ImageGalleryModal = ({
   open,
@@ -128,15 +129,16 @@ const ImageGalleryModal = ({
                     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
                   }}
                 >
-                  <Box
-                    component="img"
-                    src={`/api/image?path=${encodeURIComponent(image)}`}
-                    alt={`Imagen ${index + 1}`}
-                    sx={{
+                  <img
+                    src={AWS_IMAGE_CONFIG.getImageUrl(image)}
+                    alt={`${propertyName} - Imagen ${index + 1}`}
+                    style={{
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
+                      cursor: "pointer",
                     }}
+                    onClick={() => handleThumbnailClick(index)}
                   />
                 </Box>
               </Box>
@@ -203,13 +205,10 @@ const ImageGalleryModal = ({
             boxShadow: "inset 0 0 10px rgba(0,0,0,0.1)",
           }}
         >
-          <Box
-            component="img"
-            src={`/api/image?path=${encodeURIComponent(
-              allImages[selectedIndex]
-            )}`}
-            alt={`Imagen ${selectedIndex + 1}`}
-            sx={{
+          <img
+            src={AWS_IMAGE_CONFIG.getImageUrl(allImages[selectedIndex])}
+            alt={`${propertyName} - Imagen seleccionada`}
+            style={{
               maxWidth: "100%",
               maxHeight: "100%",
               objectFit: "contain",
@@ -291,15 +290,16 @@ const ImageGalleryModal = ({
                 }}
                 onClick={() => handleThumbnailClick(index)}
               >
-                <Box
-                  component="img"
-                  src={`/api/image?path=${encodeURIComponent(image)}`}
-                  alt={`Miniatura ${index + 1}`}
-                  sx={{
+                <img
+                  src={AWS_IMAGE_CONFIG.getImageUrl(image)}
+                  alt={`${propertyName} - Imagen ${index + 1}`}
+                  style={{
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
+                    cursor: "pointer",
                   }}
+                  onClick={() => handleThumbnailClick(index)}
                 />
               </Box>
             ))}

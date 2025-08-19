@@ -17,6 +17,7 @@ import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useIndividualImageHandling } from "../../../../hooks/useIndividualImageHandling";
 import ImageUploadProgress from "../../../../components/ImageUploadProgress";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 const Step3Images = ({
   onSubmit,
@@ -584,7 +585,12 @@ const Step3Images = ({
                 >
                   <Box
                     component="img"
-                    src={mainImagePreview || existingImages.mainImage?.url}
+                    src={
+                      mainImagePreview ||
+                      AWS_IMAGE_CONFIG.getImageUrl(
+                        existingImages.mainImage?.url
+                      )
+                    }
                     sx={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                   <Box
@@ -832,7 +838,7 @@ const Step3Images = ({
                   <Card sx={{ position: "relative" }}>
                     <Box
                       component="img"
-                      src={img.url}
+                      src={AWS_IMAGE_CONFIG.getImageUrl(img.url)}
                       sx={{ width: "100%", height: 180, objectFit: "cover" }}
                     />
 
