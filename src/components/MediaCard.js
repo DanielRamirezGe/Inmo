@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
 import { VerticalVideoPlayer } from "./videoStream";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 // Constantes de configuración
 const BREAKPOINTS = {
@@ -175,10 +176,7 @@ const LoadingSpinner = () => (
   </Box>
 );
 
-const VideoContent = ({
-  videoPath,
-  onError,
-}) => (
+const VideoContent = ({ videoPath, onError }) => (
   <VerticalVideoPlayer
     videoPath={videoPath}
     height="100%"
@@ -191,12 +189,13 @@ const VideoContent = ({
 const FallbackImage = ({ imageSrc, propertyName }) => (
   <Box
     component="img"
-    src={`/api/image?path=${encodeURIComponent(imageSrc)}`}
+    src={AWS_IMAGE_CONFIG.getImageUrl(imageSrc)}
     alt={`${propertyName} - Imagen secundaria`}
     sx={{
       width: "100%",
       height: "100%",
       objectFit: "cover",
+      borderRadius: "8px",
     }}
   />
 );
@@ -220,18 +219,14 @@ const VideoSection = ({
         transition: "all 0.3s ease",
         "&:hover": {
           transform: videoPath ? "scale(1.02)" : "none",
-          boxShadow:
-            videoPath
-              ? "0 6px 24px rgba(240,185,43,0.2)"
-              : "0 4px 16px rgba(0,0,0,0.15)",
+          boxShadow: videoPath
+            ? "0 6px 24px rgba(240,185,43,0.2)"
+            : "0 4px 16px rgba(0,0,0,0.15)",
         },
       }}
     >
       {videoPath ? (
-        <VideoContent
-          videoPath={videoPath}
-          onError={onError}
-        />
+        <VideoContent videoPath={videoPath} onError={onError} />
       ) : (
         <Box
           sx={{
@@ -345,13 +340,13 @@ const SecondaryImage = ({
   >
     <Box
       component="img"
-      src={`/api/image?path=${encodeURIComponent(image)}`}
+      src={AWS_IMAGE_CONFIG.getImageUrl(image)}
       alt={`${propertyName} - Imagen secundaria ${index + 1}`}
       sx={{
         width: "100%",
         height: "100%",
         objectFit: "cover",
-        transition: "transform 0.3s ease",
+        objectPosition: "center",
       }}
     />
     {showOverlay && <ImageOverlay remainingCount={remainingCount} />}
@@ -436,13 +431,13 @@ export const MediaCard = ({
 
   // Handlers
   const handleImageClick = () => onOpenGallery?.();
-  
+
   const handleVideoError = (error) => {
-    console.error('Error en video de MediaCard:', error);
+    console.error("Error en video de MediaCard:", error);
   };
 
   // Early return si no hay contenido
-  if (!secondaryImages.length && (!videoPath)) {
+  if (!secondaryImages.length && !videoPath) {
     return null;
   }
 

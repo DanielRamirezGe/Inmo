@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { api } from "../services/api";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 export const useImageHandling = () => {
   const [loading, setLoading] = useState(false);
@@ -169,16 +170,13 @@ export const useImageHandling = () => {
           }
 
           if (mainImagePath) {
-            // La API espera siempre rutas en formato /image?path=uploads/...
-            // Siempre usar isFullPath=true ya que la función getImage ya maneja las rutas correctamente
+            // Usar la nueva configuración para limpiar el path
+            const cleanedPath = AWS_IMAGE_CONFIG.cleanImagePath(mainImagePath);
             console.log(
-              "loadDevelopmentImages - Using mainImagePath:",
-              mainImagePath
+              "loadDevelopmentImages - Using cleaned mainImagePath:",
+              cleanedPath
             );
-            processedItem.mainImagePreview = await loadImage(
-              mainImagePath,
-              true
-            );
+            processedItem.mainImagePreview = await loadImage(cleanedPath, true);
             console.log(
               "loadDevelopmentImages - Main image preview created:",
               processedItem.mainImagePreview
@@ -187,34 +185,36 @@ export const useImageHandling = () => {
         }
 
         // Cargar las imágenes secundarias
-        if (item.secondaryImages && item.secondaryImages.length > 0) {
-          console.log(
-            "loadDevelopmentImages - Secondary images:",
-            item.secondaryImages
-          );
+        if (item.secondaryImages && Array.isArray(item.secondaryImages)) {
+          const secondaryImagesPromises = item.secondaryImages.map(
+            async (secondaryImage) => {
+              if (!secondaryImage) return null;
 
-          processedItem.secondaryImagesPreview = await Promise.all(
-            item.secondaryImages.map(async (img) => {
-              // Manejar diferentes formatos de imagen secundaria
-              let imagePath;
-              if (typeof img === "string") {
-                imagePath = img;
-              } else if (img.imagePath) {
-                imagePath = img.imagePath;
-              } else if (img.path) {
-                imagePath = img.path;
+              let secondaryImagePath;
+              if (typeof secondaryImage === "string") {
+                secondaryImagePath = secondaryImage;
+              } else if (secondaryImage.imagePath) {
+                secondaryImagePath = secondaryImage.imagePath;
+              } else if (secondaryImage.path) {
+                secondaryImagePath = secondaryImage.path;
               }
 
-              if (!imagePath) return null;
-
-              // La API espera siempre rutas en formato /image?path=uploads/...
-              // Siempre usar isFullPath=true ya que la función getImage ya maneja las rutas correctamente
-              console.log(
-                "loadDevelopmentImages - Using secondary image path:",
-                imagePath
-              );
-              return await loadImage(imagePath, true);
-            })
+              if (secondaryImagePath) {
+                // Usar la nueva configuración para limpiar el path
+                const cleanedPath =
+                  AWS_IMAGE_CONFIG.cleanImagePath(secondaryImagePath);
+                console.log(
+                  "loadDevelopmentImages - Using cleaned secondaryImagePath:",
+                  cleanedPath
+                );
+                const preview = await loadImage(cleanedPath, true);
+                return {
+                  ...secondaryImage,
+                  preview,
+                };
+              }
+              return secondaryImage;
+            }
           );
 
           processedItem.secondaryImagesPreview =

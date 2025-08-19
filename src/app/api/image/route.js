@@ -10,15 +10,22 @@ export async function GET(request) {
       return new NextResponse("Image path is required", { status: 400 });
     }
 
-    // Usar la configuración centralizada
-    const baseURL = apiConfig.baseURL;
+    // Limpiar el path de la imagen eliminando prefijos innecesarios
+    let cleanImagePath = imagePath;
+    if (cleanImagePath.startsWith("uploads/prototypes/")) {
+      cleanImagePath = cleanImagePath.replace("uploads/prototypes/", "");
+    } else if (cleanImagePath.startsWith("uploads/")) {
+      cleanImagePath = cleanImagePath.replace("uploads/", "");
+    }
 
-    // Construir la URL completa de la imagen
-    const imageUrl = `${baseURL}/api/v1/image?path=${encodeURIComponent(
-      imagePath
+    // Construir la URL completa del bucket de AWS
+    const imageUrl = `https://minkaasa-images.s3.us-east-1.amazonaws.com/${encodeURIComponent(
+      cleanImagePath
     )}`;
 
-    // Hacer la petición al servidor backend
+    console.log("Fetching image from AWS:", imageUrl);
+
+    // Hacer la petición al bucket de AWS
     const response = await fetch(imageUrl, {
       headers: {
         Accept: "image/*",
@@ -27,7 +34,7 @@ export async function GET(request) {
 
     if (!response.ok) {
       console.error(
-        `Failed to fetch image: ${response.status} ${response.statusText}`
+        `Failed to fetch image from AWS: ${response.status} ${response.statusText}`
       );
       return new NextResponse("Image not found", { status: 404 });
     }
@@ -50,7 +57,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Error proxying image:", error);
+    console.error("Error proxying image from AWS:", error);
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
