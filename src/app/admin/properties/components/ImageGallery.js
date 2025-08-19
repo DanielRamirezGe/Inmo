@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, Modal, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import apiConfig from "../../../../config/apiConfig";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 const ImageGallery = ({ mainImage, secondaryImages }) => {
   const [open, setOpen] = useState(false);
@@ -61,17 +62,8 @@ const ImageGallery = ({ mainImage, secondaryImages }) => {
       return imagePath;
     }
 
-    // Si la ruta no comienza con 'uploads/' y no parece ser una URL relativa o absoluta,
-    // agregar el prefijo 'uploads/'
-    if (!imagePath.startsWith("uploads/") && !imagePath.startsWith("/")) {
-      imagePath = `uploads/${imagePath}`;
-    }
-
-    // Otherwise, construct the full API URL with query parameter
-    const apiUrl = `/api/image?path=${encodeURIComponent(imagePath)}`;
-    console.log("ImageGallery - Constructed image URL:", apiUrl);
-
-    return apiUrl;
+    // Usar la nueva configuración para obtener la URL de la imagen
+    return AWS_IMAGE_CONFIG.getImageUrl(imagePath);
   };
 
   return (

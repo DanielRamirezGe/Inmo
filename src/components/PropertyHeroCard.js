@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Card,
-  Typography,
-  Grid,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Card, Typography, Grid, CircularProgress } from "@mui/material";
 import { VerticalVideoPlayer } from "./videoStream";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 export const PropertyHeroCard = ({
   mainImage,
@@ -90,7 +85,7 @@ export const PropertyHeroCard = ({
             <Box
               className="image"
               component="img"
-              src={`/api/image?path=${encodeURIComponent(mainImage)}`}
+              src={AWS_IMAGE_CONFIG.getImageUrl(mainImage)}
               alt={`Imagen principal de ${propertyName}`}
               sx={{
                 width: "100%",
@@ -178,7 +173,7 @@ export const PropertyHeroCard = ({
                     <Box
                       className="image"
                       component="img"
-                      src={`/api/image?path=${encodeURIComponent(mainImage)}`}
+                      src={AWS_IMAGE_CONFIG.getImageUrl(mainImage)}
                       alt={`Imagen principal de ${propertyName}`}
                       sx={{
                         width: "100%",
@@ -214,7 +209,9 @@ export const PropertyHeroCard = ({
 
                 {/* Video con proporción vertical coordinada */}
                 {showVideo && videoPath && (
-                  <Grid item xs={5} sx={{ p: "4px !important" }}> {/* Aumentado de 3 a 5 */}
+                  <Grid item xs={5} sx={{ p: "4px !important" }}>
+                    {" "}
+                    {/* Aumentado de 3 a 5 */}
                     <Box
                       sx={{
                         height: "100%",
@@ -229,7 +226,10 @@ export const PropertyHeroCard = ({
                         showControls={true}
                         autoPlay={false}
                         onError={(error) => {
-                          console.error('Error en reproductor de video:', error);
+                          console.error(
+                            "Error en reproductor de video:",
+                            error
+                          );
                         }}
                       />
                     </Box>
@@ -240,7 +240,9 @@ export const PropertyHeroCard = ({
 
             {/* Imágenes secundarias con más espacio y mejor proporción */}
             {secondaryImages.length > 0 && (
-              <Grid item xs={5} sx={{ p: "4px !important" }}> {/* Aumentado de 4 a 5 */}
+              <Grid item xs={5} sx={{ p: "4px !important" }}>
+                {" "}
+                {/* Aumentado de 4 a 5 */}
                 <Box
                   sx={{
                     height: "100%",
@@ -273,15 +275,14 @@ export const PropertyHeroCard = ({
                       >
                         <Box
                           component="img"
-                          src={`/api/image?path=${encodeURIComponent(image)}`}
-                          alt={`${propertyName} - Imagen secundaria ${
-                            index + 1
-                          }`}
+                          src={AWS_IMAGE_CONFIG.getImageUrl(image)}
+                          alt={`Imagen secundaria de ${propertyName}`}
                           sx={{
                             width: "100%",
                             height: "100%",
                             objectFit: "cover",
-                            objectPosition: "center", // Centra las imágenes secundarias
+                            objectPosition: "center",
+                            transition: "transform 0.3s ease",
                           }}
                         />
                         {index === imageLayout.count - 1 &&

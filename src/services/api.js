@@ -6,6 +6,7 @@ import {
   ENTITY_PAGINATION_CONFIG,
   validatePaginationParams,
 } from "../constants/pagination";
+import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
 /**
  * API Service Layer
@@ -460,8 +461,10 @@ export const api = {
     try {
       const axiosInstance = getAxiosInstance();
       let imagePath = path;
-      if (!isFullPath && !path.startsWith("uploads/")) {
-        imagePath = `uploads/${path}`;
+
+      // Limpiar el path de la imagen eliminando prefijos innecesarios
+      if (!isFullPath) {
+        imagePath = AWS_IMAGE_CONFIG.cleanImagePath(path);
       }
 
       console.log(
