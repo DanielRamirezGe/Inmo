@@ -632,7 +632,7 @@ const MapComponent = ({
             </div>
             
             <div style="text-align: center;">
-              <a href="https://minkaasa.com/prototype/${
+              <a href="https://minkaasa.com/property/${
                 property.prototypeId
               }" target="_blank" style="display: block; width: 100%; background-color: #1976d2; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 11px; transition: background-color 0.2s; box-sizing: border-box;">
                 Ver más detalles
