@@ -302,6 +302,44 @@ export const api = {
     }
   },
 
+  // Cargar propiedades por bounds del viewport (para carga eficiente del mapa)
+  getPropertiesByBounds: async (bounds, pageSize = 50) => {
+    try {
+      const { north, south, east, west } = bounds;
+
+      // Validar bounds
+      if (!north || !south || !east || !west) {
+        throw new Error("Bounds inválidos");
+      }
+
+      const axiosInstance = getPublicAxiosInstance();
+      const response = await axiosInstance.get("/public/bounds", {
+        params: {
+          north: north.toFixed(6),
+          south: south.toFixed(6),
+          east: east.toFixed(6),
+          west: west.toFixed(6),
+          pageSize,
+          page: 1,
+        },
+      });
+
+      return {
+        data: response.data.data || [],
+        page: response.data.page || 1,
+        pageSize: response.data.pageSize || pageSize,
+        total: response.data.total || 0,
+        bounds: { north, south, east, west },
+      };
+    } catch (error) {
+      // Si el endpoint no existe, devolver error para usar datos mock
+      console.log(
+        "Endpoint /public/prototype/bounds no disponible, usando datos mock"
+      );
+      throw error;
+    }
+  },
+
   getPublicSearchProperties: async (q) => {
     try {
       const axiosInstance = getPublicAxiosInstance();

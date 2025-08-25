@@ -1,7 +1,5 @@
 const isDevelopment = process.env.NODE_ENV === "development";
 
-console.log(process.env.API_URL_DEV);
-
 const apiConfig = {
   baseURL: isDevelopment
     ? "https://adonaipayment.com/minkaasa_test"

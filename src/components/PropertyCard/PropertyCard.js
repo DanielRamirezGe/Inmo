@@ -26,7 +26,7 @@ import {
 } from "@/utils/contactHelpers";
 import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
 
-const PropertyCard = ({ property, onDetailClick }) => {
+const PropertyCard = ({ property, onDetailClick, compact = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -578,10 +578,10 @@ const PropertyCard = ({ property, onDetailClick }) => {
                       sx={{
                         color: "#5D6D7E",
                         fontSize: { xs: "0.6rem", md: "0.7rem" },
+                        fontWeight: 500,
                         lineHeight: 1.2,
                         wordBreak: "break-word",
                         whiteSpace: "normal",
-                        fontWeight: 500,
                       }}
                     >
                       {state} - {city}
