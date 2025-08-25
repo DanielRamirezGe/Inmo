@@ -9,6 +9,7 @@ import {
 import { Loader } from "@googlemaps/js-api-loader";
 import { useViewportBasedLoading } from "@/hooks/useViewportBasedLoading";
 import MapControls from "./MapControls";
+import MapScrollWrapper from "./MapScrollWrapper";
 import {
   MAP_CONFIG,
   PIN_CONFIGS,
@@ -831,10 +832,7 @@ const MapComponent = ({
   };
 
   return (
-    <Box
-      className={`${className} ${styles.mapContainer}`}
-      sx={{ width: "100%", position: "relative" }}
-    >
+    <MapScrollWrapper className={`${className} ${styles.mapContainer}`}>
       {/* Controles del mapa */}
       {showControls && (
         <MapControls
@@ -853,35 +851,9 @@ const MapComponent = ({
           sx={{ height: responsiveHeight }}
         />
 
-        {/* Indicador de carga sutil como overlay */}
-        {loading && (
-          <Box
-            sx={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: "8px",
-              padding: "8px 12px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              zIndex: 1000,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <CircularProgress size={16} />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontSize: "11px" }}
-            >
-              Cargando...
-            </Typography>
-          </Box>
-        )}
+        {/* Indicador de carga eliminado para evitar movimiento del mapa */}
       </Box>
-    </Box>
+    </MapScrollWrapper>
   );
 };
 

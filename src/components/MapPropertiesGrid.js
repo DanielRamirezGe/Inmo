@@ -95,24 +95,7 @@ const MapPropertiesGrid = ({
         </Box>
       )}
 
-      {/* Estado de carga */}
-      {loading && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: compact ? "10vh" : "20vh",
-          }}
-        >
-          <Typography
-            variant={compact ? "body2" : "body1"}
-            color="text.secondary"
-          >
-            Cargando propiedades de la zona...
-          </Typography>
-        </Box>
-      )}
+      {/* Estado de carga eliminado para evitar movimiento del mapa */}
 
       {/* Estado de error */}
       {error && !loading && (

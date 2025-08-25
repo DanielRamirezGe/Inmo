@@ -112,7 +112,30 @@
 
 /* Prevenir que el mapa interfiera con el scroll de la página */
 .mapElement {
-  touch-action: pan-x pan-y;
+  /* Cambiar de pan-x pan-y a manipulation para mejor control táctil */
+  touch-action: manipulation;
+  /* Prevenir scroll no deseado */
+  overscroll-behavior: contain;
+  /* Asegurar que el mapa capture todos los eventos táctiles */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Estilos específicos para dispositivos móviles */
+@media (max-width: 768px) {
+  .mapElement {
+    /* En móviles, usar touch-action: none para control total */
+    touch-action: none;
+    /* Prevenir scroll de la página */
+    overscroll-behavior: none;
+  }
+  
+  /* Asegurar que el contenedor del mapa no cause scroll */
+  .mapContainer {
+    overscroll-behavior: contain;
+  }
 }
 
 /* Estilos para las ventanas de información de Google Maps */
