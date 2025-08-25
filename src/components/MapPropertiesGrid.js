@@ -25,8 +25,6 @@ const MapPropertiesGrid = ({
 
   const handleDetailClick = (propertyId) => {
     if (propertyId) {
-      // If onPropertyClick callback is provided, use it (for drawer)
-      // Otherwise, use new property page navigation
       if (onPropertyClick) {
         onPropertyClick(propertyId);
       } else {
@@ -36,8 +34,6 @@ const MapPropertiesGrid = ({
   };
 
   const handleRetry = () => {
-    // Since this component doesn't load data itself,
-    // we'll trigger a parent refresh if needed
     if (onPropertyClick && typeof onPropertyClick === "function") {
       onPropertyClick("refresh");
     }
@@ -94,8 +90,6 @@ const MapPropertiesGrid = ({
           </Typography>
         </Box>
       )}
-
-      {/* Estado de carga eliminado para evitar movimiento del mapa */}
 
       {/* Estado de error */}
       {error && !loading && (
