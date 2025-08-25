@@ -59,7 +59,7 @@ export const MARKER_CONFIG = {
 
 // URLs y endpoints
 export const ENDPOINTS = {
-  PROPERTY_DETAILS: "https://minkaasa.com/prototype/",
+  PROPERTY_DETAILS: "https://minkaasa.com/property/",
   IMAGE_BASE: "https://minkaasa-images.s3.us-east-1.amazonaws.com/",
 };
 
