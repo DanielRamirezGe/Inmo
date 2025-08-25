@@ -19,6 +19,20 @@ html[data-theme="light"] {
   color-scheme: light !important;
 }
 
+/* Prevenir que CssBaseline interfiera con la solución del scroll del mapa */
+.MuiCssBaseline body {
+  /* Mantener estilos personalizados para el scroll */
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* Asegurar que la solución del scroll del mapa tenga prioridad */
+body[style*="position: fixed"] {
+  /* Cuando el scroll está bloqueado por el mapa */
+  overflow: hidden !important;
+  position: fixed !important;
+}
+
 /* Forzar colores de fondo y texto para el tema claro */
 body {
   background-color: #ffffff !important;
@@ -38,7 +52,7 @@ html {
   height: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  /* Remover scroll-behavior: smooth que causa el problema del scroll automático */
 }
 
 body {
@@ -50,6 +64,9 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Asegurar que el scroll funcione correctamente */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Layout container for sticky footer */
