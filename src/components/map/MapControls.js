@@ -47,7 +47,7 @@ const MapControls = ({ onRefresh, onLocationClick, className = "" }) => {
           }}
         >
           <RefreshIcon
-            fontSize={isMobile ? "small" : "small"}
+            fontSize="small"
             color="primary"
             sx={{
               fontSize: isMobile ? "0.875rem" : "1.25rem",
@@ -90,7 +90,7 @@ const MapControls = ({ onRefresh, onLocationClick, className = "" }) => {
           }}
         >
           <LocationIcon
-            fontSize={isMobile ? "small" : "small"}
+            fontSize="small"
             color="primary"
             sx={{
               fontSize: isMobile ? "0.875rem" : "1.25rem",

@@ -6,10 +6,8 @@ import {
   Box,
   Divider,
   useMediaQuery,
-  useTheme,
-  Fade,
 } from "@mui/material";
-import MapComponent from "./map/MapComponent";
+import { MapComponent } from "./map";
 import MapPropertiesGrid from "./MapPropertiesGrid";
 
 const MapPropertiesCard = ({
@@ -23,7 +21,6 @@ const MapPropertiesCard = ({
   className = "",
   compact = false,
 }) => {
-  const theme = useTheme();
   const isSmallTablet = useMediaQuery("(min-width:730px)");
 
   // Estado local para mantener las propiedades durante la carga
@@ -56,9 +53,6 @@ const MapPropertiesCard = ({
 
   // Determinar si mostrar el indicador de carga
   const showLoadingIndicator = loading && isInitialLoad;
-
-  // Determinar si mostrar el indicador de actualización
-  const showUpdateIndicator = loading && !isInitialLoad && propertiesCount > 0;
 
   return (
     <Card
@@ -234,11 +228,11 @@ const MapPropertiesCard = ({
             >
               <MapPropertiesGrid
                 properties={validProperties}
-                loading={showLoadingIndicator} // Solo mostrar loading en carga inicial
+                loading={showLoadingIndicator}
                 error={error}
                 onPropertyClick={onPropertyClick}
                 compact={true}
-                showTitle={false} // Ya tenemos el título en el header
+                showTitle={false}
               />
             </Box>
           </Box>
@@ -301,11 +295,11 @@ const MapPropertiesCard = ({
             {/* Grid de propiedades */}
             <MapPropertiesGrid
               properties={validProperties}
-              loading={showLoadingIndicator} // Solo mostrar loading en carga inicial
+              loading={showLoadingIndicator}
               error={error}
               onPropertyClick={onPropertyClick}
               compact={compact}
-              showTitle={false} // Ya tenemos el título en el header
+              showTitle={false}
             />
           </Box>
         )}

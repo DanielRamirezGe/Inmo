@@ -8,7 +8,6 @@ import {
   Alert,
   Button,
   useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 
@@ -22,7 +21,6 @@ const MapPropertiesGrid = ({
   compact = false,
 }) => {
   const router = useRouter();
-  const theme = useTheme();
   const isSmallMobile = useMediaQuery("(max-width:425px)");
 
   const handleDetailClick = (propertyId) => {
