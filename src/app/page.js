@@ -28,10 +28,14 @@ export default function Home() {
   const [mapError, setMapError] = useState(null);
 
   const handlePropertyClick = (propertyId) => {
-    // Navegar a la página de detalle de la propiedad
     if (propertyId) {
       router.push(`/property/${propertyId}`);
     }
+  };
+
+  const handleMapPinClick = (property) => {
+    // Solo para logging, el InfoWindow se maneja automáticamente
+    console.log("Pin del mapa clickeado:", property.prototypeName);
   };
 
   // Callback para recibir las propiedades del mapa
@@ -62,6 +66,7 @@ export default function Home() {
           loading={mapLoading}
           error={mapError}
           onPropertyClick={handlePropertyClick}
+          onMapPinClick={handleMapPinClick}
           onPropertiesUpdate={handleMapPropertiesUpdate}
           height={getMapHeight()}
           showControls={true}

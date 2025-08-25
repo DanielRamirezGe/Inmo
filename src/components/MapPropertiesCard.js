@@ -15,6 +15,7 @@ const MapPropertiesCard = ({
   loading = false,
   error = null,
   onPropertyClick = null,
+  onMapPinClick = null,
   onPropertiesUpdate = null,
   height = "600px",
   showControls = true,
@@ -172,6 +173,7 @@ const MapPropertiesCard = ({
                 showControls={showControls}
                 onPropertyClick={onPropertyClick}
                 onPropertiesUpdate={onPropertiesUpdate}
+                onMapPinClick={onMapPinClick}
               />
             </Box>
 
@@ -208,6 +210,7 @@ const MapPropertiesCard = ({
                 showControls={showControls}
                 onPropertyClick={onPropertyClick}
                 onPropertiesUpdate={onPropertiesUpdate}
+                onMapPinClick={onMapPinClick}
               />
             </Box>
 

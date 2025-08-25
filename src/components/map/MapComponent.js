@@ -23,6 +23,7 @@ const MapComponent = ({
   height = "600px",
   showControls = true,
   onPropertyClick = null,
+  onMapPinClick = null,
   onPropertiesUpdate = null,
   className = "",
 }) => {
@@ -503,8 +504,8 @@ const MapComponent = ({
           infoWindowRef.current.open(mapInstanceRef.current, marker);
         }, 100);
 
-        if (onPropertyClick) {
-          onPropertyClick(property);
+        if (onMapPinClick) {
+          onMapPinClick(property);
         }
       });
 
@@ -539,7 +540,7 @@ const MapComponent = ({
     filteredProperties,
     isMapLoaded,
     createPinStyles,
-    onPropertyClick,
+    onMapPinClick,
     updateAllMarkersSize,
   ]);
 
