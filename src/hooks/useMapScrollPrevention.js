@@ -12,6 +12,7 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
   const startYRef = useRef(0);
   const startScrollYRef = useRef(0);
   const timeoutRef = useRef(null);
+  const originalBodyStylesRef = useRef({});
 
   // Función para detectar si el scroll está dentro del mapa
   const isScrollInMap = useCallback(
@@ -22,14 +23,27 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
     [mapRef]
   );
 
-  // Función para bloquear scroll de la página
+  // Función para bloquear scroll de la página usando una técnica más simple
   const blockPageScroll = useCallback(() => {
     if (typeof window !== "undefined" && !isScrollBlocked && isEnabled) {
-      const scrollY = window.scrollY;
+      // Guardar estilos originales del body
+      originalBodyStylesRef.current = {
+        position: document.body.style.position,
+        top: document.body.style.top,
+        width: document.body.style.width,
+        overflow: document.body.style.overflow,
+        height: document.body.style.height,
+      };
+
+      const currentScrollY = window.scrollY;
+
+      // Usar una técnica más simple que no cause problemas
       document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
+      document.body.style.top = `-${currentScrollY}px`;
       document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
+      document.body.style.height = "100%";
+
       setIsScrollBlocked(true);
     }
   }, [isScrollBlocked, isEnabled]);
@@ -38,20 +52,41 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
   const restorePageScroll = useCallback(() => {
     if (typeof window !== "undefined" && isScrollBlocked) {
       const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+
+      // Restaurar estilos originales del body
+      if (originalBodyStylesRef.current) {
+        document.body.style.position =
+          originalBodyStylesRef.current.position || "";
+        document.body.style.top = originalBodyStylesRef.current.top || "";
+        document.body.style.width = originalBodyStylesRef.current.width || "";
+        document.body.style.overflow =
+          originalBodyStylesRef.current.overflow || "";
+        document.body.style.height = originalBodyStylesRef.current.height || "";
+      } else {
+        // Fallback: limpiar estilos manualmente
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        document.body.style.height = "";
       }
+
+      // Restaurar la posición de scroll
+      if (scrollY) {
+        const targetScrollY = parseInt(scrollY.replace("-", ""));
+        if (!isNaN(targetScrollY)) {
+          // Usar scrollTo inmediatamente sin delay
+          window.scrollTo(0, targetScrollY);
+        }
+      }
+
       setIsScrollBlocked(false);
     }
   }, [isScrollBlocked]);
 
   // Función para restaurar scroll con delay
   const restorePageScrollDelayed = useCallback(
-    (delay = 200) => {
+    (delay = 50) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -66,9 +101,12 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      restorePageScroll();
+      // Solo restaurar si es necesario
+      if (isScrollBlocked) {
+        restorePageScroll();
+      }
     };
-  }, [restorePageScroll]);
+  }, [isScrollBlocked, restorePageScroll]);
 
   // Restaurar scroll cuando se pierde el foco o cambia la visibilidad
   useEffect(() => {
@@ -117,8 +155,8 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
         const currentY = e.touches[0].clientY;
         const deltaY = Math.abs(currentY - startYRef.current);
 
-        if (deltaY > 5) {
-          // Umbral mínimo para considerar scroll vertical
+        if (deltaY > 3) {
+          // Umbral más bajo para mejor detección
           e.preventDefault();
           e.stopPropagation();
         }
@@ -131,10 +169,11 @@ export const useMapScrollPrevention = (isEnabled = true, mapRef = null) => {
     (e) => {
       if (isScrollingRef.current && isScrollInMap(e.target)) {
         isScrollingRef.current = false;
-        restorePageScrollDelayed(200);
+        // Restaurar scroll inmediatamente para evitar saltos
+        restorePageScroll();
       }
     },
-    [isScrollInMap, restorePageScrollDelayed]
+    [isScrollInMap, restorePageScroll]
   );
 
   const handleWheel = useCallback(

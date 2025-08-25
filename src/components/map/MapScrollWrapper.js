@@ -22,20 +22,24 @@ const MapScrollWrapper = ({ children, className = "", isEnabled = true }) => {
     const wrapper = wrapperRef.current;
     if (!wrapper || !isEnabled) return;
 
-    wrapper.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    });
-    wrapper.addEventListener("touchmove", handleTouchMove, { passive: false });
-    wrapper.addEventListener("touchend", handleTouchEnd, { passive: false });
-    wrapper.addEventListener("wheel", handleWheel, { passive: false });
-    wrapper.addEventListener("keydown", handleKeyDown);
+    const eventHandlers = [
+      ["touchstart", handleTouchStart, { passive: false }],
+      ["touchmove", handleTouchMove, { passive: false }],
+      ["touchend", handleTouchEnd, { passive: false }],
+      ["wheel", handleWheel, { passive: false }],
+      ["keydown", handleKeyDown],
+    ];
 
+    // Agregar todos los event listeners
+    eventHandlers.forEach(([event, handler, options]) => {
+      wrapper.addEventListener(event, handler, options);
+    });
+
+    // Cleanup function
     return () => {
-      wrapper.removeEventListener("touchstart", handleTouchStart);
-      wrapper.removeEventListener("touchmove", handleTouchMove);
-      wrapper.removeEventListener("touchend", handleTouchEnd);
-      wrapper.removeEventListener("wheel", handleWheel);
-      wrapper.removeEventListener("keydown", handleKeyDown);
+      eventHandlers.forEach(([event, handler]) => {
+        wrapper.removeEventListener(event, handler);
+      });
     };
   }, [
     isEnabled,
@@ -52,7 +56,7 @@ const MapScrollWrapper = ({ children, className = "", isEnabled = true }) => {
       className={`${styles.mapScrollWrapper} ${className} ${
         isScrollBlocked ? styles.scrollBlocked : ""
       }`}
-      tabIndex={-1} // Para capturar eventos de teclado
+      tabIndex={-1}
     >
       {children}
     </Box>
