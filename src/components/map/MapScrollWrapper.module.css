@@ -1,0 +1,73 @@
+/* Wrapper para prevenir scroll de la página durante interacción con el mapa */
+.mapScrollWrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  /* Prevenir scroll de la página */
+  overscroll-behavior: contain;
+  /* Asegurar que el wrapper capture todos los eventos táctiles */
+  touch-action: none;
+}
+
+/* Estilos específicos para dispositivos móviles */
+@media (max-width: 768px) {
+  .mapScrollWrapper {
+    /* En móviles, usar touch-action: none para control total */
+    touch-action: none;
+    /* Prevenir scroll de la página */
+    overscroll-behavior: none;
+    /* Asegurar que el wrapper esté por encima del contenido */
+    z-index: 1;
+  }
+}
+
+/* Estilos para pantallas más grandes */
+@media (min-width: 769px) {
+  .mapScrollWrapper {
+    /* En desktop, permitir scroll normal */
+    touch-action: auto;
+    overscroll-behavior: auto;
+  }
+}
+
+/* Asegurar que el contenido del wrapper no cause scroll */
+.mapScrollWrapper * {
+  /* Prevenir selección de texto */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Prevenir scroll no deseado */
+  overscroll-behavior: contain;
+}
+
+/* Estilos específicos para el mapa dentro del wrapper */
+.mapScrollWrapper .mapElement {
+  /* Asegurar que el mapa tenga el control total */
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* Prevenir scroll en eventos de rueda del mouse */
+.mapScrollWrapper .mapElement {
+  /* Capturar eventos de rueda del mouse */
+  pointer-events: auto;
+}
+
+/* Estilos para cuando el scroll está bloqueado */
+.mapScrollWrapper.scrollBlocked {
+  /* Indicador visual de que el scroll está bloqueado */
+  position: relative;
+}
+
+.mapScrollWrapper.scrollBlocked::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 1000;
+} 
