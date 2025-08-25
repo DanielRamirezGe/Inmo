@@ -144,46 +144,7 @@ const MapPropertiesCard = ({
             </Typography>
           </Box>
 
-          {/* Indicador de estado */}
-          {showLoadingIndicator && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                px: 2,
-                py: 1,
-                backgroundColor: "rgba(25, 118, 210, 0.1)",
-                borderRadius: 2,
-                border: "1px solid rgba(25, 118, 210, 0.2)",
-              }}
-            >
-              <Box
-                sx={{
-                  width: "8px",
-                  height: "8px",
-                  borderRadius: "50%",
-                  backgroundColor: "#1976d2",
-                  animation: "pulse 2s infinite",
-                  "@keyframes pulse": {
-                    "0%": { opacity: 1 },
-                    "50%": { opacity: 0.4 },
-                    "100%": { opacity: 1 },
-                  },
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "#1976d2",
-                  fontWeight: 600,
-                  fontSize: "0.75rem",
-                }}
-              >
-                Conectado
-              </Typography>
-            </Box>
-          )}
+          {/* Indicador de estado eliminado para evitar movimiento del mapa */}
         </Box>
       </CardContent>
 
