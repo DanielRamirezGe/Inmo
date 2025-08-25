@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import MainHeader from "./components/mainHeader";
 import PropertiesGrid from "@/components/PropertiesGrid";
 import BottomNavigationBar from "@/components/BottomNavigationBar";
@@ -17,6 +18,7 @@ import styles from "./page.module.css";
 
 export default function Home() {
   const theme = useTheme();
+  const router = useRouter();
   const isTablet = useMediaQuery(theme.breakpoints.up("md")); // 900px y superior
   const isSmallTablet = useMediaQuery("(min-width:730px)"); // 750px y superior
 
@@ -25,10 +27,11 @@ export default function Home() {
   const [mapLoading, setMapLoading] = useState(false);
   const [mapError, setMapError] = useState(null);
 
-  const handlePropertyClick = (property) => {
-    // Aquí puedes implementar la navegación a la página de detalle
-    console.log("Propiedad seleccionada:", property);
-    // router.push(`/property/${property.id}`);
+  const handlePropertyClick = (propertyId) => {
+    // Navegar a la página de detalle de la propiedad
+    if (propertyId) {
+      router.push(`/property/${propertyId}`);
+    }
   };
 
   // Callback para recibir las propiedades del mapa
