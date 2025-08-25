@@ -1,5 +1,6 @@
-import React from "react";
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import React, {useState} from "react";
+import { Card,CardHeader, CardContent,Collapse, IconButton, Typography, Box } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import StarIcon from "@mui/icons-material/Star";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -15,6 +16,7 @@ import SentimentSatisfiedAltIcon from "@mui/icons-material/SentimentSatisfiedAlt
  * @param {Object} [props.sx] - Estilos adicionales para la tarjeta
  */
 const DescriptionCard = ({ title, description, index, sx = {} }) => {
+  const [open, setOpen] = useState(false);
   // Seleccionar el icono según el índice
   const getIcon = () => {
     switch (index % 4) {
@@ -86,7 +88,9 @@ const DescriptionCard = ({ title, description, index, sx = {} }) => {
           display: "flex",
           alignItems: "center",
           gap: 1.5,
+          cursor: "pointer",
         }}
+         onClick={() => setOpen(!open)} 
       >
         <Box
           className="icon-circle-primary"
@@ -94,6 +98,9 @@ const DescriptionCard = ({ title, description, index, sx = {} }) => {
             width: { xs: 40, md: 48 },
             height: { xs: 40, md: 48 },
             flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {getIcon()}
@@ -105,13 +112,24 @@ const DescriptionCard = ({ title, description, index, sx = {} }) => {
             fontWeight: 600,
             color: "secondary.main",
             lineHeight: 1.3,
+            flexGrow: 1,
           }}
         >
           {title}
         </Typography>
+         <IconButton
+          sx={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.3s",
+            p: 0,
+          }}
+        >
+          <ExpandMoreIcon />
+        </IconButton>
       </Box>
 
       {/* Contenido de la Card */}
+       <Collapse in={open}>
       <CardContent
         sx={{
           p: { xs: 2.5, md: 3 },
@@ -188,6 +206,7 @@ const DescriptionCard = ({ title, description, index, sx = {} }) => {
           })}
         </Typography>
       </CardContent>
+      </Collapse>
     </Card>
   );
 };
