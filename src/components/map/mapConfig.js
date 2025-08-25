@@ -61,7 +61,7 @@ export const PIN_CONFIGS = {
   },
   apartment: {
     color: "#e6a820fa",
-    symbol: "Departamento",
+    symbol: "Apt",
     shortSymbol: "A",
   },
   default: {
