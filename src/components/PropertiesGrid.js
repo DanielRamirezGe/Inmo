@@ -149,7 +149,15 @@ const PropertiesGrid = ({
       )}
 
       {!loading && !error && properties.length === 0 && (
-        <Typography variant="h6" textAlign="center" sx={{ my: 5 }}>
+        <Typography
+          variant="h6"
+          textAlign="center"
+          sx={{
+            my: 5,
+            fontSize: { xs: "1rem", sm: "1.25rem" },
+            fontWeight: { xs: 500, sm: 600 },
+          }}
+        >
           No hay propiedades disponibles en este momento.
         </Typography>
       )}

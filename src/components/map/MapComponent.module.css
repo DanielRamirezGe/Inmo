@@ -1,0 +1,204 @@
+/* Estilos específicos para el componente del mapa */
+.mapContainer {
+  width: 100%;
+  position: relative;
+  overflow: visible; /* Cambiado de hidden a visible */
+}
+
+.mapElement {
+  width: 100%;
+  min-height: 400px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  position: relative;
+  z-index: 1;
+  /* Remover height: 100% para evitar conflictos */
+}
+
+/* Asegurar que el mapa de Google tenga prioridad sobre otros estilos */
+.mapElement > div {
+  width: 100% !important;
+  /* Remover height: 100% para evitar conflictos */
+}
+
+/* Contenedor de controles */
+.controlsContainer {
+  margin-bottom: 16px;
+}
+
+/* Overlay de carga */
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 10;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Mensaje de no propiedades */
+.noPropertiesMessage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 5;
+  max-width: 300px;
+}
+
+/* Información de debug */
+.debugInfo {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 5;
+  font-family: monospace;
+}
+
+/* Asegurar que los controles del mapa sean visibles */
+.mapControls {
+  z-index: 1000;
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  .mapElement {
+    min-height: 300px;
+  }
+  
+  .noPropertiesMessage {
+    max-width: 220px;
+    padding: 12px 16px;
+    border-radius: 6px;
+  }
+  
+  .debugInfo {
+    bottom: 5px;
+    right: 5px;
+    font-size: 10px;
+    padding: 6px;
+  }
+}
+
+/* Estilos para móviles muy pequeños */
+@media (max-width: 480px) {
+  .noPropertiesMessage {
+    max-width: 200px;
+    padding: 10px 12px;
+    border-radius: 4px;
+  }
+}
+
+/* Asegurar que el scroll funcione correctamente */
+.mapContainer * {
+  box-sizing: border-box;
+}
+
+/* Prevenir que el mapa interfiera con el scroll de la página */
+.mapElement {
+  touch-action: pan-x pan-y;
+}
+
+/* Estilos para las ventanas de información de Google Maps */
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+}
+
+.gm-style .gm-style-iw-t::after {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0) 33.333%, #ffffff 33.333%, #ffffff 66.667%, rgba(255, 255, 255, 0) 66.667%) !important;
+}
+
+/* Asegurar que los marcadores sean visibles */
+.gm-style-moc {
+  z-index: 1000 !important;
+}
+
+/* Estilos para el zoom control */
+.gm-control-active {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 4px !important;
+}
+
+.gm-control-active:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Estilos para el control de tipo de mapa */
+.gm-style-mtc {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 4px !important;
+}
+
+.gm-style-mtc button {
+  background-color: #ffffff !important;
+  color: #333333 !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+.gm-style-mtc button:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Estilos para el control de Street View */
+.gm-svpc {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 4px !important;
+}
+
+.gm-svpc:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Estilos para el control de pantalla completa */
+.gm-fullscreen-control {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  border-radius: 4px !important;
+}
+
+.gm-fullscreen-control:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Estilos específicos para el mapa en la página principal */
+.home-map .mapElement {
+  /* Altura responsiva - se controla desde el componente React */
+  height: inherit !important;
+  min-height: inherit !important;
+}
+
+/* Estilos para el Grid del mapa */
+.mapGridContainer {
+  height: auto !important; /* Permitir que el Grid se ajuste al contenido */
+}
+
+.mapGridItem {
+  height: auto !important; /* Permitir que los items del Grid se ajusten */
+} 

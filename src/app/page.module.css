@@ -181,3 +181,20 @@ a.secondary {
     filter: invert();
   }
 }
+
+/* Estilos específicos para la página principal */
+.homeMapSection {
+  margin-bottom: 2rem;
+}
+
+.homeMapContainer {
+  width: 100%;
+  height: auto;
+  min-height: 600px;
+}
+
+/* Layout de dos columnas para pantallas grandes */
+.mapPropertiesSection {
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+}
