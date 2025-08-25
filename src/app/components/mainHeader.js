@@ -10,6 +10,7 @@ import Box from "@mui/material/Box";
 export default function MainHeader() {
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("xs"));
+  const isSmallMobile = useMediaQuery("(max-width:425px)");
   const imagen = [
     "/mainBanner/minkaasa.png",
     // Add more image paths as needed
@@ -28,14 +29,24 @@ export default function MainHeader() {
       >
         <Box
           sx={{
-            maxHeight: "600px",
+            maxHeight: isSmallMobile ? "100px" : "400px",
+            height: isSmallMobile ? "100px" : "auto",
             overflow: "hidden",
           }}
         >
           <Carousel showThumbs={false} autoPlay infiniteLoop>
             {imagen.map((item, index) => (
               <div key={index}>
-                <img src={item} style={{ maxWidth: "800px" }} />
+                <img
+                  src={item}
+                  style={{
+                    maxWidth: isSmallMobile ? "100%" : "500px",
+                    width: isSmallMobile ? "100%" : "auto",
+                    height: isSmallMobile ? "100px" : "auto",
+                    objectFit: isSmallMobile ? "contain" : "scale-down",
+                    objectPosition: "center",
+                  }}
+                />
               </div>
             ))}
           </Carousel>
