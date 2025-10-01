@@ -13,6 +13,7 @@ import {
   Fade,
   Fab,
 } from "@mui/material";
+import { setPermisos, STORAGE_KEY } from "@/utils/analytics";
 import { Cookie, Close } from "@mui/icons-material";
 
 export default function ConsentMUI() {
@@ -21,17 +22,18 @@ export default function ConsentMUI() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     
-    const saved = localStorage.getItem('key');
-    console.log(saved)
+    const saved = localStorage.getItem(STORAGE_KEY);
+    console.log("saved",saved)
     const granted = saved === "true";
+    console.log("granted",granted)
 
-    console.log("Consentimiento previo:", granted);
+    setPermisos(granted);
     setVisible(!granted);
   }, []);
 
   const applyConsent = useCallback((granted) => {
-    console.log("Aplicando consentimiento:", granted);
-    localStorage.setItem('key', String(!!granted));
+    setPermisos(granted);
+    localStorage.setItem(STORAGE_KEY, String(granted));
     setVisible(false);
   }, []);
 
