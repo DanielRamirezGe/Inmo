@@ -13,6 +13,7 @@ import {
 import PropertyCard from "@/components/PropertyCard/PropertyCard";
 import { api } from "@/services/api";
 import { ENTITY_PAGINATION_CONFIG } from "../constants/pagination";
+import { trackerClick } from "@/utils/analytics";
 
 const PropertiesGrid = ({
   filteredProperties = null,
@@ -106,6 +107,7 @@ const PropertiesGrid = ({
       if (onPropertyClick) {
         onPropertyClick(propertyId);
       } else {
+        trackerClick("property_card_click", "Card", { propertyId });
         router.push(`/property/${propertyId}`);
       }
     }

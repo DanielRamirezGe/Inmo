@@ -25,6 +25,7 @@ import {
   openWhatsAppChat,
 } from "@/utils/contactHelpers";
 import { AWS_IMAGE_CONFIG } from "@/config/imageConfig";
+import { trackerClick } from "@/utils/analytics";
 
 const PropertyCard = ({ property, onDetailClick, compact = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,6 +65,7 @@ const PropertyCard = ({ property, onDetailClick, compact = false }) => {
   ].filter(Boolean);
 
   const handleImageClick = () => {
+    trackerClick("property_image_gallery", "Box", { propertyId: property.prototypeId });
     setIsModalOpen(true);
   };
 
@@ -73,6 +75,7 @@ const PropertyCard = ({ property, onDetailClick, compact = false }) => {
 
   // Función de WhatsApp - siempre la misma lógica
   const handleWhatsAppClick = () => {
+    trackerClick("contact_whatsapp", "Button", { propertyId: property.prototypeId });
     const message = generatePropertyMessage({
       name: property.prototypeName,
       development: property.developmentName || property.condominium,

@@ -53,6 +53,7 @@ import { MediaCard } from "./MediaCard";
 import { PropertyHeroCard } from "./PropertyHeroCard";
 import ContactCard from "./ContactCard";
 import { AppointmentButton } from "./appointments";
+import { trackerClick } from "@/utils/analytics";
 
 /**
  * Shared Property Detail View component
@@ -215,6 +216,7 @@ export default function PropertyDetailView({
   };
 
   const handleOpenGallery = () => {
+    trackerClick("property_image_gallery", "Box", { propertyId: property.prototypeId });
     setIsGalleryOpen(true);
   };
 

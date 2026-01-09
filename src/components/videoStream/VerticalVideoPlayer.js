@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useVideoStream } from '../../hooks/useVideoStream';
 import VerticalVideoModal from './VerticalVideoModal';
+import { trackerClick } from '@/utils/analytics';
 
 const VerticalVideoPlayer = ({
   videoPath,
@@ -113,6 +114,7 @@ const VerticalVideoPlayer = ({
   }, [onLoadComplete]);
 
   const handlePlay = useCallback(() => {
+    trackerClick('video_play', "video");
     setIsPlaying(true);
   }, []);
 

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import theme from "../theme";
 import Footer from "./components/footer";
+import ConsentBanner from "@/components/ConsentBanner";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
             <CssBaseline />
             <div className="layout-container">
               <main className="main-content">{children}</main>
+              <ConsentBanner />
               <Footer />
             </div>
           </ThemeProvider>

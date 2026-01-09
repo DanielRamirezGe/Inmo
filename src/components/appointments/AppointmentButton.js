@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@mui/material";
 import { Event } from "@mui/icons-material";
 import AppointmentDialog from "./AppointmentDialog";
+import { trackerClick } from "@/utils/analytics";
 
 const AppointmentButton = ({
   prototypeId = null,
@@ -18,6 +19,7 @@ const AppointmentButton = ({
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleOpenDialog = () => {
+    trackerClick("schedule_appointment_button", "Button", { prototypeId });
     setDialogOpen(true);
   };
 
